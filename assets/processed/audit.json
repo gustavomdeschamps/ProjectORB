@@ -1,0 +1,1861 @@
+{
+  "frames_checked": 177,
+  "world_assets_checked": 46,
+  "errors": [],
+  "animations": {
+    "player": {
+      "idle": [
+        {
+          "frame": "processed/player/orb/idle/idle_01.png",
+          "opaque_pixels": 9043,
+          "bounds": [
+            60,
+            99,
+            163,
+            208
+          ]
+        },
+        {
+          "frame": "processed/player/orb/idle/idle_02.png",
+          "opaque_pixels": 8713,
+          "bounds": [
+            62,
+            100,
+            160,
+            208
+          ]
+        },
+        {
+          "frame": "processed/player/orb/idle/idle_03.png",
+          "opaque_pixels": 8768,
+          "bounds": [
+            62,
+            100,
+            161,
+            208
+          ]
+        },
+        {
+          "frame": "processed/player/orb/idle/idle_04.png",
+          "opaque_pixels": 8681,
+          "bounds": [
+            62,
+            100,
+            161,
+            208
+          ]
+        }
+      ],
+      "walk": [
+        {
+          "frame": "processed/player/orb/walk/walk_01.png",
+          "opaque_pixels": 8864,
+          "bounds": [
+            60,
+            99,
+            162,
+            208
+          ]
+        },
+        {
+          "frame": "processed/player/orb/walk/walk_02.png",
+          "opaque_pixels": 8478,
+          "bounds": [
+            61,
+            100,
+            161,
+            208
+          ]
+        },
+        {
+          "frame": "processed/player/orb/walk/walk_03.png",
+          "opaque_pixels": 8565,
+          "bounds": [
+            62,
+            99,
+            160,
+            208
+          ]
+        },
+        {
+          "frame": "processed/player/orb/walk/walk_04.png",
+          "opaque_pixels": 9107,
+          "bounds": [
+            58,
+            97,
+            164,
+            208
+          ]
+        },
+        {
+          "frame": "processed/player/orb/walk/walk_05.png",
+          "opaque_pixels": 9031,
+          "bounds": [
+            59,
+            95,
+            163,
+            208
+          ]
+        },
+        {
+          "frame": "processed/player/orb/walk/walk_06.png",
+          "opaque_pixels": 8925,
+          "bounds": [
+            62,
+            96,
+            161,
+            208
+          ]
+        }
+      ],
+      "dash": [
+        {
+          "frame": "processed/player/orb/dash/dash_01.png",
+          "opaque_pixels": 8469,
+          "bounds": [
+            59,
+            107,
+            163,
+            208
+          ]
+        },
+        {
+          "frame": "processed/player/orb/dash/dash_02.png",
+          "opaque_pixels": 9681,
+          "bounds": [
+            35,
+            106,
+            187,
+            208
+          ]
+        },
+        {
+          "frame": "processed/player/orb/dash/dash_03.png",
+          "opaque_pixels": 10495,
+          "bounds": [
+            33,
+            103,
+            189,
+            208
+          ]
+        },
+        {
+          "frame": "processed/player/orb/dash/dash_04.png",
+          "opaque_pixels": 11718,
+          "bounds": [
+            8,
+            107,
+            218,
+            208
+          ]
+        },
+        {
+          "frame": "processed/player/orb/dash/dash_05.png",
+          "opaque_pixels": 13357,
+          "bounds": [
+            20,
+            103,
+            200,
+            208
+          ]
+        }
+      ],
+      "attack": [
+        {
+          "frame": "processed/player/orb/attack/attack_01.png",
+          "opaque_pixels": 8806,
+          "bounds": [
+            59,
+            101,
+            163,
+            208
+          ]
+        },
+        {
+          "frame": "processed/player/orb/attack/attack_02.png",
+          "opaque_pixels": 15182,
+          "bounds": [
+            26,
+            64,
+            197,
+            208
+          ]
+        },
+        {
+          "frame": "processed/player/orb/attack/attack_03.png",
+          "opaque_pixels": 8635,
+          "bounds": [
+            59,
+            103,
+            163,
+            208
+          ]
+        },
+        {
+          "frame": "processed/player/orb/attack/attack_04.png",
+          "opaque_pixels": 8875,
+          "bounds": [
+            59,
+            101,
+            163,
+            208
+          ]
+        }
+      ],
+      "hurt": [
+        {
+          "frame": "processed/player/orb/hurt/hurt_01.png",
+          "opaque_pixels": 9217,
+          "bounds": [
+            60,
+            96,
+            163,
+            208
+          ]
+        },
+        {
+          "frame": "processed/player/orb/hurt/hurt_02.png",
+          "opaque_pixels": 9195,
+          "bounds": [
+            48,
+            80,
+            174,
+            208
+          ]
+        },
+        {
+          "frame": "processed/player/orb/hurt/hurt_03.png",
+          "opaque_pixels": 10023,
+          "bounds": [
+            42,
+            74,
+            181,
+            208
+          ]
+        },
+        {
+          "frame": "processed/player/orb/hurt/hurt_04.png",
+          "opaque_pixels": 10619,
+          "bounds": [
+            43,
+            71,
+            182,
+            208
+          ]
+        }
+      ],
+      "death": [
+        {
+          "frame": "processed/player/orb/death/death_01.png",
+          "opaque_pixels": 9526,
+          "bounds": [
+            59,
+            96,
+            163,
+            208
+          ]
+        },
+        {
+          "frame": "processed/player/orb/death/death_02.png",
+          "opaque_pixels": 10415,
+          "bounds": [
+            45,
+            75,
+            178,
+            208
+          ]
+        },
+        {
+          "frame": "processed/player/orb/death/death_03.png",
+          "opaque_pixels": 9387,
+          "bounds": [
+            48,
+            86,
+            175,
+            208
+          ]
+        },
+        {
+          "frame": "processed/player/orb/death/death_04.png",
+          "opaque_pixels": 4870,
+          "bounds": [
+            45,
+            93,
+            177,
+            208
+          ]
+        },
+        {
+          "frame": "processed/player/orb/death/death_05.png",
+          "opaque_pixels": 2513,
+          "bounds": [
+            55,
+            112,
+            168,
+            208
+          ]
+        }
+      ]
+    },
+    "triangle": {
+      "idle": [
+        {
+          "frame": "processed/enemies/triangle/idle/idle_01.png",
+          "opaque_pixels": 6451,
+          "bounds": [
+            60,
+            100,
+            163,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/triangle/idle/idle_02.png",
+          "opaque_pixels": 6395,
+          "bounds": [
+            61,
+            100,
+            162,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/triangle/idle/idle_03.png",
+          "opaque_pixels": 6383,
+          "bounds": [
+            61,
+            100,
+            162,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/triangle/idle/idle_04.png",
+          "opaque_pixels": 6340,
+          "bounds": [
+            60,
+            101,
+            162,
+            208
+          ]
+        }
+      ],
+      "walk": [
+        {
+          "frame": "processed/enemies/triangle/walk/walk_01.png",
+          "opaque_pixels": 6373,
+          "bounds": [
+            61,
+            101,
+            162,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/triangle/walk/walk_02.png",
+          "opaque_pixels": 6568,
+          "bounds": [
+            61,
+            100,
+            161,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/triangle/walk/walk_03.png",
+          "opaque_pixels": 6522,
+          "bounds": [
+            61,
+            99,
+            161,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/triangle/walk/walk_04.png",
+          "opaque_pixels": 6510,
+          "bounds": [
+            61,
+            100,
+            161,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/triangle/walk/walk_05.png",
+          "opaque_pixels": 6333,
+          "bounds": [
+            62,
+            100,
+            161,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/triangle/walk/walk_06.png",
+          "opaque_pixels": 5894,
+          "bounds": [
+            63,
+            104,
+            159,
+            208
+          ]
+        }
+      ],
+      "dash": [
+        {
+          "frame": "processed/enemies/triangle/dash/dash_01.png",
+          "opaque_pixels": 6120,
+          "bounds": [
+            61,
+            104,
+            162,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/triangle/dash/dash_02.png",
+          "opaque_pixels": 8535,
+          "bounds": [
+            35,
+            104,
+            188,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/triangle/dash/dash_03.png",
+          "opaque_pixels": 9672,
+          "bounds": [
+            31,
+            107,
+            192,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/triangle/dash/dash_04.png",
+          "opaque_pixels": 9545,
+          "bounds": [
+            30,
+            105,
+            193,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/triangle/dash/dash_05.png",
+          "opaque_pixels": 11298,
+          "bounds": [
+            27,
+            106,
+            198,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/triangle/dash/dash_06.png",
+          "opaque_pixels": 6017,
+          "bounds": [
+            62,
+            106,
+            160,
+            208
+          ]
+        }
+      ],
+      "attack": [
+        {
+          "frame": "processed/enemies/triangle/attack/attack_01.png",
+          "opaque_pixels": 6163,
+          "bounds": [
+            62,
+            104,
+            161,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/triangle/attack/attack_02.png",
+          "opaque_pixels": 9204,
+          "bounds": [
+            33,
+            97,
+            189,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/triangle/attack/attack_03.png",
+          "opaque_pixels": 10280,
+          "bounds": [
+            36,
+            79,
+            186,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/triangle/attack/attack_04.png",
+          "opaque_pixels": 15327,
+          "bounds": [
+            32,
+            22,
+            191,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/triangle/attack/attack_05.png",
+          "opaque_pixels": 12077,
+          "bounds": [
+            10,
+            85,
+            212,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/triangle/attack/attack_06.png",
+          "opaque_pixels": 6032,
+          "bounds": [
+            62,
+            104,
+            160,
+            208
+          ]
+        }
+      ],
+      "hurt": [
+        {
+          "frame": "processed/enemies/triangle/hurt/hurt_01.png",
+          "opaque_pixels": 6480,
+          "bounds": [
+            58,
+            105,
+            165,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/triangle/hurt/hurt_02.png",
+          "opaque_pixels": 7121,
+          "bounds": [
+            46,
+            107,
+            177,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/triangle/hurt/hurt_03.png",
+          "opaque_pixels": 6661,
+          "bounds": [
+            52,
+            113,
+            171,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/triangle/hurt/hurt_04.png",
+          "opaque_pixels": 6124,
+          "bounds": [
+            62,
+            104,
+            161,
+            208
+          ]
+        }
+      ],
+      "death": [
+        {
+          "frame": "processed/enemies/triangle/death/death_01.png",
+          "opaque_pixels": 7888,
+          "bounds": [
+            50,
+            94,
+            173,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/triangle/death/death_02.png",
+          "opaque_pixels": 8420,
+          "bounds": [
+            34,
+            75,
+            188,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/triangle/death/death_03.png",
+          "opaque_pixels": 6293,
+          "bounds": [
+            32,
+            86,
+            190,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/triangle/death/death_04.png",
+          "opaque_pixels": 5965,
+          "bounds": [
+            37,
+            97,
+            185,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/triangle/death/death_05.png",
+          "opaque_pixels": 1986,
+          "bounds": [
+            20,
+            136,
+            199,
+            208
+          ]
+        }
+      ]
+    },
+    "square": {
+      "idle": [
+        {
+          "frame": "processed/enemies/square/idle/idle_01.png",
+          "opaque_pixels": 8498,
+          "bounds": [
+            65,
+            106,
+            157,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/square/idle/idle_02.png",
+          "opaque_pixels": 8653,
+          "bounds": [
+            65,
+            105,
+            158,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/square/idle/idle_03.png",
+          "opaque_pixels": 8626,
+          "bounds": [
+            64,
+            105,
+            159,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/square/idle/idle_04.png",
+          "opaque_pixels": 8751,
+          "bounds": [
+            65,
+            105,
+            157,
+            208
+          ]
+        }
+      ],
+      "walk": [
+        {
+          "frame": "processed/enemies/square/walk/walk_01.png",
+          "opaque_pixels": 8393,
+          "bounds": [
+            64,
+            107,
+            159,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/square/walk/walk_02.png",
+          "opaque_pixels": 8434,
+          "bounds": [
+            59,
+            107,
+            163,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/square/walk/walk_03.png",
+          "opaque_pixels": 8503,
+          "bounds": [
+            58,
+            107,
+            164,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/square/walk/walk_04.png",
+          "opaque_pixels": 8567,
+          "bounds": [
+            62,
+            107,
+            161,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/square/walk/walk_05.png",
+          "opaque_pixels": 8552,
+          "bounds": [
+            59,
+            107,
+            163,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/square/walk/walk_06.png",
+          "opaque_pixels": 8645,
+          "bounds": [
+            57,
+            107,
+            165,
+            208
+          ]
+        }
+      ],
+      "dash": [
+        {
+          "frame": "processed/enemies/square/dash/dash_01.png",
+          "opaque_pixels": 8475,
+          "bounds": [
+            58,
+            110,
+            165,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/square/dash/dash_02.png",
+          "opaque_pixels": 10644,
+          "bounds": [
+            37,
+            109,
+            186,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/square/dash/dash_03.png",
+          "opaque_pixels": 10239,
+          "bounds": [
+            35,
+            108,
+            188,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/square/dash/dash_04.png",
+          "opaque_pixels": 10352,
+          "bounds": [
+            34,
+            108,
+            189,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/square/dash/dash_05.png",
+          "opaque_pixels": 8403,
+          "bounds": [
+            59,
+            110,
+            164,
+            208
+          ]
+        }
+      ],
+      "attack": [
+        {
+          "frame": "processed/enemies/square/attack/attack_01.png",
+          "opaque_pixels": 8796,
+          "bounds": [
+            60,
+            107,
+            162,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/square/attack/attack_02.png",
+          "opaque_pixels": 13363,
+          "bounds": [
+            24,
+            84,
+            199,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/square/attack/attack_03.png",
+          "opaque_pixels": 8205,
+          "bounds": [
+            64,
+            111,
+            158,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/square/attack/attack_04.png",
+          "opaque_pixels": 8451,
+          "bounds": [
+            53,
+            108,
+            168,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/square/attack/attack_05.png",
+          "opaque_pixels": 8572,
+          "bounds": [
+            64,
+            107,
+            158,
+            208
+          ]
+        }
+      ],
+      "hurt": [
+        {
+          "frame": "processed/enemies/square/hurt/hurt_01.png",
+          "opaque_pixels": 9000,
+          "bounds": [
+            60,
+            106,
+            163,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/square/hurt/hurt_02.png",
+          "opaque_pixels": 10399,
+          "bounds": [
+            31,
+            93,
+            192,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/square/hurt/hurt_03.png",
+          "opaque_pixels": 10140,
+          "bounds": [
+            33,
+            89,
+            189,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/square/hurt/hurt_04.png",
+          "opaque_pixels": 8951,
+          "bounds": [
+            59,
+            106,
+            163,
+            208
+          ]
+        }
+      ],
+      "death": [
+        {
+          "frame": "processed/enemies/square/death/death_01.png",
+          "opaque_pixels": 9256,
+          "bounds": [
+            59,
+            105,
+            163,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/square/death/death_02.png",
+          "opaque_pixels": 10006,
+          "bounds": [
+            45,
+            81,
+            178,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/square/death/death_03.png",
+          "opaque_pixels": 10238,
+          "bounds": [
+            31,
+            83,
+            192,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/square/death/death_04.png",
+          "opaque_pixels": 5546,
+          "bounds": [
+            31,
+            120,
+            192,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/square/death/death_05.png",
+          "opaque_pixels": 2441,
+          "bounds": [
+            44,
+            123,
+            179,
+            208
+          ]
+        }
+      ]
+    },
+    "diamond": {
+      "idle": [
+        {
+          "frame": "processed/enemies/diamond/idle/idle_01.png",
+          "opaque_pixels": 4922,
+          "bounds": [
+            70,
+            99,
+            152,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/diamond/idle/idle_02.png",
+          "opaque_pixels": 4832,
+          "bounds": [
+            71,
+            99,
+            152,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/diamond/idle/idle_03.png",
+          "opaque_pixels": 4773,
+          "bounds": [
+            70,
+            102,
+            152,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/diamond/idle/idle_04.png",
+          "opaque_pixels": 4878,
+          "bounds": [
+            70,
+            97,
+            152,
+            208
+          ]
+        }
+      ],
+      "hover": [
+        {
+          "frame": "processed/enemies/diamond/hover/hover_01.png",
+          "opaque_pixels": 5450,
+          "bounds": [
+            70,
+            80,
+            152,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/diamond/hover/hover_02.png",
+          "opaque_pixels": 5233,
+          "bounds": [
+            70,
+            73,
+            153,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/diamond/hover/hover_03.png",
+          "opaque_pixels": 5268,
+          "bounds": [
+            70,
+            87,
+            152,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/diamond/hover/hover_04.png",
+          "opaque_pixels": 5141,
+          "bounds": [
+            70,
+            75,
+            153,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/diamond/hover/hover_05.png",
+          "opaque_pixels": 5623,
+          "bounds": [
+            71,
+            61,
+            152,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/diamond/hover/hover_06.png",
+          "opaque_pixels": 5325,
+          "bounds": [
+            70,
+            88,
+            152,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/diamond/hover/hover_07.png",
+          "opaque_pixels": 5568,
+          "bounds": [
+            70,
+            63,
+            152,
+            208
+          ]
+        }
+      ],
+      "dash": [
+        {
+          "frame": "processed/enemies/diamond/dash/dash_01.png",
+          "opaque_pixels": 5209,
+          "bounds": [
+            70,
+            98,
+            153,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/diamond/dash/dash_02.png",
+          "opaque_pixels": 8357,
+          "bounds": [
+            35,
+            98,
+            187,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/diamond/dash/dash_03.png",
+          "opaque_pixels": 8890,
+          "bounds": [
+            31,
+            97,
+            191,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/diamond/dash/dash_04.png",
+          "opaque_pixels": 8026,
+          "bounds": [
+            39,
+            102,
+            184,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/diamond/dash/dash_05.png",
+          "opaque_pixels": 7135,
+          "bounds": [
+            46,
+            102,
+            177,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/diamond/dash/dash_06.png",
+          "opaque_pixels": 5079,
+          "bounds": [
+            70,
+            99,
+            153,
+            208
+          ]
+        }
+      ],
+      "attack": [
+        {
+          "frame": "processed/enemies/diamond/attack/attack_01.png",
+          "opaque_pixels": 5132,
+          "bounds": [
+            70,
+            99,
+            153,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/diamond/attack/attack_02.png",
+          "opaque_pixels": 5610,
+          "bounds": [
+            59,
+            99,
+            163,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/diamond/attack/attack_03.png",
+          "opaque_pixels": 6512,
+          "bounds": [
+            44,
+            99,
+            178,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/diamond/attack/attack_04.png",
+          "opaque_pixels": 6903,
+          "bounds": [
+            25,
+            99,
+            197,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/diamond/attack/attack_05.png",
+          "opaque_pixels": 7363,
+          "bounds": [
+            13,
+            99,
+            210,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/diamond/attack/attack_06.png",
+          "opaque_pixels": 5153,
+          "bounds": [
+            70,
+            99,
+            153,
+            208
+          ]
+        }
+      ],
+      "hurt": [
+        {
+          "frame": "processed/enemies/diamond/hurt/hurt_01.png",
+          "opaque_pixels": 5816,
+          "bounds": [
+            68,
+            94,
+            155,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/diamond/hurt/hurt_02.png",
+          "opaque_pixels": 7496,
+          "bounds": [
+            43,
+            87,
+            176,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/diamond/hurt/hurt_03.png",
+          "opaque_pixels": 7660,
+          "bounds": [
+            40,
+            86,
+            182,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/diamond/hurt/hurt_04.png",
+          "opaque_pixels": 7940,
+          "bounds": [
+            47,
+            92,
+            176,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/diamond/hurt/hurt_05.png",
+          "opaque_pixels": 5449,
+          "bounds": [
+            68,
+            94,
+            154,
+            208
+          ]
+        }
+      ],
+      "death": [
+        {
+          "frame": "processed/enemies/diamond/death/death_01.png",
+          "opaque_pixels": 6307,
+          "bounds": [
+            66,
+            91,
+            157,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/diamond/death/death_02.png",
+          "opaque_pixels": 8289,
+          "bounds": [
+            63,
+            76,
+            160,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/diamond/death/death_03.png",
+          "opaque_pixels": 8091,
+          "bounds": [
+            50,
+            81,
+            172,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/diamond/death/death_04.png",
+          "opaque_pixels": 5671,
+          "bounds": [
+            58,
+            93,
+            164,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/diamond/death/death_05.png",
+          "opaque_pixels": 4224,
+          "bounds": [
+            55,
+            100,
+            168,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/diamond/death/death_06.png",
+          "opaque_pixels": 2891,
+          "bounds": [
+            65,
+            104,
+            157,
+            208
+          ]
+        }
+      ]
+    },
+    "hexagon": {
+      "idle": [
+        {
+          "frame": "processed/enemies/hexagon/idle/idle_01.png",
+          "opaque_pixels": 8819,
+          "bounds": [
+            58,
+            101,
+            164,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/hexagon/idle/idle_02.png",
+          "opaque_pixels": 8557,
+          "bounds": [
+            59,
+            101,
+            163,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/hexagon/idle/idle_03.png",
+          "opaque_pixels": 8719,
+          "bounds": [
+            59,
+            101,
+            164,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/hexagon/idle/idle_04.png",
+          "opaque_pixels": 8657,
+          "bounds": [
+            59,
+            101,
+            163,
+            208
+          ]
+        }
+      ],
+      "walk": [
+        {
+          "frame": "processed/enemies/hexagon/walk/walk_01.png",
+          "opaque_pixels": 8474,
+          "bounds": [
+            59,
+            103,
+            163,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/hexagon/walk/walk_02.png",
+          "opaque_pixels": 8436,
+          "bounds": [
+            60,
+            101,
+            162,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/hexagon/walk/walk_03.png",
+          "opaque_pixels": 8449,
+          "bounds": [
+            60,
+            101,
+            162,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/hexagon/walk/walk_04.png",
+          "opaque_pixels": 8459,
+          "bounds": [
+            60,
+            101,
+            162,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/hexagon/walk/walk_05.png",
+          "opaque_pixels": 8405,
+          "bounds": [
+            60,
+            101,
+            162,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/hexagon/walk/walk_06.png",
+          "opaque_pixels": 8476,
+          "bounds": [
+            60,
+            101,
+            162,
+            208
+          ]
+        }
+      ],
+      "dash": [
+        {
+          "frame": "processed/enemies/hexagon/dash/dash_01.png",
+          "opaque_pixels": 8273,
+          "bounds": [
+            60,
+            106,
+            163,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/hexagon/dash/dash_02.png",
+          "opaque_pixels": 9670,
+          "bounds": [
+            41,
+            105,
+            182,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/hexagon/dash/dash_03.png",
+          "opaque_pixels": 11324,
+          "bounds": [
+            17,
+            105,
+            205,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/hexagon/dash/dash_04.png",
+          "opaque_pixels": 14723,
+          "bounds": [
+            13,
+            106,
+            209,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/hexagon/dash/dash_05.png",
+          "opaque_pixels": 8299,
+          "bounds": [
+            60,
+            106,
+            162,
+            208
+          ]
+        }
+      ],
+      "attack": [
+        {
+          "frame": "processed/enemies/hexagon/attack/attack_01.png",
+          "opaque_pixels": 8387,
+          "bounds": [
+            60,
+            104,
+            163,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/hexagon/attack/attack_02.png",
+          "opaque_pixels": 9623,
+          "bounds": [
+            34,
+            104,
+            187,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/hexagon/attack/attack_03.png",
+          "opaque_pixels": 10762,
+          "bounds": [
+            15,
+            105,
+            207,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/hexagon/attack/attack_04.png",
+          "opaque_pixels": 10762,
+          "bounds": [
+            15,
+            105,
+            207,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/hexagon/attack/attack_05.png",
+          "opaque_pixels": 8585,
+          "bounds": [
+            47,
+            105,
+            176,
+            208
+          ]
+        }
+      ],
+      "hurt": [
+        {
+          "frame": "processed/enemies/hexagon/hurt/hurt_01.png",
+          "opaque_pixels": 8718,
+          "bounds": [
+            59,
+            103,
+            164,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/hexagon/hurt/hurt_02.png",
+          "opaque_pixels": 10095,
+          "bounds": [
+            30,
+            101,
+            193,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/hexagon/hurt/hurt_03.png",
+          "opaque_pixels": 9895,
+          "bounds": [
+            36,
+            106,
+            187,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/hexagon/hurt/hurt_04.png",
+          "opaque_pixels": 8277,
+          "bounds": [
+            60,
+            104,
+            162,
+            208
+          ]
+        }
+      ],
+      "death": [
+        {
+          "frame": "processed/enemies/hexagon/death/death_01.png",
+          "opaque_pixels": 9690,
+          "bounds": [
+            56,
+            97,
+            166,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/hexagon/death/death_02.png",
+          "opaque_pixels": 10063,
+          "bounds": [
+            54,
+            96,
+            168,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/hexagon/death/death_03.png",
+          "opaque_pixels": 7974,
+          "bounds": [
+            49,
+            93,
+            174,
+            208
+          ]
+        },
+        {
+          "frame": "processed/enemies/hexagon/death/death_04.png",
+          "opaque_pixels": 3717,
+          "bounds": [
+            6,
+            126,
+            217,
+            209
+          ]
+        },
+        {
+          "frame": "processed/enemies/hexagon/death/death_05.png",
+          "opaque_pixels": 4522,
+          "bounds": [
+            8,
+            134,
+            215,
+            208
+          ]
+        }
+      ]
+    },
+    "boss": {
+      "idle": [
+        {
+          "frame": "processed/boss/idle/idle_01.png",
+          "opaque_pixels": 16308,
+          "bounds": [
+            100,
+            169,
+            282,
+            357
+          ]
+        },
+        {
+          "frame": "processed/boss/idle/idle_02.png",
+          "opaque_pixels": 16469,
+          "bounds": [
+            101,
+            169,
+            282,
+            357
+          ]
+        },
+        {
+          "frame": "processed/boss/idle/idle_03.png",
+          "opaque_pixels": 16910,
+          "bounds": [
+            96,
+            169,
+            287,
+            356
+          ]
+        },
+        {
+          "frame": "processed/boss/idle/idle_04.png",
+          "opaque_pixels": 17039,
+          "bounds": [
+            97,
+            169,
+            285,
+            357
+          ]
+        },
+        {
+          "frame": "processed/boss/idle/idle_05.png",
+          "opaque_pixels": 16334,
+          "bounds": [
+            96,
+            169,
+            287,
+            357
+          ]
+        }
+      ],
+      "powerup": [
+        {
+          "frame": "processed/boss/powerup/powerup_01.png",
+          "opaque_pixels": 16114,
+          "bounds": [
+            101,
+            174,
+            282,
+            358
+          ]
+        },
+        {
+          "frame": "processed/boss/powerup/powerup_02.png",
+          "opaque_pixels": 18220,
+          "bounds": [
+            94,
+            174,
+            288,
+            357
+          ]
+        },
+        {
+          "frame": "processed/boss/powerup/powerup_03.png",
+          "opaque_pixels": 21702,
+          "bounds": [
+            88,
+            174,
+            295,
+            358
+          ]
+        },
+        {
+          "frame": "processed/boss/powerup/powerup_04.png",
+          "opaque_pixels": 21407,
+          "bounds": [
+            84,
+            174,
+            301,
+            357
+          ]
+        },
+        {
+          "frame": "processed/boss/powerup/powerup_05.png",
+          "opaque_pixels": 29886,
+          "bounds": [
+            79,
+            174,
+            303,
+            358
+          ]
+        }
+      ],
+      "orbs": [
+        {
+          "frame": "processed/boss/orbs/orbs_01.png",
+          "opaque_pixels": 16114,
+          "bounds": [
+            101,
+            174,
+            282,
+            358
+          ]
+        },
+        {
+          "frame": "processed/boss/orbs/orbs_02.png",
+          "opaque_pixels": 18220,
+          "bounds": [
+            94,
+            174,
+            288,
+            357
+          ]
+        },
+        {
+          "frame": "processed/boss/orbs/orbs_03.png",
+          "opaque_pixels": 21702,
+          "bounds": [
+            88,
+            174,
+            295,
+            358
+          ]
+        },
+        {
+          "frame": "processed/boss/orbs/orbs_04.png",
+          "opaque_pixels": 21407,
+          "bounds": [
+            84,
+            174,
+            301,
+            357
+          ]
+        },
+        {
+          "frame": "processed/boss/orbs/orbs_05.png",
+          "opaque_pixels": 29886,
+          "bounds": [
+            79,
+            174,
+            303,
+            358
+          ]
+        }
+      ],
+      "beam": [
+        {
+          "frame": "processed/boss/beam/beam_01.png",
+          "opaque_pixels": 13253,
+          "bounds": [
+            113,
+            154,
+            270,
+            358
+          ]
+        },
+        {
+          "frame": "processed/boss/beam/beam_02.png",
+          "opaque_pixels": 19154,
+          "bounds": [
+            107,
+            149,
+            276,
+            358
+          ]
+        },
+        {
+          "frame": "processed/boss/beam/beam_03.png",
+          "opaque_pixels": 22051,
+          "bounds": [
+            100,
+            149,
+            282,
+            358
+          ]
+        },
+        {
+          "frame": "processed/boss/beam/beam_04.png",
+          "opaque_pixels": 23889,
+          "bounds": [
+            89,
+            149,
+            293,
+            358
+          ]
+        },
+        {
+          "frame": "processed/boss/beam/beam_05.png",
+          "opaque_pixels": 15667,
+          "bounds": [
+            110,
+            149,
+            273,
+            358
+          ]
+        }
+      ],
+      "enraged": [
+        {
+          "frame": "processed/boss/enraged/enraged_01.png",
+          "opaque_pixels": 17862,
+          "bounds": [
+            106,
+            153,
+            276,
+            357
+          ]
+        },
+        {
+          "frame": "processed/boss/enraged/enraged_02.png",
+          "opaque_pixels": 17955,
+          "bounds": [
+            107,
+            158,
+            275,
+            356
+          ]
+        },
+        {
+          "frame": "processed/boss/enraged/enraged_03.png",
+          "opaque_pixels": 18992,
+          "bounds": [
+            101,
+            156,
+            282,
+            356
+          ]
+        }
+      ],
+      "death": [
+        {
+          "frame": "processed/boss/death/death_01.png",
+          "opaque_pixels": 19850,
+          "bounds": [
+            101,
+            159,
+            281,
+            358
+          ]
+        },
+        {
+          "frame": "processed/boss/death/death_02.png",
+          "opaque_pixels": 18964,
+          "bounds": [
+            102,
+            153,
+            283,
+            358
+          ]
+        },
+        {
+          "frame": "processed/boss/death/death_03.png",
+          "opaque_pixels": 12941,
+          "bounds": [
+            89,
+            158,
+            290,
+            358
+          ]
+        }
+      ]
+    }
+  }
+}

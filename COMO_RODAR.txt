@@ -1,0 +1,25 @@
+PROJECT ORB — COMO RODAR
+
+REQUISITO
+- Java 21
+
+WINDOWS / POWERSHELL
+1. Abra o terminal na pasta ProjectORB.
+2. Execute:
+
+   .\gradlew :lwjgl3:run
+
+Alternativa:
+
+   .\gradlew.bat :lwjgl3:run
+
+CONTROLES
+- A / D ou setas: mover
+- ESPAÇO: pular / duplo salto
+- SHIFT: dash
+- Mouse esquerdo: atirar
+- ESC: pausar
+
+IMPORTANTE
+Os novos assets ficam em assets/processed/.
+Não mova nem renomeie essa pasta sem também atualizar Assets.java.

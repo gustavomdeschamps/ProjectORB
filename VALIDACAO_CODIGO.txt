@@ -1,0 +1,2 @@
+Java 21 static compile against local LibGDX-compatible API stubs: PASS
+No Java compiler diagnostics.

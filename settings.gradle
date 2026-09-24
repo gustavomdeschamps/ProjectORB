@@ -1,0 +1,3 @@
+rootProject.name = 'ProjectORB'
+include 'core'
+include 'lwjgl3'

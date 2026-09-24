@@ -1,0 +1,12 @@
+{
+  "java": "21",
+  "framework": "LibGDX 1.14.2",
+  "source_compile_check": "PASS",
+  "logic_test": "PASS",
+  "sections": 6,
+  "collision_surfaces": 39,
+  "asset_files": 81,
+  "missing_direct_assets": 0,
+  "missing_animation_frames": 0,
+  "gradle_runtime_note": "Gradle real não foi executado no ambiente de criação porque a distribuição/dependências externas não estavam disponíveis localmente."
+}

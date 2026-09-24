@@ -1,0 +1,572 @@
+{
+  "player": {
+    "idle": {
+      "frames": [
+        "processed/player/orb/idle/idle_01.png",
+        "processed/player/orb/idle/idle_02.png",
+        "processed/player/orb/idle/idle_03.png",
+        "processed/player/orb/idle/idle_04.png"
+      ],
+      "duration": 0.18,
+      "canvas": [
+        224,
+        224
+      ]
+    },
+    "walk": {
+      "frames": [
+        "processed/player/orb/walk/walk_01.png",
+        "processed/player/orb/walk/walk_02.png",
+        "processed/player/orb/walk/walk_03.png",
+        "processed/player/orb/walk/walk_04.png",
+        "processed/player/orb/walk/walk_05.png",
+        "processed/player/orb/walk/walk_06.png"
+      ],
+      "duration": 0.09,
+      "canvas": [
+        224,
+        224
+      ]
+    },
+    "dash": {
+      "frames": [
+        "processed/player/orb/dash/dash_01.png",
+        "processed/player/orb/dash/dash_02.png",
+        "processed/player/orb/dash/dash_03.png",
+        "processed/player/orb/dash/dash_04.png",
+        "processed/player/orb/dash/dash_05.png"
+      ],
+      "duration": 0.055,
+      "canvas": [
+        224,
+        224
+      ]
+    },
+    "attack": {
+      "frames": [
+        "processed/player/orb/attack/attack_01.png",
+        "processed/player/orb/attack/attack_02.png",
+        "processed/player/orb/attack/attack_03.png",
+        "processed/player/orb/attack/attack_04.png"
+      ],
+      "duration": 0.07,
+      "canvas": [
+        224,
+        224
+      ]
+    },
+    "hurt": {
+      "frames": [
+        "processed/player/orb/hurt/hurt_01.png",
+        "processed/player/orb/hurt/hurt_02.png",
+        "processed/player/orb/hurt/hurt_03.png",
+        "processed/player/orb/hurt/hurt_04.png"
+      ],
+      "duration": 0.09,
+      "canvas": [
+        224,
+        224
+      ]
+    },
+    "death": {
+      "frames": [
+        "processed/player/orb/death/death_01.png",
+        "processed/player/orb/death/death_02.png",
+        "processed/player/orb/death/death_03.png",
+        "processed/player/orb/death/death_04.png",
+        "processed/player/orb/death/death_05.png"
+      ],
+      "duration": 0.12,
+      "canvas": [
+        224,
+        224
+      ]
+    }
+  },
+  "triangle": {
+    "idle": {
+      "frames": [
+        "processed/enemies/triangle/idle/idle_01.png",
+        "processed/enemies/triangle/idle/idle_02.png",
+        "processed/enemies/triangle/idle/idle_03.png",
+        "processed/enemies/triangle/idle/idle_04.png"
+      ],
+      "duration": 0.18,
+      "canvas": [
+        224,
+        224
+      ]
+    },
+    "walk": {
+      "frames": [
+        "processed/enemies/triangle/walk/walk_01.png",
+        "processed/enemies/triangle/walk/walk_02.png",
+        "processed/enemies/triangle/walk/walk_03.png",
+        "processed/enemies/triangle/walk/walk_04.png",
+        "processed/enemies/triangle/walk/walk_05.png",
+        "processed/enemies/triangle/walk/walk_06.png"
+      ],
+      "duration": 0.11,
+      "canvas": [
+        224,
+        224
+      ]
+    },
+    "dash": {
+      "frames": [
+        "processed/enemies/triangle/dash/dash_01.png",
+        "processed/enemies/triangle/dash/dash_02.png",
+        "processed/enemies/triangle/dash/dash_03.png",
+        "processed/enemies/triangle/dash/dash_04.png",
+        "processed/enemies/triangle/dash/dash_05.png",
+        "processed/enemies/triangle/dash/dash_06.png"
+      ],
+      "duration": 0.06,
+      "canvas": [
+        224,
+        224
+      ]
+    },
+    "attack": {
+      "frames": [
+        "processed/enemies/triangle/attack/attack_01.png",
+        "processed/enemies/triangle/attack/attack_02.png",
+        "processed/enemies/triangle/attack/attack_03.png",
+        "processed/enemies/triangle/attack/attack_04.png",
+        "processed/enemies/triangle/attack/attack_05.png",
+        "processed/enemies/triangle/attack/attack_06.png"
+      ],
+      "duration": 0.08,
+      "canvas": [
+        224,
+        224
+      ]
+    },
+    "hurt": {
+      "frames": [
+        "processed/enemies/triangle/hurt/hurt_01.png",
+        "processed/enemies/triangle/hurt/hurt_02.png",
+        "processed/enemies/triangle/hurt/hurt_03.png",
+        "processed/enemies/triangle/hurt/hurt_04.png"
+      ],
+      "duration": 0.1,
+      "canvas": [
+        224,
+        224
+      ]
+    },
+    "death": {
+      "frames": [
+        "processed/enemies/triangle/death/death_01.png",
+        "processed/enemies/triangle/death/death_02.png",
+        "processed/enemies/triangle/death/death_03.png",
+        "processed/enemies/triangle/death/death_04.png",
+        "processed/enemies/triangle/death/death_05.png"
+      ],
+      "duration": 0.12,
+      "canvas": [
+        224,
+        224
+      ]
+    }
+  },
+  "square": {
+    "idle": {
+      "frames": [
+        "processed/enemies/square/idle/idle_01.png",
+        "processed/enemies/square/idle/idle_02.png",
+        "processed/enemies/square/idle/idle_03.png",
+        "processed/enemies/square/idle/idle_04.png"
+      ],
+      "duration": 0.18,
+      "canvas": [
+        224,
+        224
+      ]
+    },
+    "walk": {
+      "frames": [
+        "processed/enemies/square/walk/walk_01.png",
+        "processed/enemies/square/walk/walk_02.png",
+        "processed/enemies/square/walk/walk_03.png",
+        "processed/enemies/square/walk/walk_04.png",
+        "processed/enemies/square/walk/walk_05.png",
+        "processed/enemies/square/walk/walk_06.png"
+      ],
+      "duration": 0.11,
+      "canvas": [
+        224,
+        224
+      ]
+    },
+    "dash": {
+      "frames": [
+        "processed/enemies/square/dash/dash_01.png",
+        "processed/enemies/square/dash/dash_02.png",
+        "processed/enemies/square/dash/dash_03.png",
+        "processed/enemies/square/dash/dash_04.png",
+        "processed/enemies/square/dash/dash_05.png"
+      ],
+      "duration": 0.06,
+      "canvas": [
+        224,
+        224
+      ]
+    },
+    "attack": {
+      "frames": [
+        "processed/enemies/square/attack/attack_01.png",
+        "processed/enemies/square/attack/attack_02.png",
+        "processed/enemies/square/attack/attack_03.png",
+        "processed/enemies/square/attack/attack_04.png",
+        "processed/enemies/square/attack/attack_05.png"
+      ],
+      "duration": 0.08,
+      "canvas": [
+        224,
+        224
+      ]
+    },
+    "hurt": {
+      "frames": [
+        "processed/enemies/square/hurt/hurt_01.png",
+        "processed/enemies/square/hurt/hurt_02.png",
+        "processed/enemies/square/hurt/hurt_03.png",
+        "processed/enemies/square/hurt/hurt_04.png"
+      ],
+      "duration": 0.1,
+      "canvas": [
+        224,
+        224
+      ]
+    },
+    "death": {
+      "frames": [
+        "processed/enemies/square/death/death_01.png",
+        "processed/enemies/square/death/death_02.png",
+        "processed/enemies/square/death/death_03.png",
+        "processed/enemies/square/death/death_04.png",
+        "processed/enemies/square/death/death_05.png"
+      ],
+      "duration": 0.12,
+      "canvas": [
+        224,
+        224
+      ]
+    }
+  },
+  "diamond": {
+    "idle": {
+      "frames": [
+        "processed/enemies/diamond/idle/idle_01.png",
+        "processed/enemies/diamond/idle/idle_02.png",
+        "processed/enemies/diamond/idle/idle_03.png",
+        "processed/enemies/diamond/idle/idle_04.png"
+      ],
+      "duration": 0.18,
+      "canvas": [
+        224,
+        224
+      ]
+    },
+    "hover": {
+      "frames": [
+        "processed/enemies/diamond/hover/hover_01.png",
+        "processed/enemies/diamond/hover/hover_02.png",
+        "processed/enemies/diamond/hover/hover_03.png",
+        "processed/enemies/diamond/hover/hover_04.png",
+        "processed/enemies/diamond/hover/hover_05.png",
+        "processed/enemies/diamond/hover/hover_06.png",
+        "processed/enemies/diamond/hover/hover_07.png"
+      ],
+      "duration": 0.11,
+      "canvas": [
+        224,
+        224
+      ]
+    },
+    "dash": {
+      "frames": [
+        "processed/enemies/diamond/dash/dash_01.png",
+        "processed/enemies/diamond/dash/dash_02.png",
+        "processed/enemies/diamond/dash/dash_03.png",
+        "processed/enemies/diamond/dash/dash_04.png",
+        "processed/enemies/diamond/dash/dash_05.png",
+        "processed/enemies/diamond/dash/dash_06.png"
+      ],
+      "duration": 0.06,
+      "canvas": [
+        224,
+        224
+      ]
+    },
+    "attack": {
+      "frames": [
+        "processed/enemies/diamond/attack/attack_01.png",
+        "processed/enemies/diamond/attack/attack_02.png",
+        "processed/enemies/diamond/attack/attack_03.png",
+        "processed/enemies/diamond/attack/attack_04.png",
+        "processed/enemies/diamond/attack/attack_05.png",
+        "processed/enemies/diamond/attack/attack_06.png"
+      ],
+      "duration": 0.09,
+      "canvas": [
+        224,
+        224
+      ]
+    },
+    "hurt": {
+      "frames": [
+        "processed/enemies/diamond/hurt/hurt_01.png",
+        "processed/enemies/diamond/hurt/hurt_02.png",
+        "processed/enemies/diamond/hurt/hurt_03.png",
+        "processed/enemies/diamond/hurt/hurt_04.png",
+        "processed/enemies/diamond/hurt/hurt_05.png"
+      ],
+      "duration": 0.1,
+      "canvas": [
+        224,
+        224
+      ]
+    },
+    "death": {
+      "frames": [
+        "processed/enemies/diamond/death/death_01.png",
+        "processed/enemies/diamond/death/death_02.png",
+        "processed/enemies/diamond/death/death_03.png",
+        "processed/enemies/diamond/death/death_04.png",
+        "processed/enemies/diamond/death/death_05.png",
+        "processed/enemies/diamond/death/death_06.png"
+      ],
+      "duration": 0.12,
+      "canvas": [
+        224,
+        224
+      ]
+    }
+  },
+  "hexagon": {
+    "idle": {
+      "frames": [
+        "processed/enemies/hexagon/idle/idle_01.png",
+        "processed/enemies/hexagon/idle/idle_02.png",
+        "processed/enemies/hexagon/idle/idle_03.png",
+        "processed/enemies/hexagon/idle/idle_04.png"
+      ],
+      "duration": 0.18,
+      "canvas": [
+        224,
+        224
+      ]
+    },
+    "walk": {
+      "frames": [
+        "processed/enemies/hexagon/walk/walk_01.png",
+        "processed/enemies/hexagon/walk/walk_02.png",
+        "processed/enemies/hexagon/walk/walk_03.png",
+        "processed/enemies/hexagon/walk/walk_04.png",
+        "processed/enemies/hexagon/walk/walk_05.png",
+        "processed/enemies/hexagon/walk/walk_06.png"
+      ],
+      "duration": 0.11,
+      "canvas": [
+        224,
+        224
+      ]
+    },
+    "dash": {
+      "frames": [
+        "processed/enemies/hexagon/dash/dash_01.png",
+        "processed/enemies/hexagon/dash/dash_02.png",
+        "processed/enemies/hexagon/dash/dash_03.png",
+        "processed/enemies/hexagon/dash/dash_04.png",
+        "processed/enemies/hexagon/dash/dash_05.png"
+      ],
+      "duration": 0.06,
+      "canvas": [
+        224,
+        224
+      ]
+    },
+    "attack": {
+      "frames": [
+        "processed/enemies/hexagon/attack/attack_01.png",
+        "processed/enemies/hexagon/attack/attack_02.png",
+        "processed/enemies/hexagon/attack/attack_03.png",
+        "processed/enemies/hexagon/attack/attack_04.png",
+        "processed/enemies/hexagon/attack/attack_05.png"
+      ],
+      "duration": 0.09,
+      "canvas": [
+        224,
+        224
+      ]
+    },
+    "hurt": {
+      "frames": [
+        "processed/enemies/hexagon/hurt/hurt_01.png",
+        "processed/enemies/hexagon/hurt/hurt_02.png",
+        "processed/enemies/hexagon/hurt/hurt_03.png",
+        "processed/enemies/hexagon/hurt/hurt_04.png"
+      ],
+      "duration": 0.1,
+      "canvas": [
+        224,
+        224
+      ]
+    },
+    "death": {
+      "frames": [
+        "processed/enemies/hexagon/death/death_01.png",
+        "processed/enemies/hexagon/death/death_02.png",
+        "processed/enemies/hexagon/death/death_03.png",
+        "processed/enemies/hexagon/death/death_04.png",
+        "processed/enemies/hexagon/death/death_05.png"
+      ],
+      "duration": 0.12,
+      "canvas": [
+        224,
+        224
+      ]
+    }
+  },
+  "boss": {
+    "idle": {
+      "frames": [
+        "processed/boss/idle/idle_01.png",
+        "processed/boss/idle/idle_02.png",
+        "processed/boss/idle/idle_03.png",
+        "processed/boss/idle/idle_04.png",
+        "processed/boss/idle/idle_05.png"
+      ],
+      "duration": 0.16,
+      "canvas": [
+        384,
+        384
+      ]
+    },
+    "powerup": {
+      "frames": [
+        "processed/boss/powerup/powerup_01.png",
+        "processed/boss/powerup/powerup_02.png",
+        "processed/boss/powerup/powerup_03.png",
+        "processed/boss/powerup/powerup_04.png",
+        "processed/boss/powerup/powerup_05.png"
+      ],
+      "duration": 0.11,
+      "canvas": [
+        384,
+        384
+      ]
+    },
+    "orbs": {
+      "frames": [
+        "processed/boss/orbs/orbs_01.png",
+        "processed/boss/orbs/orbs_02.png",
+        "processed/boss/orbs/orbs_03.png",
+        "processed/boss/orbs/orbs_04.png",
+        "processed/boss/orbs/orbs_05.png"
+      ],
+      "duration": 0.1,
+      "canvas": [
+        384,
+        384
+      ]
+    },
+    "beam": {
+      "frames": [
+        "processed/boss/beam/beam_01.png",
+        "processed/boss/beam/beam_02.png",
+        "processed/boss/beam/beam_03.png",
+        "processed/boss/beam/beam_04.png",
+        "processed/boss/beam/beam_05.png"
+      ],
+      "duration": 0.1,
+      "canvas": [
+        384,
+        384
+      ]
+    },
+    "enraged": {
+      "frames": [
+        "processed/boss/enraged/enraged_01.png",
+        "processed/boss/enraged/enraged_02.png",
+        "processed/boss/enraged/enraged_03.png"
+      ],
+      "duration": 0.12,
+      "canvas": [
+        384,
+        384
+      ]
+    },
+    "death": {
+      "frames": [
+        "processed/boss/death/death_01.png",
+        "processed/boss/death/death_02.png",
+        "processed/boss/death/death_03.png"
+      ],
+      "duration": 0.14,
+      "canvas": [
+        384,
+        384
+      ]
+    }
+  },
+  "world": {
+    "ground_grass": "processed/world/tiles/ground_grass.png",
+    "ground_grass_alt": "processed/world/tiles/ground_grass_alt.png",
+    "ground_edge_left": "processed/world/tiles/ground_edge_left.png",
+    "ground_edge_right": "processed/world/tiles/ground_edge_right.png",
+    "ground_stone": "processed/world/tiles/ground_stone.png",
+    "ground_stone_moss": "processed/world/tiles/ground_stone_moss.png",
+    "rune_magenta": "processed/world/tiles/rune_magenta.png",
+    "rune_blue": "processed/world/tiles/rune_blue.png",
+    "tech_blue": "processed/world/tiles/tech_blue.png",
+    "float_island_large": "processed/world/tiles/float_island_large.png",
+    "float_platform_magenta": "processed/world/tiles/float_platform_magenta.png",
+    "float_platform_blue": "processed/world/tiles/float_platform_blue.png",
+    "float_platform_green": "processed/world/tiles/float_platform_green.png",
+    "spikes_magenta": "processed/world/hazards/spikes_magenta.png",
+    "spikes_blue": "processed/world/hazards/spikes_blue.png",
+    "crystals_magenta": "processed/world/decor/crystals_magenta.png",
+    "crystals_blue": "processed/world/decor/crystals_blue.png",
+    "flowers": "processed/world/decor/flowers.png",
+    "grass_rocks": "processed/world/decor/grass_rocks.png",
+    "pillar_magenta": "processed/world/decor/pillar_magenta.png",
+    "pillar_blue": "processed/world/decor/pillar_blue.png",
+    "ruin_chunk": "processed/world/decor/ruin_chunk.png",
+    "pillar_ruined": "processed/world/decor/pillar_ruined.png",
+    "arch_magenta": "processed/world/decor/arch_magenta.png",
+    "arch_stone": "processed/world/decor/arch_stone.png",
+    "spring_magenta": "processed/world/props/spring_magenta.png",
+    "spring_blue": "processed/world/props/spring_blue.png",
+    "checkpoint": "processed/world/props/checkpoint.png",
+    "portal": "processed/world/props/portal.png",
+    "suspended_magenta": "processed/world/props/suspended_magenta.png",
+    "suspended_blue": "processed/world/props/suspended_blue.png",
+    "suspended_wood": "processed/world/props/suspended_wood.png",
+    "banner_magenta": "processed/world/decor/banner_magenta.png",
+    "banner_blue": "processed/world/decor/banner_blue.png",
+    "ladder": "processed/world/props/ladder.png",
+    "crate": "processed/world/props/crate.png",
+    "stone_crate": "processed/world/props/stone_crate.png",
+    "barrel": "processed/world/props/barrel.png",
+    "crystal_pedestal": "processed/world/props/crystal_pedestal.png",
+    "sign": "processed/world/props/sign.png",
+    "rocks_large": "processed/world/decor/rocks_large.png",
+    "door_blue": "processed/world/props/door_blue.png",
+    "wall_rune": "processed/world/decor/wall_rune.png",
+    "wall_cracked": "processed/world/decor/wall_cracked.png",
+    "crystal_rock": "processed/world/decor/crystal_rock.png",
+    "rock_cluster": "processed/world/decor/rock_cluster.png"
+  },
+  "background": {
+    "full": "processed/background/ruins_full.png",
+    "gameplay": "processed/background/ruins_gameplay.png"
+  },
+  "ui": {
+    "weakpoint": "processed/ui/weakpoint_marker.png",
+    "crosshair": "processed/ui/crosshair.png",
+    "guide_arrow": "processed/ui/guide_arrow.png"
+  }
+}

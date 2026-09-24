@@ -1,0 +1,5 @@
+CIRCLE PASS rounds=1 enemyShots=0
+TRIANGLE PASS rounds=1 enemyShots=0
+SQUARE PASS rounds=1 enemyShots=0
+PENTAGON PASS rounds=1 enemyShots=0
+BOSS PASS rounds=6 enemyShots=0
