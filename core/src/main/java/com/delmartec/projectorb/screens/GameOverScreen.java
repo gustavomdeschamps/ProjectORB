@@ -68,10 +68,11 @@ public final class GameOverScreen extends ScreenAdapter {
         game.batch.draw(game.assets.pixel, 0f, 0f, Constants.VIEW_WIDTH, Constants.VIEW_HEIGHT);
         game.batch.setColor(Color.WHITE);
 
-        game.batch.draw(game.assets.bossEnraged.getKeyFrame(stateTime), 1370f, 480f, 448f, 448f); // 224 px x2
+        game.batch.draw(game.assets.bossEnraged.getKeyFrame(stateTime), 1370f, 480f,
+            113f * Constants.PIXEL_SCALE, 113f * Constants.PIXEL_SCALE); // escala única
         game.batch.setColor(1f, 1f, 1f, 0.86f);
         game.batch.draw(game.assets.orbDeath.getKeyFrame(game.assets.orbDeath.getAnimationDuration() * 0.5f), 120f, 105f,
-            Constants.PLAYER_CANVAS * 7f, Constants.PLAYER_CANVAS * 7f); // 7x
+            Constants.PLAYER_W, Constants.PLAYER_H); // escala única
         game.batch.setColor(Color.WHITE);
 
         game.ui.panel(390f, 315f, 1140f, 590f, UiRenderer.DANGER, 1f);

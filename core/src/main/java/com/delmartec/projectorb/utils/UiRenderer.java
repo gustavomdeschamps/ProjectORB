@@ -20,9 +20,9 @@ public final class UiRenderer {
     private final BitmapFont font;
     private final BitmapFont titleFont;
     private final Assets assets;
-    // Painéis oficiais (sprites/ui/) em NinePatch 1x. Os cortes vêm de
-    // sprites/manifest.json ("ninepatch"): incluem os detalhes de canto, então
-    // só as faixas lisas das bordas e o miolo esticam — sem distorcer pixel.
+    // Painéis (sprites/ui/panel*.png) em NinePatch na escala única. Os cortes
+    // vêm de sprites/manifest.json ("ninepatch_px"): incluem os detalhes de
+    // canto, então só as faixas lisas das bordas e o miolo esticam.
     private final NinePatch dialogPatch;
     private final NinePatch hudPatch;
     private final NinePatch dangerPatch;
@@ -33,9 +33,15 @@ public final class UiRenderer {
         this.font = font;
         this.titleFont = titleFont;
         this.assets = assets;
-        dialogPatch = new NinePatch(assets.dialogPanel, 64, 73, 26, 22);
-        hudPatch = new NinePatch(assets.hudPanel, 48, 56, 16, 16);
-        dangerPatch = new NinePatch(assets.enemyPanel, 40, 44, 13, 11);
+        dialogPatch = patch(assets.panelCyan);
+        hudPatch = patch(assets.panel);
+        dangerPatch = patch(assets.panelRed);
+    }
+
+    private static NinePatch patch(com.badlogic.gdx.graphics.Texture texture) {
+        NinePatch p = new NinePatch(texture, 12, 14, 4, 4);
+        p.scale(Constants.PIXEL_SCALE, Constants.PIXEL_SCALE);
+        return p;
     }
 
     public void panel(float x, float y, float width, float height, Color accent, float alpha) {
@@ -55,8 +61,7 @@ public final class UiRenderer {
     }
 
     public void crystalCorners(float x, float y, float width, float height, float requested, float alpha) {
-        // Escala inteira do marcador nativo mais próxima do tamanho pedido.
-        float size = assets.weakPoint.getWidth() * Math.max(1, Math.round(requested / assets.weakPoint.getWidth()));
+        float size = assets.weakPoint.getWidth() * Constants.PIXEL_SCALE;
         batch.setColor(1f, 1f, 1f, alpha);
         batch.draw(assets.weakPoint, x - size * 0.5f, y + height - size * 0.5f, size, size);
         batch.draw(assets.weakPoint, x + width - size * 0.5f, y + height - size * 0.5f, size, size);
@@ -77,15 +82,15 @@ public final class UiRenderer {
             bounds.width - inset * 2f, bounds.height - inset * 2f);
         batch.setColor(Color.WHITE);
         if (selected && enabled && !pressed) {
-            float orb = assets.lifeOrbSmall.getWidth() * 2f;
+            float orb = assets.lifeOrb.getWidth() * Constants.PIXEL_SCALE;
             float oy = bounds.y + bounds.height / 2f - orb / 2f;
-            batch.draw(assets.lifeOrbSmall, bounds.x + 58f, oy, orb, orb);
-            batch.draw(assets.lifeOrbSmall, bounds.x + bounds.width - 58f - orb, oy, orb, orb);
+            batch.draw(assets.lifeOrb, bounds.x + 58f, oy, orb, orb);
+            batch.draw(assets.lifeOrb, bounds.x + bounds.width - 58f - orb, oy, orb, orb);
         }
         float fontScale = (pressed ? 1.47f : 1.55f) * 1.8f;
         font.getData().setScale(fontScale);
         layout.setText(font, text);
-        float available = bounds.width - 190f;
+        float available = bounds.width - 250f;
         if (layout.width > available) {
             font.getData().setScale(fontScale * available / layout.width);
             layout.setText(font, text);

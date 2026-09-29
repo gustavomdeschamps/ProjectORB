@@ -75,9 +75,10 @@ public final class VictoryScreen extends ScreenAdapter {
 
         float orbBob = game.settings.isReducedMotion() ? 0f : MathUtils.sin(stateTime * 3.2f) * 10f;
         game.batch.draw(game.assets.orbIdle.getKeyFrame(stateTime), 115f, 210f + orbBob,
-            Constants.PLAYER_CANVAS * 6f, Constants.PLAYER_CANVAS * 6f); // 6x
+            Constants.PLAYER_W, Constants.PLAYER_H); // escala única
         game.batch.draw(game.assets.portal, 1435f, 250f,
-            game.assets.portal.getWidth() * 2f, game.assets.portal.getHeight() * 2f); // 2x
+            game.assets.portal.getWidth() * Constants.PIXEL_SCALE,
+            game.assets.portal.getHeight() * Constants.PIXEL_SCALE); // escala única
 
         game.ui.panel(390f, 300f, 1140f, 620f, UiRenderer.SUCCESS, 1f);
         game.ui.crystalCorners(390f, 300f, 1140f, 620f, 70f, 1f);

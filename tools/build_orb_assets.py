@@ -1,29 +1,27 @@
 """Gera TODOS os sprites ativos do Project ORB em assets/sprites/.
 
-Entrada: a arte oficial em assets/ProjetoFinal_TCC/ (somente leitura).
-Saída:   assets/sprites/ — o ÚNICO diretório de arte que o jogo lê — e
-         assets/sprites/manifest.json com as medidas usadas pelo código
-         (EnemyType e Constants).
+Fontes (somente leitura, originais intactos como backup fora de assets/):
+  1. art-source/projetofinal-29/   (prioridade máxima)
+  2. art-source/ProjetoFinal_TCC/
+  3. o que não existir nas duas é GERADO aqui.
 
-O que não existe na pasta oficial é GERADO aqui, na mesma paleta:
-- player: idle/walk/jump/dash/attack/hurt/death a partir dos 3 frames, só com
-  operações de pixel art (deslocamento, squash/stretch por linha, flash de
-  cor, rotação de 90°, inclinação por linha, dissolução por dithering);
-- inimigos da pasta (triângulo, losango, círculo, pentágono): o corpo vem do
-  frame oficial; núcleo e arcos são redesenhados por frame (pulso, giro,
-  flash, dissolução);
-- hexágono, quadrado alinhado aos eixos e o boss: desenhados no mesmo
-  gabarito medido nos inimigos oficiais;
-- efeitos, mira, marcadores, tiros, UI de apoio e peças de mundo.
+Regras que o script garante:
+- escala única: 1 pixel de arte = 4 pixels de mundo (Constants.PIXEL_SCALE)
+  para ORB, inimigos, boss, mundo, efeitos e UI; tudo é pixel art nativa
+  (sem antialiasing, alfa 0/255), desenhado em escala inteira no jogo;
+- o ORB usa só a paleta do idle canônico (o script falha se sobrar cor fora);
+- inimigos/boss seguem o gabarito medido nos inimigos do TCC (marcadores de
+  vértice, contorno, faixa interna, núcleo, arcos), redesenhados a 1/4 do
+  tamanho original como pixel art (decisão da Fase 0);
+- nomes limpos (sem espaços, acentos ou erros de digitação); a tabela
+  nome-limpo -> original fica em sprites/manifest.json ("sources").
 
-Reproduzível: sem aleatoriedade não semeada; a mesma entrada gera os mesmos
-bytes. Uso:
+Reproduzível: a mesma entrada gera os mesmos bytes. Nunca apaga arquivos;
+arquivos antigos que não são mais gerados são apenas listados.
 
+Uso:
     python tools/build_orb_assets.py            # gera assets/sprites/
-    python tools/build_orb_assets.py --preview  # e grava previews em tmp/asset-preview/
-
-O script só escreve dentro de assets/sprites/ (e tmp/ com --preview) e nunca
-apaga arquivos: arquivos antigos que ele não gera mais são apenas listados.
+    python tools/build_orb_assets.py --preview  # e folhas de contato em tmp/asset-preview/
 """
 
 import argparse
@@ -35,12 +33,15 @@ import numpy as np
 from PIL import Image, ImageDraw
 
 ROOT = Path(__file__).resolve().parents[1]
-SRC = ROOT / "assets" / "ProjetoFinal_TCC"
+SRC_29 = ROOT / "art-source" / "projetofinal-29"
+SRC_TCC = ROOT / "art-source" / "ProjetoFinal_TCC"
 OUT = ROOT / "assets" / "sprites"
 PREVIEW = ROOT / "tmp" / "asset-preview"
+PIXEL = 4
 
 # ------------------------------------------------------------------ paleta
-# Amostrada dos inimigos oficiais (enemies/*.png).
+# Amostrada dos inimigos, plataformas e painéis do TCC. Paleta fechada: todo
+# pixel gerado (fora o que vem pronto das pastas oficiais) é uma destas cores.
 DARK = (10, 11, 27)
 BAND = (24, 24, 50)
 MARK_IN = (33, 25, 59)
@@ -48,110 +49,117 @@ SPOKE = (62, 33, 91)
 OUTLINE = (119, 59, 170)
 MAG = (205, 69, 231)
 LILAC = (224, 141, 255)
-CYAN = (81, 218, 234)
 WHITE = (242, 241, 255)
+CYAN = (81, 218, 234)
+PALE_CYAN = (170, 246, 255)
 TEAL = (31, 72, 92)
 RED = (239, 55, 55)
-# Plataformas / painéis oficiais.
+PALE_RED = (255, 150, 170)
 NEON_MAG = (225, 18, 255)
+NEON_MAG2 = (173, 61, 203)
 NEON_CYAN = (0, 255, 242)
+NEON_CYAN2 = (40, 170, 190)
+PANEL_TOP = (27, 28, 54)
 PANEL_DARK = (11, 12, 26)
 PANEL_LINE = (60, 56, 80)
+PANEL_EDGE = (53, 39, 86)
+DASH = (84, 180, 215)
+VOID = (5, 5, 12)
+PORTAL_1 = (120, 96, 250)
+PORTAL_2 = (168, 128, 255)
+PORTAL_IN = (58, 38, 118)
 
-# Gabarito medido nos inimigos oficiais (canvas 128, centro 64,64):
-TEMPLATE = {
-    "vertex_r": 52.0,      # centro dos marcadores de vértice
-    "outer_r": 60.0,       # raio externo do contorno do polígono
-    "marker_r": 3.5,       # raio do anel do marcador
-    "arc_r": 38.8,         # raio dos arcos magenta/ciano
-    "arc_w": 1.7,
-    "band_out": 0.765,     # faixa clara, em fração do apótema externo
-    "band_in": 0.53,
-    "core_r": 17.0,        # disco do núcleo redesenhado por frame
+# Clareamento dentro da paleta (flash de dano, brilho): cada cor sobe um
+# degrau. Nunca cria cor nova.
+LIGHTER = {
+    DARK: BAND, BAND: SPOKE, MARK_IN: SPOKE, SPOKE: OUTLINE, OUTLINE: MAG, MAG: LILAC,
+    LILAC: WHITE, WHITE: WHITE, TEAL: CYAN, CYAN: PALE_CYAN, PALE_CYAN: WHITE,
+    RED: PALE_RED, PALE_RED: WHITE,
 }
-ENEMY_CANVAS = 144         # 128 + 8 px de folga por lado
-ENEMY_SCALE = 2
-BOSS_CANVAS = 224
-BOSS_SCALE = 2
-BOSS_K = 1.75              # boss = gabarito x 1,75
-PLAYER_CANVAS = 48
-PLAYER_SCALE = 4
-BG_SCALE = 4
-SS = 4                     # supersampling das formas vetoriais (mesmo AA da arte oficial)
 
 written = []
-manifest = {"generator": "tools/build_orb_assets.py", "source": "assets/ProjetoFinal_TCC"}
+sources = {}
+manifest = {"generator": "tools/build_orb_assets.py", "pixel_scale": PIXEL,
+            "source_priority": ["art-source/projetofinal-29", "art-source/ProjetoFinal_TCC", "gerado"]}
 
 
 # ================================================================ utilidades
 
-def save(img, rel):
+def save(a, rel, source="gerado"):
+    im = a if isinstance(a, Image.Image) else Image.fromarray(np.ascontiguousarray(a, dtype=np.uint8), "RGBA")
     path = OUT / rel
     path.parent.mkdir(parents=True, exist_ok=True)
-    img.save(path, optimize=False, compress_level=9)
-    written.append(rel.replace("\\", "/"))
+    im.save(path, optimize=False, compress_level=9)
+    written.append(rel)
+    sources[rel] = source
 
 
-def load(rel):
-    return Image.open(SRC / rel).convert("RGBA")
+def load(root, rel):
+    return np.array(Image.open(root / rel).convert("RGBA"), dtype=np.uint8)
 
 
-def arr(img):
-    return np.array(img, dtype=np.uint8)
+def canvas(w, h=None):
+    return np.zeros((h or w, w, 4), dtype=np.uint8)
 
 
-def img(a):
-    return Image.fromarray(np.ascontiguousarray(a, dtype=np.uint8), "RGBA")
+def paint(a, m, col):
+    a[m] = (*col, 255)
 
 
-def premul_resize(big, size):
-    """Reduz com média de caixa em alfa pré-multiplicado (AA sem franja escura)."""
-    return big.convert("RGBa").resize(size, Image.BOX).convert("RGBA")
+def dist(w, h, cx, cy):
+    yy, xx = np.mgrid[0:h, 0:w]
+    return np.hypot(xx + 0.5 - cx, yy + 0.5 - cy)
 
 
-class AA:
-    """Canvas supersampled: desenha em coordenadas de pixel final, reduz com BOX."""
-
-    def __init__(self, w, h):
-        self.w, self.h = w, h
-        self.im = Image.new("RGBA", (w * SS, h * SS), (0, 0, 0, 0))
-        self.d = ImageDraw.Draw(self.im)
-
-    def _p(self, pts):
-        return [(x * SS, y * SS) for x, y in pts]
-
-    def polygon(self, pts, fill):
-        self.d.polygon(self._p(pts), fill=fill)
-
-    def polyline(self, pts, fill, width):
-        self.d.line(self._p(pts), fill=fill, width=max(1, round(width * SS)), joint="curve")
-
-    def line(self, a, b, fill, width):
-        self.d.line(self._p([a, b]), fill=fill, width=max(1, round(width * SS)))
-
-    def disc(self, cx, cy, r, fill):
-        self.d.ellipse([(cx - r) * SS, (cy - r) * SS, (cx + r) * SS, (cy + r) * SS], fill=fill)
-
-    def ring(self, cx, cy, r, fill, width):
-        # O traço do PIL fica por dentro da caixa: centraliza no raio pedido.
-        R = r + width / 2
-        self.d.ellipse([(cx - R) * SS, (cy - R) * SS, (cx + R) * SS, (cy + R) * SS],
-                       outline=fill, width=max(1, round(width * SS)))
-
-    def arc(self, cx, cy, r, a0, a1, fill, width):
-        """Ângulos em graus, sentido anti-horário a partir das 3h (y para cima)."""
-        R = r + width / 2
-        self.d.arc([(cx - R) * SS, (cy - R) * SS, (cx + R) * SS, (cy + R) * SS],
-                   start=-a1, end=-a0, fill=fill, width=max(1, round(width * SS)))
-
-    def result(self):
-        return premul_resize(self.im, (self.w, self.h))
+def m_disc(w, h, cx, cy, r):
+    return dist(w, h, cx, cy) <= r
 
 
-def over(base, top):
-    out = base.copy()
-    out.alpha_composite(top)
-    return out
+def m_ring(w, h, cx, cy, r, width=1.0):
+    d = dist(w, h, cx, cy)
+    return (d >= r - width / 2) & (d < r + width / 2)
+
+
+def m_arc(w, h, cx, cy, r, a0, a1, width=1.0):
+    yy, xx = np.mgrid[0:h, 0:w]
+    ang = np.degrees(np.arctan2(-(yy + 0.5 - cy), xx + 0.5 - cx)) % 360
+    span = (a1 - a0) % 360
+    inside = ((ang - a0) % 360) <= span
+    return m_ring(w, h, cx, cy, r, width) & inside
+
+
+def m_poly(w, h, pts, ss=8):
+    im = Image.new("L", (w * ss, h * ss), 0)
+    ImageDraw.Draw(im).polygon([(x * ss, y * ss) for x, y in pts], fill=255)
+    return np.array(im.resize((w, h), Image.BOX)) >= 128
+
+
+def outline(m):
+    er = m.copy()
+    for dy, dx in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+        er &= np.roll(np.roll(m, dy, 0), dx, 1)
+    return m & ~er
+
+
+def m_line(w, h, x0, y0, x1, y1):
+    m = np.zeros((h, w), dtype=bool)
+    x0, y0, x1, y1 = int(math.floor(x0)), int(math.floor(y0)), int(math.floor(x1)), int(math.floor(y1))
+    dx, dy = abs(x1 - x0), -abs(y1 - y0)
+    sx, sy = (1 if x0 < x1 else -1), (1 if y0 < y1 else -1)
+    err = dx + dy
+    while True:
+        if 0 <= x0 < w and 0 <= y0 < h:
+            m[y0, x0] = True
+        if x0 == x1 and y0 == y1:
+            break
+        e2 = 2 * err
+        if e2 >= dy:
+            err += dy
+            x0 += sx
+        if e2 <= dx:
+            err += dx
+            y0 += sy
+    return m
 
 
 def shift(a, dx, dy):
@@ -163,20 +171,28 @@ def shift(a, dx, dy):
     return out
 
 
-def tint(a, color, amount):
-    """Flash de cor: mistura só nos pixels visíveis, alfa preservado."""
-    out = a.copy().astype(np.float32)
-    m = a[..., 3] > 0
-    for c in range(3):
-        out[..., c][m] = out[..., c][m] * (1 - amount) + color[c] * amount
-    return np.clip(out, 0, 255).astype(np.uint8)
+def lighten(a, steps=1):
+    out = a.copy()
+    for _ in range(steps):
+        cur = out.copy()
+        for src, dst in LIGHTER.items():
+            m = (cur[..., 3] > 0) & np.all(cur[..., :3] == src, axis=2)
+            out[m, :3] = dst
+    return out
+
+
+def recolor(a, mapping):
+    out = a.copy()
+    for src, dst in mapping.items():
+        m = (a[..., 3] > 0) & np.all(a[..., :3] == src, axis=2)
+        out[m, :3] = dst
+    return out
 
 
 BAYER4 = np.array([[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]], dtype=np.float32) / 16.0
 
 
-def dither_dissolve(a, level):
-    """Dissolução por dithering ordenado (compatível com pixel art)."""
+def dither(a, level):
     h, w = a.shape[:2]
     th = np.tile(BAYER4, (h // 4 + 1, w // 4 + 1))[:h, :w]
     out = a.copy()
@@ -184,452 +200,312 @@ def dither_dissolve(a, level):
     return out
 
 
-def noise_dissolve(a, level, seed):
-    """Dissolução por ruído semeado (para as formas com AA)."""
-    rng = np.random.default_rng(seed)
-    h, w = a.shape[:2]
-    # ruído em blocos de 2 px: lê como "pixels se soltando", não como chuvisco
-    small = rng.random((h // 2 + 1, w // 2 + 1)).astype(np.float32)
-    th = np.kron(small, np.ones((2, 2), dtype=np.float32))[:h, :w]
-    out = a.copy()
-    out[..., 3][th < level] = 0
-    return out
-
-
-def opaque_bbox(a, thr=128):
+def bbox(a, thr=1):
     ys, xs = np.nonzero(a[..., 3] >= thr)
     if len(xs) == 0:
         return None
     return int(xs.min()), int(ys.min()), int(xs.max()), int(ys.max())
 
 
-def poly_pts(cx, cy, r, n, start_deg):
-    return [(cx + r * math.cos(math.radians(start_deg + i * 360 / n)),
-             cy - r * math.sin(math.radians(start_deg + i * 360 / n))) for i in range(n)]
+def snap(c, r, deg):
+    """Offset inteiro a partir do centro: pontos simétricos ficam simétricos."""
+    return c + round(r * math.cos(math.radians(deg))), c - round(r * math.sin(math.radians(deg)))
 
 
-# ============================================================ inimigos: núcleo
-
-def core_profile(src, cx, cy, rmax=18.0, step=0.25):
-    """Perfil radial médio (RGBA pré-multiplicado) do núcleo oficial."""
-    a = arr(src).astype(np.float32)
-    h, w = a.shape[:2]
-    yy, xx = np.mgrid[0:h, 0:w]
-    d = np.hypot(xx + 0.5 - cx, yy + 0.5 - cy)
-    pm = a.copy()
-    pm[..., :3] *= pm[..., 3:4] / 255.0
-    bins = np.arange(0, rmax + step, step)
-    prof = []
-    for r in bins:
-        m = np.abs(d - r) <= step
-        prof.append(pm[m].mean(axis=0) if m.any() else None)
-    # Bins sem pixel (r=0 cai entre os centros de pixel) herdam o vizinho
-    # mais próximo; antes viravam um ponto escuro no meio do núcleo.
-    filled = [i for i, v in enumerate(prof) if v is not None]
-    prof = [v if v is not None else prof[min(filled, key=lambda j: abs(j - i))]
-            for i, v in enumerate(prof)]
-    return bins, np.array(prof)
+def palette_of(a):
+    px = a[a[..., 3] > 0][:, :3]
+    return {tuple(int(v) for v in p) for p in px}
 
 
-def draw_core(a, cx, cy, profile, scale=1.0, bright=0.0, hue=None, clear_r=None):
-    """Redesenha o núcleo (disco) a partir do perfil oficial, com escala/brilho."""
-    bins, prof = profile
-    h, w = a.shape[:2]
-    rmax = bins[-1] - 1.0
-    reach = rmax * scale
-    clear_r = reach if clear_r is None else max(clear_r, reach)
-    yy, xx = np.mgrid[0:h, 0:w]
-    d = np.hypot(xx + 0.5 - cx, yy + 0.5 - cy)
-    out = a.astype(np.float32)
-    m = d <= clear_r + 0.5
-    rr = np.clip(d[m] / scale, 0, bins[-1])
-    idx = np.clip(np.round(rr / (bins[1] - bins[0])).astype(int), 0, len(bins) - 1)
-    col = prof[idx].copy()
-    # Fora do alcance do perfil (anel ciano já passou): fundo escuro do corpo.
-    far = d[m] > reach
-    col[far] = np.array([*DARK, 255], dtype=np.float32)
-    # Borda do disco limpo: mistura com o que já estava (sem degrau duro).
-    edge = np.clip(clear_r + 0.5 - d[m], 0, 1)[:, None]
-    rgb = col[:, :3] / np.maximum(col[:, 3:4] / 255.0, 1e-3)
-    if hue is not None:
-        sat = (rgb.max(axis=1) - rgb.min(axis=1)) > 60
-        rgb[sat] = rgb[sat] * 0.35 + np.array(hue, dtype=np.float32) * 0.65
-    if bright:
-        lum = rgb.max(axis=1, keepdims=True) > 70
-        rgb = np.where(lum, rgb + (255 - rgb) * bright, rgb)
-    newc = np.concatenate([rgb, col[:, 3:4]], axis=1)
-    out[m] = out[m] * (1 - edge) + newc * edge
-    return np.clip(out, 0, 255).astype(np.uint8)
+def quantize(a, pal):
+    """Cada pixel visível vira a cor mais próxima da paleta (distância RGB)."""
+    pal_arr = np.array(sorted(pal), dtype=np.int32)
+    out = a.copy()
+    m = a[..., 3] > 0
+    px = a[m][:, :3].astype(np.int32)
+    d = ((px[:, None, :] - pal_arr[None, :, :]) ** 2).sum(axis=2)
+    out[m, :3] = pal_arr[d.argmin(axis=1)]
+    out[..., 3] = np.where(a[..., 3] > 0, 255, 0)
+    return out
 
 
-# ============================================================ inimigos: arcos
-
-def arc_mask(a, cx, cy, r0, r1):
-    rgb = a[..., :3].astype(np.int32)
-    h, w = a.shape[:2]
-    yy, xx = np.mgrid[0:h, 0:w]
-    d = np.hypot(xx + 0.5 - cx, yy + 0.5 - cy)
-    ann = (d >= r0) & (d <= r1)
-    strong = ann & (a[..., 3] > 20) & ((rgb[..., 0] > 150) | (rgb[..., 1] > 100))
-    # dilata 1 px dentro do anel para levar a franja antialiasada junto
-    grow = strong.copy()
-    for dy in (-1, 0, 1):
-        for dx in (-1, 0, 1):
-            grow |= np.roll(np.roll(strong, dy, 0), dx, 1)
-    return grow & ann
-
-
-def inpaint(a, mask, iters=12):
-    """Preenche a máscara de fora para dentro com a média dos vizinhos conhecidos."""
-    pm = a.astype(np.float32)
-    pm[..., :3] *= pm[..., 3:4] / 255.0
-    known = ~mask
-    for _ in range(iters):
-        if known.all():
-            break
-        acc = np.zeros_like(pm)
-        cnt = np.zeros(mask.shape, dtype=np.float32)
-        for dy in (-1, 0, 1):
-            for dx in (-1, 0, 1):
-                if dx == 0 and dy == 0:
-                    continue
-                k = np.roll(np.roll(known, dy, 0), dx, 1)
-                v = np.roll(np.roll(pm, dy, 0), dx, 1)
-                acc += v * k[..., None]
-                cnt += k
-        fill = (~known) & (cnt > 0)
-        pm[fill] = acc[fill] / cnt[fill][:, None]
-        known = known | fill
-    rgb = pm[..., :3] / np.maximum(pm[..., 3:4] / 255.0, 1e-3)
-    out = np.concatenate([rgb, pm[..., 3:4]], axis=2)
-    return np.clip(out, 0, 255).astype(np.uint8)
-
-
-ARC_SET = [(60, 180, MAG), (240, 360, CYAN)]  # medido nos inimigos oficiais
-
-
-def arcs_layer(size, cx, cy, r, width, theta, colors=None, extra=()):
-    c = AA(size, size)
-    cols = colors or [col for _, _, col in ARC_SET]
-    for (a0, a1, _), col in zip(ARC_SET, cols):
-        c.arc(cx, cy, r, a0 + theta, a1 + theta, col, width)
-    for (rr, a0, a1, col, wd) in extra:
-        c.arc(cx, cy, rr, a0 + theta, a1 + theta, col, wd)
-    return c.result()
-
-
-def markers_flash_layer(size, pts, r, amount, color=WHITE):
-    if amount <= 0:
-        return None
-    c = AA(size, size)
-    for x, y in pts:
-        c.disc(x, y, r + 0.6, (*color, int(255 * amount)))
-    return c.result()
-
-
-# ======================================================= corpo procedural
-
-def draw_body(size, cx, cy, n, start, k=1.0, markers=None, marker_r=None, spokes_to=None,
-              extra=None, outline=OUTLINE, outer_r=None):
-    """Corpo no gabarito oficial: polígono escuro, faixa, raios e marcadores."""
-    T = TEMPLATE
-    ro = (outer_r or T["outer_r"]) * k
-    c = AA(size, size)
-    outer = poly_pts(cx, cy, ro, n, start) if n else None
-    if n:
-        ap = ro * math.cos(math.pi / n)
-        c.polygon(outer, (*DARK, 252))
-        c.polygon(poly_pts(cx, cy, ro * T["band_out"], n, start), (*BAND, 255))
-        c.polyline(poly_pts(cx, cy, ro * T["band_out"], n, start) + [poly_pts(cx, cy, ro * T["band_out"], n, start)[0]],
-                   (*TEAL, 170), 1.0)
-        c.polygon(poly_pts(cx, cy, ro * T["band_in"], n, start), (*DARK, 255))
-    else:
-        c.disc(cx, cy, ro, (*DARK, 252))
-        c.disc(cx, cy, ro * T["band_out"], (*BAND, 255))
-        c.ring(cx, cy, ro * T["band_out"] - 0.5, (*TEAL, 170), 1.0)
-        c.disc(cx, cy, ro * T["band_in"], (*DARK, 255))
-    for (x, y) in (spokes_to or []):
-        c.line((cx, cy), (x, y), (*SPOKE, 255), 1.0 * max(1.0, k * 0.8))
-    if extra:
-        extra(c)
-    if n:
-        c.polyline(outer + [outer[0]], (*outline, 255), 1.3 * max(1.0, k * 0.8))
-    else:
-        c.ring(cx, cy, ro - 0.6, (*outline, 255), 1.3 * max(1.0, k * 0.8))
-    mr = (marker_r or T["marker_r"]) * k
-    for (x, y) in (markers or []):
-        c.disc(x, y, mr, (*MARK_IN, 255))
-        # 1,5 px: com traço mais fino o AA diluía o magenta e o marcador ficava
-        # mais apagado que os da arte oficial.
-        c.ring(x, y, mr - 0.5, (*MAG, 255), 1.5 * max(1.0, k * 0.7))
-    return c.result()
-
-
-# ============================================================ inimigos
-
-def build_enemy_frames(body, cx, cy, profile, marker_pts, size, arc_r, arc_w, core_k=1.0,
-                       enraged=False):
-    """Retorna dict anim -> lista de frames (numpy RGBA) para um inimigo comum."""
-    base = arr(body)
-
-    def frame(theta=0.0, s=1.0, b=0.0, flash=0.0, dx=0, dy=0, tint_c=None, tint_a=0.0,
-              dissolve=0.0, seed=0, hue=None, arc_cols=None):
-        a = draw_core(base, cx, cy, profile, scale=s * core_k, bright=b, hue=hue,
-                      clear_r=TEMPLATE["core_r"] * core_k)
-        im = img(a)
-        im = over(im, arcs_layer(size, cx, cy, arc_r, arc_w, theta, arc_cols))
-        fl = markers_flash_layer(size, marker_pts, TEMPLATE["marker_r"] * core_k, flash)
-        if fl is not None:
-            im = over(im, fl)
-        a = arr(im)
-        if tint_c is not None and tint_a > 0:
-            a = tint(a, tint_c, tint_a)
-        if dissolve > 0:
-            a = noise_dissolve(a, dissolve, seed)
-        if dx or dy:
-            a = shift(a, dx, dy)
-        return a
-
-    anims = {}
-    anims["idle"] = [frame(theta=6 * math.sin(2 * math.pi * i / 6),
-                           s=1 + 0.06 * math.sin(2 * math.pi * i / 6),
-                           b=0.10 + 0.10 * math.sin(2 * math.pi * i / 6)) for i in range(6)]
-    bob = [0, -1, -1, 0, 0, 1, 1, 0]
-    anims["move"] = [frame(theta=-45 * i, dy=bob[i], s=1.0 + 0.04 * (i % 2)) for i in range(8)]
-    anims["attack"] = [frame(theta=t, s=s, b=b, flash=f) for t, s, b, f in zip(
-        [0, 20, 50, 95, 130, 150], [1.0, 1.15, 1.30, 1.45, 1.22, 1.05],
-        [0.10, 0.30, 0.50, 0.85, 0.40, 0.15], [0.0, 0.30, 0.60, 1.0, 0.45, 0.15])]
-    anims["hurt"] = [frame(tint_c=WHITE, tint_a=ta, dx=dx) for ta, dx in zip(
-        [0.75, 0.40, 0.18, 0.0], [2, -2, 1, 0])]
-    anims["hurt"][1] = tint(anims["hurt"][1], MAG, 0.25)
-    anims["death"] = [frame(theta=20 * i, s=1.2 + 0.25 * i, b=min(1.0, 0.3 + 0.18 * i),
-                            tint_c=LILAC, tint_a=0.12 * i, dissolve=d, seed=1000 + i)
-                      for i, d in enumerate([0.0, 0.18, 0.38, 0.58, 0.78, 0.94])]
-    return anims
-
-
-def process_official_enemy(filename):
-    """Corpo oficial sem os arcos; núcleo e arcos são redesenhados por frame."""
-    src = load(f"enemies/{filename}")
-    pad = (ENEMY_CANVAS - 128) // 2
-    canvas = Image.new("RGBA", (ENEMY_CANVAS, ENEMY_CANVAS), (0, 0, 0, 0))
-    canvas.paste(src, (pad, pad))
-    cx = cy = ENEMY_CANVAS / 2
-    profile = core_profile(canvas, cx, cy)
-    a = arr(canvas)
-    mask = arc_mask(a, cx, cy, TEMPLATE["arc_r"] - 3.3, TEMPLATE["arc_r"] + 3.3)
-    body = inpaint(a, mask)
-    # Onde o arco passava FORA do corpo o preenchimento mistura corpo e vazio e
-    # deixa uma mancha translúcida: ali o certo é transparente.
-    body[..., 3][mask & (body[..., 3] < 200)] = 0
-    return img(body), profile
-
-
-def vertex_points(cx, cy, r, n, start):
-    return poly_pts(cx, cy, r, n, start)
-
-
-def write_anims(prefix, anims):
+def write_anims(prefix, anims, source="gerado"):
     counts = {}
     for name, frames in anims.items():
         for i, f in enumerate(frames, 1):
-            save(img(f), f"{prefix}/{name}_{i:02d}.png")
+            save(f, f"{prefix}/{name}_{i:02d}.png", source)
         counts[name] = len(frames)
     return counts
 
 
-def lowest_row(frames_list):
-    low = 0
-    for f in frames_list:
-        bb = opaque_bbox(f)
-        if bb:
-            low = max(low, bb[3])
-    return low
+# ============================================================ inimigos
+
+# Gabarito medido no TCC (canvas 128), aqui a 1/2: 128 px a 2x viram 64 px a 4x.
+# Canvas ímpar (73): o centro é o pixel 36, pontos simétricos ficam simétricos.
+ENEMY_C = 73
+T = {"arc_r": 19.5, "band_out": 0.765, "band_in": 0.53, "core_ring": 7.5, "core_mag": 3.6, "core_white": 1.6}
+
+SHAPES = {
+    #            lados início  raio-externo marcadores (raio, ângulos)                      fonte
+    "triangle": (3, 90.0, 30.0, (26, [90, 210, 330]), "ProjetoFinal_TCC/enemies/triangle.png"),
+    "diamond": (4, 0.0, 30.0, (26, [0, 90, 180, 270]), "ProjetoFinal_TCC/enemies/square.png"),
+    "pentagon": (5, 90.0, 30.0, (26, [90 + 72 * i for i in range(5)]), "ProjetoFinal_TCC/enemies/pentagonon.png"),
+    "circle": (0, 90.0, 30.0, (26, [22.5 * i for i in range(16)]), "ProjetoFinal_TCC/enemies/cricle.png"),
+    "hexagon": (6, 90.0, 30.0, (26, [90 + 60 * i for i in range(6)]), "gerado"),
+    # quadrado alinhado aos eixos, marcadores no MEIO dos lados (onde ficam os
+    # pontos fracos do QUADRADO): apótema 25 -> raio externo 25/cos45.
+    "square": (4, 45.0, 25 / math.cos(math.pi / 4), (24, [0, 90, 180, 270]), "gerado"),
+}
 
 
-def build_enemies(official_profile_src):
-    T = TEMPLATE
-    S = ENEMY_CANVAS
+def poly(c, r, n, start):
+    return [(c + r * math.cos(math.radians(start + i * 360 / n)),
+             c - r * math.sin(math.radians(start + i * 360 / n))) for i in range(n)]
+
+
+def draw_body(S, n, start, ro, markers, k=1.0, outline_col=OUTLINE, spoke_to=None, extra=None):
     c = S / 2
-    enemies = {}
+    a = canvas(S)
+    if n:
+        outer = m_poly(S, S, poly(c, ro, n, start))
+        band_o = m_poly(S, S, poly(c, ro * T["band_out"], n, start))
+        band_i = m_poly(S, S, poly(c, ro * T["band_in"], n, start))
+    else:
+        outer = m_disc(S, S, c, c, ro)
+        band_o = m_disc(S, S, c, c, ro * T["band_out"])
+        band_i = m_disc(S, S, c, c, ro * T["band_in"])
+    paint(a, outer, DARK)
+    paint(a, band_o & ~band_i, BAND)
+    paint(a, outline(band_o), TEAL)
+    core_clear = m_disc(S, S, c, c, (T["core_ring"] + 1.5) * k)
+    for (x, y) in (spoke_to or markers):
+        paint(a, m_line(S, S, c, c, x + 0.5, y + 0.5) & ~core_clear, SPOKE)
+    if extra:
+        extra(a)
+    paint(a, outline(outer), outline_col)
+    mr = 2 if k < 1.5 else 3
+    for (x, y) in markers:
+        paint(a, m_disc(S, S, x + 0.5, y + 0.5, mr + 0.5), MARK_IN)
+        paint(a, m_ring(S, S, x + 0.5, y + 0.5, mr, 1.0), MAG)
+    return a
 
-    # ---- oficiais: triângulo, losango (square.png), círculo, pentágono
-    official = {
-        "triangle": ("triangle.png", 3, 90.0),
-        "diamond": ("square.png", 4, 0.0),     # square.png é o quadrado girado 45°
-        "pentagon": ("pentagonon.png", 5, 90.0),
-        "circle": ("cricle.png", 0, 90.0),
+
+def draw_core(a, k=1.0, s=1.0, bright=0, hue=False):
+    S = a.shape[0]
+    c = S / 2
+    ring_w = 1.0 if k < 1.5 else 2.0
+    paint(a, m_disc(S, S, c, c, T["core_ring"] * k + ring_w / 2), DARK)
+    paint(a, m_ring(S, S, c, c, T["core_ring"] * k, ring_w), PALE_CYAN if bright >= 2 else CYAN)
+    core = RED if hue else MAG
+    paint(a, m_disc(S, S, c, c, T["core_mag"] * k * s), core)
+    if bright >= 1:
+        paint(a, m_ring(S, S, c, c, T["core_mag"] * k * s - 0.5, 1.0), PALE_RED if hue else LILAC)
+    paint(a, m_disc(S, S, c, c, T["core_white"] * k * s + (0.6 if bright >= 2 else 0)), WHITE)
+    return a
+
+
+def draw_arcs(a, theta, r, width=1.0, cols=(MAG, CYAN), extra=()):
+    S = a.shape[0]
+    c = S / 2
+    for (a0, a1), col in zip(((60, 180), (240, 360)), cols):
+        paint(a, m_arc(S, S, c, c, r, a0 + theta, a1 + theta, width), col)
+    for (rr, a0, a1, col, wd) in extra:
+        paint(a, m_arc(S, S, c, c, rr, a0 + theta, a1 + theta, wd), col)
+    return a
+
+
+def flash_markers(a, markers, amount):
+    if amount <= 0:
+        return a
+    S = a.shape[0]
+    col = WHITE if amount >= 0.66 else LILAC
+    r = 2 if S < 100 else 3
+    for (x, y) in markers:
+        paint(a, m_disc(S, S, x + 0.5, y + 0.5, r + 0.5), col)
+    return a
+
+
+def enemy_frames(key):
+    n, start, ro, (mr, angles), src = SHAPES[key]
+    S = ENEMY_C
+    c = S // 2  # pixel central (inteiro)
+    markers = [snap(c, mr, ang) for ang in angles]
+    spoke = [snap(c, ro * 0.86, start + i * 360 / n) for i in range(n)] if key == "square" else None
+    body = draw_body(S, n, start, ro, markers, spoke_to=spoke)
+
+    def frame(theta=0.0, s=1.0, bright=0, flash=0.0, light=0, dx=0, dy=0, dis=0.0):
+        a = draw_core(body.copy(), s=s, bright=bright)
+        a = draw_arcs(a, theta, T["arc_r"])
+        a = flash_markers(a, markers, flash)
+        if light:
+            a = lighten(a, light)
+        if dis:
+            a = dither(a, dis)
+        return shift(a, dx, dy)
+
+    sway = [0, 6, 10, 6, 0, -6]
+    anims = {
+        "idle": [frame(theta=sway[i], s=[1.0, 1.0, 1.2, 1.2, 1.0, 1.0][i], bright=[0, 0, 1, 1, 0, 0][i])
+                 for i in range(6)],
+        "move": [frame(theta=-45 * i, dy=[0, -1, -1, 0, 0, 1, 1, 0][i]) for i in range(8)],
+        "attack": [frame(theta=t, s=s, bright=b, flash=f) for t, s, b, f in zip(
+            [0, 20, 50, 95, 130, 150], [1.0, 1.2, 1.4, 1.7, 1.3, 1.1], [0, 1, 1, 2, 1, 0],
+            [0, 0.4, 0.7, 1.0, 0.5, 0])],
+        "hurt": [frame(light=3, dx=1), frame(light=2, dx=-1), frame(light=1, dx=1), frame()],
+        "death": [frame(theta=20 * i, s=1.3 + 0.3 * i, bright=2, light=min(3, i), dis=d)
+                  for i, d in enumerate([0.0, 0.2, 0.4, 0.6, 0.8, 0.9])],
     }
-    for key, (fname, n, start) in official.items():
-        body, profile = process_official_enemy(fname)
-        pts = vertex_points(c, c, T["vertex_r"], n if n else 32, start)
-        anims = build_enemy_frames(body, c, c, profile, pts, S, T["arc_r"], T["arc_w"])
-        enemies[key] = {"anims": anims, "sides": n, "start": start, "weak_r": T["vertex_r"],
-                        "outer_r": T["outer_r"], "source": f"enemies/{fname}"}
+    return anims, markers, src
 
-    profile = core_profile(official_profile_src, c, c)
 
-    # ---- hexágono (desenhado): pontudo em cima, marcadores nos 6 vértices
-    pts = vertex_points(c, c, T["vertex_r"], 6, 90)
-    body = draw_body(S, c, c, 6, 90, markers=pts, spokes_to=pts)
-    enemies["hexagon"] = {"anims": build_enemy_frames(body, c, c, profile, pts, S, T["arc_r"], T["arc_w"]),
-                          "sides": 6, "start": 90.0, "weak_r": T["vertex_r"], "outer_r": T["outer_r"],
-                          "source": "gerado"}
-
-    # ---- quadrado (desenhado, alinhado aos eixos): marcadores no MEIO dos lados,
-    # que é onde ficam os pontos fracos do QUADRADO no jogo.
-    # Apótema 50: com o raio externo das outras formas (60) o quadrado ficava
-    # visivelmente menor; 50 é o maior que cabe no canvas de 144 com as quinas.
-    ap = 50.0
-    sq_r = ap / math.cos(math.pi / 4)
-    side_r = round(ap - 2.4, 1)
-    pts = vertex_points(c, c, side_r, 4, 0)
-    corners = vertex_points(c, c, sq_r * 0.86, 4, 45)
-    body = draw_body(S, c, c, 4, 45, markers=pts, spokes_to=corners, outer_r=sq_r)
-    enemies["square"] = {"anims": build_enemy_frames(body, c, c, profile, pts, S, T["arc_r"], T["arc_w"]),
-                         "sides": 4, "start": 45.0, "weak_r": side_r, "outer_r": round(sq_r, 2),
-                         "source": "gerado"}
-
+def build_enemies():
     out = {}
-    for key, e in enemies.items():
-        counts = write_anims(f"enemies/{key}", e["anims"])
-        rest = e["anims"]["idle"] + e["anims"]["move"]
-        low = lowest_row(rest)
-        out[key] = {
-            "canvas": S, "scale": ENEMY_SCALE, "frames": counts,
-            "center_px": [c, c],
-            # linha mais baixa ocupada em repouso/movimento (inclui arcos):
-            # é ela que encosta no chão.
-            "baseline_px": S - 1 - low,
-            "sides": e["sides"], "start_deg": e["start"],
-            "weak_r_px": e["weak_r"], "outer_r_px": e["outer_r"],
-            "source": e["source"],
-        }
+    for key in SHAPES:
+        anims, markers, src = enemy_frames(key)
+        source = f"redesenho de art-source/{src}" if src != "gerado" else "gerado"
+        counts = write_anims(f"enemies/{key}", anims, source)
+        low = max(bbox(f)[3] for f in anims["idle"] + anims["move"])
+        n, start, ro, (mr, angles), _ = SHAPES[key]
+        out[key] = {"canvas": ENEMY_C, "frames": counts, "center_px": ENEMY_C / 2,
+                    "baseline_px": ENEMY_C - 1 - low, "sides": n, "start_deg": start,
+                    "marker_r_px": mr, "outer_r_px": round(ro, 3), "markers_px": markers, "source": src}
     return out
 
 
-def build_boss(profile_src):
-    T = TEMPLATE
+BOSS_C = 113
+BOSS_K = 1.75
+
+
+def build_boss():
+    S = BOSS_C
+    c = S // 2
     k = BOSS_K
-    S = BOSS_CANVAS
-    c = S / 2
-    vr = T["vertex_r"] * k
-    pts = vertex_points(c, c, vr, 6, 90)
-    sub = vertex_points(c, c, vr * 0.5, 3, 90)          # 3 núcleos da fase do espelho
-    sides = vertex_points(c, c, vr * math.cos(math.pi / 6), 6, 0)
+    ro = 30.0 * k
+    mr = 26 * k                       # 45.5
+    markers = [snap(c, mr, 90 + 60 * i) for i in range(6)]
+    subs = [snap(c, mr * 0.5, 90 + 120 * i) for i in range(3)]
 
-    def extra(cv):
-        # triângulo interno ligando os núcleos + hexágono girado de apoio
-        cv.polyline(sub + [sub[0]], (*SPOKE, 255), 1.6)
-        inner = poly_pts(c, c, T["outer_r"] * k * 0.36, 6, 0)
-        cv.polyline(inner + [inner[0]], (*TEAL, 200), 1.2)
-        for x, y in sub:
-            cv.disc(x, y, 7.5, (*DARK, 255))
-            cv.ring(x, y, 6.2, (*CYAN, 255), 1.6)
-            cv.disc(x, y, 3.0, (*MAG, 255))
-            cv.disc(x, y, 1.4, (*WHITE, 255))
+    def extra(a):
+        for i in range(3):
+            x0, y0 = subs[i]
+            x1, y1 = subs[(i + 1) % 3]
+            paint(a, m_line(S, S, x0 + 0.5, y0 + 0.5, x1 + 0.5, y1 + 0.5), SPOKE)
+        paint(a, outline(m_poly(S, S, poly(S / 2, ro * 0.36, 6, 0))), TEAL)
 
-    body = draw_body(S, c, c, 6, 90, k=k, markers=pts, spokes_to=pts, extra=extra)
-    body_red = draw_body(S, c, c, 6, 90, k=k, markers=pts, spokes_to=pts, extra=extra, outline=RED)
-    # núcleo: perfil oficial ampliado (mesmo desenho, escala 1,75)
-    small_c = ENEMY_CANVAS / 2
-    profile = core_profile(profile_src, small_c, small_c)
-    arc_r = T["arc_r"] * k
-    arc_w = T["arc_w"] * 1.4
-    extra_arcs = [(T["arc_r"] * k * 0.78, 200, 290, MAG, 1.6), (T["arc_r"] * k * 0.78, 20, 110, CYAN, 1.6)]
-
-    def frame(b_img=body, theta=0.0, s=1.0, br=0.0, flash=0.0, sub_glow=0.0, hue=None,
-              arc_cols=None, tint_c=None, tint_a=0.0, dissolve=0.0, seed=0, beam=0.0, orbs=0.0):
-        a = draw_core(arr(b_img), c, c, profile, scale=s * k, bright=br, hue=hue,
-                      clear_r=T["core_r"] * k)
-        im = img(a)
-        im = over(im, arcs_layer(S, c, c, arc_r, arc_w, theta, arc_cols, extra_arcs))
-        if sub_glow > 0:
-            g = AA(S, S)
-            for x, y in sub:
-                g.disc(x, y, 5 + 5 * sub_glow, (*LILAC, int(120 * sub_glow)))
-                g.disc(x, y, 3 + 2 * sub_glow, (*WHITE, int(255 * sub_glow)))
-            im = over(im, g.result())
-        if orbs > 0:
-            g = AA(S, S)
-            for i in range(6):
-                ang = math.radians(90 + 60 * i + theta)
-                rr = vr * (0.55 + 0.5 * orbs)
-                x, y = c + rr * math.cos(ang), c - rr * math.sin(ang)
-                g.disc(x, y, 5.5, (*MAG, 255))
-                g.disc(x, y, 2.6, (*WHITE, 255))
-            im = over(im, g.result())
-        if beam > 0:
-            g = AA(S, S)
-            hw = 2 + 6 * beam
-            g.polygon([(c, c - hw), (S, c - hw * 0.6), (S, c + hw * 0.6), (c, c + hw)], (*LILAC, 220))
-            g.polygon([(c, c - hw), (0, c - hw * 0.6), (0, c + hw * 0.6), (c, c + hw)], (*LILAC, 220))
-            g.polygon([(c, c - hw * 0.4), (S, c - hw * 0.2), (S, c + hw * 0.2), (c, c + hw * 0.4)], (*WHITE, 255))
-            g.polygon([(c, c - hw * 0.4), (0, c - hw * 0.2), (0, c + hw * 0.2), (c, c + hw * 0.4)], (*WHITE, 255))
-            im = over(im, g.result())
-        fl = markers_flash_layer(S, pts, T["marker_r"] * k, flash)
-        if fl is not None:
-            im = over(im, fl)
-        a = arr(im)
-        if tint_c is not None and tint_a > 0:
-            a = tint(a, tint_c, tint_a)
-        if dissolve > 0:
-            a = noise_dissolve(a, dissolve, seed)
+    def sub_cores(a, glow=0):
+        for (x, y) in subs:
+            paint(a, m_disc(S, S, x + 0.5, y + 0.5, 4.5), DARK)
+            paint(a, m_ring(S, S, x + 0.5, y + 0.5, 3.5, 1.0), PALE_CYAN if glow >= 2 else CYAN)
+            paint(a, m_disc(S, S, x + 0.5, y + 0.5, 1.6 + (1 if glow else 0)), LILAC if glow else MAG)
+            if glow >= 2:
+                paint(a, m_disc(S, S, x + 0.5, y + 0.5, 1.0), WHITE)
         return a
 
-    anims = {}
-    anims["idle"] = [frame(theta=5 * math.sin(2 * math.pi * i / 6), s=1 + 0.05 * math.sin(2 * math.pi * i / 6),
-                           br=0.1 + 0.1 * math.sin(2 * math.pi * i / 6)) for i in range(6)]
-    anims["powerup"] = [frame(theta=30 * i, s=1 + 0.12 * i, br=0.15 * i, flash=f, sub_glow=0.2 * i)
-                        for i, f in enumerate([0, 0.2, 0.4, 0.7, 1.0, 0.6])]
-    anims["orbs"] = [frame(theta=12 * i, s=1 + 0.08 * i, br=0.12 * i, sub_glow=g, orbs=o)
-                     for i, (g, o) in enumerate([(0.3, 0), (0.6, 0), (1.0, 0.1), (0.7, 0.55), (0.3, 1.0)])]
-    anims["beam"] = [frame(s=1 + 0.1 * i, br=0.15 + 0.15 * i, beam=bm)
-                     for i, bm in enumerate([0.0, 0.25, 0.7, 1.0, 0.45])]
-    red_arcs = [RED, MAG]
-    anims["enraged"] = [frame(b_img=body_red, theta=-40 * i, s=1.08 + 0.06 * (i % 2), br=0.2 + 0.1 * i,
-                              hue=RED, arc_cols=red_arcs) for i in range(4)]
-    anims["death"] = [frame(theta=25 * i, s=1.2 + 0.3 * i, br=min(1.0, 0.3 + 0.15 * i), flash=max(0, 1 - 0.3 * i),
-                            tint_c=LILAC, tint_a=0.1 * i, dissolve=d, seed=2000 + i)
-                      for i, d in enumerate([0.0, 0.15, 0.35, 0.55, 0.75, 0.93])]
-    counts = write_anims("boss", anims)
-    low = lowest_row(anims["idle"])
-    return {
-        "canvas": S, "scale": BOSS_SCALE, "frames": counts, "center_px": [c, c],
-        "baseline_px": S - 1 - low, "sides": 6, "start_deg": 90.0,
-        "weak_r_px": vr, "side_r_px": vr * math.cos(math.pi / 6), "core_r_px": vr * 0.5,
-        "outer_r_px": T["outer_r"] * k, "source": "gerado",
+    body = draw_body(S, 6, 90, ro, markers, k=k, extra=extra)
+    body_red = draw_body(S, 6, 90, ro, markers, k=k, extra=extra, outline_col=RED)
+    arc_r = 19.5 * k
+    inner = [(arc_r * 0.78, 200, 290, MAG, 1.0), (arc_r * 0.78, 20, 110, CYAN, 1.0)]
+
+    def frame(b=body, theta=0.0, s=1.0, bright=0, flash=0.0, glow=0, hue=False, cols=(MAG, CYAN),
+              light=0, dis=0.0, beam=0, orbs=0.0):
+        a = draw_core(b.copy(), k=k, s=s, bright=bright, hue=hue)
+        a = sub_cores(a, glow)
+        a = draw_arcs(a, theta, arc_r, 2.0, cols, inner)
+        if orbs:
+            for i in range(6):
+                x, y = snap(c, mr * (0.55 + 0.5 * orbs), 90 + 60 * i + theta)
+                paint(a, m_disc(S, S, x + 0.5, y + 0.5, 3.5), RED)
+                paint(a, m_disc(S, S, x + 0.5, y + 0.5, 1.6), WHITE)
+        if beam:
+            half = beam
+            a[c - half - 1:c + half + 2, :] = (*LILAC, 255)
+            a[c - max(0, half - 1):c + max(0, half - 1) + 1, :] = (*WHITE, 255)
+        a = flash_markers(a, markers, flash)
+        if light:
+            a = lighten(a, light)
+        if dis:
+            a = dither(a, dis)
+        return a
+
+    anims = {
+        "idle": [frame(theta=[0, 5, 8, 5, 0, -5][i], s=[1, 1, 1.15, 1.15, 1, 1][i], bright=[0, 0, 1, 1, 0, 0][i])
+                 for i in range(6)],
+        "powerup": [frame(theta=30 * i, s=1 + 0.12 * i, bright=min(2, i // 2), flash=f, glow=min(2, i // 2))
+                    for i, f in enumerate([0, 0.2, 0.4, 0.7, 1.0, 0.6])],
+        "orbs": [frame(theta=12 * i, s=1 + 0.08 * i, bright=min(2, i), glow=g, orbs=o)
+                 for i, (g, o) in enumerate([(1, 0), (2, 0), (2, 0.1), (1, 0.55), (1, 1.0)])],
+        "beam": [frame(s=1 + 0.1 * i, bright=min(2, i), beam=bm) for i, bm in enumerate([0, 1, 3, 4, 2])],
+        "enraged": [frame(b=body_red, theta=-40 * i, s=1.1 + 0.1 * (i % 2), bright=1, hue=True, cols=(RED, MAG))
+                    for i in range(4)],
+        "death": [frame(theta=25 * i, s=1.2 + 0.3 * i, bright=2, flash=max(0, 1 - 0.3 * i), light=min(3, i), dis=d)
+                  for i, d in enumerate([0.0, 0.15, 0.35, 0.55, 0.75, 0.9])],
     }
+    counts = write_anims("boss", anims)
+    low = max(bbox(f)[3] for f in anims["idle"])
+    return {"canvas": S, "frames": counts, "center_px": S / 2, "baseline_px": S - 1 - low,
+            "sides": 6, "start_deg": 90.0, "marker_r_px": mr, "side_r_px": mr * math.cos(math.pi / 6),
+            "core_r_px": mr * 0.5, "outer_r_px": ro, "markers_px": markers, "subcores_px": subs,
+            "source": "gerado"}
 
 
 # ================================================================ player
 
-def build_player():
-    C = PLAYER_CANVAS
-    raw = {
-        "idle": load("player/Personagem principal.png"),
-        "run": load("player/correndo.png"),
-        "jump": load("player/principal pulando.png"),
-    }
-    FEET = C - 5  # linha dos pés no canvas 48 (4 px livres embaixo)
-    base = {}
-    for k, im in raw.items():
-        a = arr(im)
-        bb = opaque_bbox(a)
-        cxs = (bb[0] + bb[2] + 1) / 2
-        dx = int(round(C / 2 - cxs))
-        dy = FEET - bb[3]
-        canvas = np.zeros((C, C, 4), dtype=np.uint8)
-        canvas[dy:dy + 32, dx:dx + 32] = a
-        base[k] = canvas
+PLAYER_C = 48
 
-    def body_rows(a):
-        bb = opaque_bbox(a)
+
+def lighten_orb(a, pal, steps):
+    """Flash do ORB dentro da própria paleta: cada cor vira a cor mais clara da
+    paleta mais próxima dela, 'steps' vezes."""
+    pal_sorted = sorted(pal, key=sum)
+    out = a.copy()
+    for _ in range(steps):
+        m = out[..., 3] > 0
+        px = out[m][:, :3].astype(int)
+        new = []
+        for p in px:
+            lum = int(p.sum())
+            brighter = [c for c in pal_sorted if sum(c) > lum + 30]
+            if not brighter:
+                new.append(tuple(p))
+                continue
+            new.append(min(brighter, key=lambda c: sum((c[i] - p[i]) ** 2 for i in range(3))))
+        out[m, :3] = np.array(new, dtype=np.uint8)
+    return out
+
+
+def build_player():
+    """ORB: frames oficiais de projetofinal-29 ajustados à paleta do idle.
+
+    A animação completa é montada a partir deles; a tarefa A2 redesenha cada
+    estado. Aqui garantimos a paleta travada (o script falha se sobrar cor).
+    """
+    d = "personagem principal/"
+    idle_src = load(SRC_29, d + "Personagem principal.png")
+    pal = palette_of(idle_src)
+    manifest["orb_palette"] = sorted(list(p) for p in pal)
+    raw = {
+        "idle": idle_src,
+        "blink": quantize(load(SRC_29, d + "principal piscando.png"), pal),
+        "run": quantize(load(SRC_29, d + "principal correndo.png"), pal),
+        "jump": quantize(load(SRC_29, d + "principal pulando.png"), pal),
+        "shoot": quantize(load(SRC_29, d + "principal atirando.png"), pal),
+    }
+    FEET = PLAYER_C - 5
+    base = {}
+    for k, a in raw.items():
+        bb = bbox(a)
+        dx = int(round(PLAYER_C / 2 - (bb[0] + bb[2] + 1) / 2))
+        dy = FEET - bb[3]
+        cv = canvas(PLAYER_C)
+        cv[dy:dy + 32, dx:dx + 32] = a
+        base[k] = cv
+
+    def rows(a):
+        bb = bbox(a)
         return bb[1], bb[3]
 
     def squash(a, n=1):
-        """Remove n linhas do meio do corpo e desce a parte de cima (pés fixos)."""
-        top, bot = body_rows(a)
+        top, bot = rows(a)
         out = a.copy()
         for _ in range(n):
             mid = (top + bot) // 2
@@ -637,273 +513,263 @@ def build_player():
         return out
 
     def stretch(a, n=1):
-        top, bot = body_rows(a)
+        top, bot = rows(a)
         out = a.copy()
         for _ in range(n):
             mid = (top + bot) // 2
             out = np.concatenate([out[1:mid + 1], out[mid:mid + 1], out[mid + 1:]], axis=0)
         return out
 
-    def widen(a, n=1):
-        bb = opaque_bbox(a)
-        mid = (bb[0] + bb[2]) // 2
-        out = a.copy()
-        for _ in range(n):
-            out = np.concatenate([out[:, 1:mid + 1], out[:, mid:mid + 1], out[:, mid + 1:]], axis=1)
-        return out
-
     def lean(a, amount):
-        """Inclinação por linha: a cabeça desloca 'amount' px, os pés ficam."""
-        top, bot = body_rows(a)
-        out = np.zeros_like(a)
-        for y in range(C):
-            if y > bot or a[y, :, 3].max() == 0:
-                out[y] = a[y]
-                continue
-            s = int(round(amount * (bot - y) / max(1, bot - top)))
-            out[y] = np.roll(a[y], s, axis=0)
-        return out
-
-    def legs_shear(a, amount):
-        top, bot = body_rows(a)
-        legs = bot - 6
+        top, bot = rows(a)
         out = a.copy()
-        for y in range(legs, bot + 1):
-            s = int(round(amount * (y - legs) / 6))
-            out[y] = np.roll(a[y], s, axis=0)
+        for y in range(top, bot + 1):
+            out[y] = np.roll(a[y], int(round(amount * (bot - y) / max(1, bot - top))), axis=0)
         return out
 
-    def blink(a):
-        top, _ = body_rows(a)
-        out = a.copy()
-        region = out[top + 5:top + 15, 8:40]
-        rgb = region[..., :3].astype(int)
-        eyes = (region[..., 3] > 0) & (rgb.min(axis=2) > 170)
-        # olho fechado: a cor mais escura do visor
-        region[eyes] = [16, 10, 42, 255]
-        return out
+    def rot_grounded(a):
+        r = np.rot90(a, k=-1).copy()
+        bb = bbox(r)
+        return shift(r, int(round(PLAYER_C / 2 - (bb[0] + bb[2] + 1) / 2)), FEET - bb[3])
 
-    def rot90_grounded(a, k):
-        r = np.rot90(a, k=k).copy()
-        bb = opaque_bbox(r)
-        cx = (bb[0] + bb[2] + 1) / 2
-        return shift(r, int(round(C / 2 - cx)), FEET - bb[3])
-
-    I, R, J = base["idle"], base["run"], base["jump"]
+    I, B, R, J, S = base["idle"], base["blink"], base["run"], base["jump"], base["shoot"]
     anims = {
-        "idle": [I, I, squash(I), squash(I), I, blink(I)],
-        "walk": [R, shift(R, 0, -1), legs_shear(R, 1), R, shift(R, 0, -1), legs_shear(R, -1)],
+        "idle": [I, I, squash(I), squash(I), I, B],
+        "walk": [R, shift(R, 0, -1), I, R, shift(R, 0, -1), I],
         "jump": [J, stretch(J)],
-        "dash": [lean(R, 1), widen(lean(R, 2)), widen(lean(R, 3), 2), widen(lean(R, 2)), lean(R, 1)],
-        "attack": [tint(I, CYAN, 0.35), shift(squash(I), -1, 0), shift(I, -1, 0), I],
-        "hurt": [tint(I, WHITE, 0.8), shift(tint(I, MAG, 0.5), -1, 0), shift(tint(I, MAG, 0.25), 1, 0), I],
-        "death": [tint(I, WHITE, 0.6), squash(I, 2), rot90_grounded(I, -1),
-                  dither_dissolve(rot90_grounded(I, -1), 0.4), dither_dissolve(rot90_grounded(I, -1), 0.8)],
+        "dash": [lean(R, 1), lean(R, 2), lean(R, 3), lean(R, 2), lean(R, 1)],
+        "attack": [S, shift(S, -1, 0), S, I],
+        "hurt": [lighten_orb(I, pal, 2), shift(lighten_orb(I, pal, 1), -1, 0), shift(I, 1, 0), I],
+        "death": [lighten_orb(I, pal, 2), squash(I, 2), rot_grounded(I), dither(rot_grounded(I), 0.4),
+                  dither(rot_grounded(I), 0.8)],
     }
-    counts = write_anims("player", anims)
-    # Linha do pé medida no frame de idle depois de montado.
-    low = opaque_bbox(anims["idle"][0])[3]
-    return {"canvas": C, "scale": PLAYER_SCALE, "frames": counts, "baseline_px": C - 1 - low,
-            "sources": ["player/Personagem principal.png", "player/correndo.png", "player/principal pulando.png"]}
+    for name, frames in anims.items():
+        for f in frames:
+            extra = palette_of(f) - pal
+            if extra:
+                raise SystemExit(f"ORB/{name}: {len(extra)} cor(es) fora da paleta do idle: {sorted(extra)[:5]}")
+    counts = write_anims("player", anims, "art-source/projetofinal-29/personagem principal (paleta do idle)")
+    low = bbox(anims["idle"][0])[3]
+    return {"canvas": PLAYER_C, "frames": counts, "baseline_px": PLAYER_C - 1 - low}
+
+
+# ================================================================ tiros
+
+def scale2x(a):
+    """EPX/Scale2x: amplia 2x preservando bordas de pixel art."""
+    h, w = a.shape[:2]
+    p = np.pad(a, ((1, 1), (1, 1), (0, 0)), mode="edge")
+    P = p[1:-1, 1:-1]
+    A, B, C, D = p[:-2, 1:-1], p[1:-1, 2:], p[1:-1, :-2], p[2:, 1:-1]
+
+    def eq(x, y):
+        return np.all(x == y, axis=2)
+    out = np.zeros((h * 2, w * 2, 4), dtype=np.uint8)
+    out[0::2, 0::2] = np.where((eq(C, A) & ~eq(C, D) & ~eq(A, B))[..., None], A, P)
+    out[0::2, 1::2] = np.where((eq(A, B) & ~eq(A, C) & ~eq(B, D))[..., None], B, P)
+    out[1::2, 0::2] = np.where((eq(D, C) & ~eq(D, B) & ~eq(C, A))[..., None], C, P)
+    out[1::2, 1::2] = np.where((eq(B, D) & ~eq(B, A) & ~eq(D, C))[..., None], D, P)
+    return out
+
+
+def rotate_pixel(a, deg):
+    """Rotação estilo RotSprite: Scale2x 3x, gira com nearest, amostra 1/8."""
+    if deg % 90 == 0:
+        return np.rot90(a, k=int(deg // 90) % 4).copy()
+    big = scale2x(scale2x(scale2x(a)))
+    im = Image.fromarray(big, "RGBA").rotate(deg, resample=Image.NEAREST, expand=False)
+    return np.array(im)[4::8, 4::8].copy()
+
+
+SHOT_RAMPS = {
+    "player": ("tiros/tiro1.png", None),
+    "enemy": ("tiros/tiro2.png", [MARK_IN, SPOKE, MAG, LILAC, WHITE]),
+    "boss_orb": ("tiros/tiro3.png", [SPOKE, RED, MAG, PALE_RED, WHITE]),
+    "boss_volley": ("tiros/tiro4.png", [SPOKE, RED, MAG, PALE_RED, WHITE]),
+}
+
+
+def ramp_recolor(a, ramp):
+    out = a.copy()
+    m = a[..., 3] > 0
+    lum = a[m][:, :3].astype(float) @ np.array([0.3, 0.5, 0.2])
+    lo, hi = lum.min(), lum.max()
+    idx = np.clip(((lum - lo) / max(1, hi - lo) * len(ramp)).astype(int), 0, len(ramp) - 1)
+    out[m, :3] = np.array(ramp, dtype=np.uint8)[idx]
+    return out
+
+
+def build_shots():
+    info = {}
+    for role, (rel, ramp) in SHOT_RAMPS.items():
+        a = load(SRC_29, rel)
+        a[..., 3] = np.where(a[..., 3] >= 128, 255, 0)  # tiro2..4 têm meio-tons de alfa
+        if ramp:
+            a = ramp_recolor(a, ramp)
+        # âncora = centro da cabeça (pixels mais claros), não o centro do canvas
+        lum = a[..., :3].astype(float) @ np.array([0.3, 0.5, 0.2]) * (a[..., 3] > 0)
+        ys, xs = np.nonzero(lum >= np.percentile(lum[lum > 0], 85))
+        head = (float(xs.mean() + 0.5), float(ys.mean() + 0.5))
+        for d in range(8):
+            save(rotate_pixel(a, 45 * d), f"fx/shot_{role}_{d}.png", f"art-source/projetofinal-29/{rel}")
+        info[role] = {"canvas": a.shape[0], "head_px": [round(head[0], 2), round(head[1], 2)]}
+    return info
 
 
 # ============================================================== efeitos/UI
 
-def pixel_disc(size, rings):
-    """Pixel art sem AA: rings = [(raio, cor RGBA)] do maior para o menor."""
-    a = np.zeros((size, size, 4), dtype=np.uint8)
-    c = (size - 1) / 2
-    yy, xx = np.mgrid[0:size, 0:size]
-    d = np.hypot(xx - c, yy - c)
-    for r, col in rings:
-        a[d <= r + 0.35] = col
-    return a
-
-
-def pixel_ring(a, r, col, w=1.0):
-    size = a.shape[0]
-    c = (size - 1) / 2
-    yy, xx = np.mgrid[0:size, 0:size]
-    d = np.hypot(xx - c, yy - c)
-    a[(d >= r - w / 2) & (d <= r + w / 2 + 0.2)] = col
-    return a
-
-
-def build_fx():
-    info = {}
-    save(img(pixel_disc(11, [(5, (*CYAN, 255)), (3.2, (160, 245, 255, 255)), (1.6, (*WHITE, 255))])),
-         "fx/player_shot.png")
-    save(img(pixel_disc(11, [(5, (*MAG, 255)), (3.2, (*LILAC, 255)), (1.6, (*WHITE, 255))])),
-         "fx/enemy_shot.png")
-    bs = pixel_disc(18, [(8.4, (*RED, 255)), (6.6, (*MAG, 255)), (4.2, (*LILAC, 255)), (2.2, (*WHITE, 255))])
-    for i in range(8):  # espinhos
-        ang = math.radians(i * 45)
-        x, y = int(round(8.5 + 8.4 * math.cos(ang))), int(round(8.5 - 8.4 * math.sin(ang)))
-        if 0 <= x < 18 and 0 <= y < 18:
-            bs[y, x] = (*WHITE, 255)
-    save(img(bs), "fx/boss_shot.png")
-
-    def burst(name, main, accent, n=6, size=32, shards=8):
-        frames = []
-        for i in range(n):
-            t = i / (n - 1)
-            a = np.zeros((size, size, 4), dtype=np.uint8)
-            r = 3 + t * 12
-            pixel_ring(a, r, (*main, 255), 2.0 if t < 0.6 else 1.0)
-            if t < 0.4:
-                a = np.maximum(a, pixel_disc(size, [(4 - 6 * t, (*WHITE, 255))]))
-            for s in range(shards):
-                ang = math.radians(s * 360 / shards + 22.5 * (s % 2))
-                rr = r + 2 + 3 * t
-                x = int(round((size - 1) / 2 + rr * math.cos(ang)))
-                y = int(round((size - 1) / 2 - rr * math.sin(ang)))
-                if 0 <= x < size and 0 <= y < size:
-                    a[y, x] = (*accent, 255)
-                    if t < 0.5 and 0 <= y + 1 < size:
-                        a[y + 1, x] = (*accent, 255)
-            a[..., 3] = (a[..., 3] > 0) * 255
-            frames.append(dither_dissolve(a, max(0.0, t - 0.35) * 1.4))
-        for i, f in enumerate(frames, 1):
-            save(img(f), f"fx/{name}_{i:02d}.png")
-        return n
-
-    info["hit_burst"] = burst("hit_burst", CYAN, WHITE)
-    info["void_burst"] = burst("void_burst", MAG, LILAC)
-    # rastro do dash: faixas horizontais que encurtam
-    n = 4
+def burst_frames(size, main, accent, n=6):
+    frames = []
+    c = size / 2
     for i in range(n):
-        a = np.zeros((32, 32, 4), dtype=np.uint8)
-        for row, col, ln in [(12, LILAC, 26), (15, CYAN, 30), (18, MAG, 24), (21, LILAC, 18)]:
-            L = int(ln * (1 - i / n))
-            a[row, 32 - L:32] = (*col, 255)
-        save(img(dither_dissolve(a, i * 0.2)), f"fx/dash_trail_{i + 1:02d}.png")
-    info["dash_trail"] = n
+        t = i / (n - 1)
+        a = canvas(size)
+        r = 2 + t * (size / 2 - 4)
+        paint(a, m_ring(size, size, c, c, r, 2.0 if t < 0.6 else 1.0), main)
+        if t < 0.4:
+            paint(a, m_disc(size, size, c, c, max(1.0, 3 - 5 * t)), WHITE)
+        for s in range(8):
+            x, y = snap(size // 2, r + 2 + 2 * t, s * 45 + 22.5 * (s % 2))
+            if 0 <= x < size and 0 <= y < size:
+                a[y, x] = (*accent, 255)
+        frames.append(dither(a, max(0.0, t - 0.35) * 1.4))
+    return frames
 
-    # marcador de ponto fraco (3 tamanhos nativos, desenhados a 2x)
-    for size in (15, 17, 22):
-        a = np.zeros((size, size, 4), dtype=np.uint8)
-        r = (size - 1) / 2
-        pixel_ring(a, r - 0.6, (*MAG, 255), 1.4)
-        pixel_ring(a, r - 3.2, (*CYAN, 255), 1.0)
-        a = np.maximum(a, pixel_disc(size, [(r * 0.28, (*WHITE, 255))]))
-        m = size // 2
-        a[m, 0:2] = a[m, size - 2:] = a[0:2, m] = a[size - 2:, m] = (*WHITE, 255)
-        save(img(a), f"ui/weakpoint_{size}.png")
-    # mira
-    a = np.zeros((17, 17, 4), dtype=np.uint8)
-    pixel_ring(a, 6.2, (*WHITE, 230), 1.0)
-    for i in list(range(0, 5)) + list(range(12, 17)):
-        a[8, i] = a[i, 8] = (*WHITE, 255)
-    a[8, 8] = (*CYAN, 255)
-    save(img(a), "ui/crosshair.png")
-    # seta guia (aponta para cima; o jogo espelha)
-    a = np.zeros((16, 12, 4), dtype=np.uint8)
-    for y in range(8):  # ponta triangular
-        half = y // 2 + 1
-        a[y, 6 - half:6 + half] = (*CYAN, 255)
-    a[8:16, 4:8] = (*CYAN, 255)  # haste
-    save(img(a), "ui/guide_arrow.png")
-    # orbe de vida pequena (14 px, desenhada a 2x) no desenho da life_orb oficial
-    a = pixel_disc(14, [(6.3, (255, 72, 196, 255)), (5.0, (0, 0, 0, 0)), (4.2, (100, 250, 255, 255)),
-                        (3.0, (0, 0, 0, 0)), (2.2, (*WHITE, 255))])
-    save(img(a), "ui/life_orb_small.png")
+
+def pixel_marker(size, outer, inner):
+    a = canvas(size)
+    c = size / 2
+    paint(a, m_ring(size, size, c, c, c - 1.0, 1.0), outer)
+    paint(a, m_ring(size, size, c, c, c - 3.0, 1.0), inner)
+    paint(a, m_disc(size, size, c, c, 0.8), WHITE)
+    return a
+
+
+def build_fx_ui():
+    info = {}
+    for name, size, main, acc in [("hit_burst", 24, CYAN, WHITE), ("void_burst", 28, MAG, LILAC),
+                                  ("void_burst_mid", 44, MAG, LILAC), ("void_burst_big", 80, MAG, LILAC)]:
+        frames = burst_frames(size, main, acc)
+        for i, f in enumerate(frames, 1):
+            save(f, f"fx/{name}_{i:02d}.png")
+        info[name] = len(frames)
+    for i in range(4):
+        a = canvas(32, 12)
+        for row, col, ln in [(2, LILAC, 26), (5, CYAN, 30), (7, MAG, 24), (9, LILAC, 18)]:
+            a[row, 32 - int(ln * (1 - i / 4)):32] = (*col, 255)
+        save(dither(a, i * 0.2), f"fx/dash_trail_{i + 1:02d}.png")
+    info["dash_trail"] = 4
+
+    save(pixel_marker(9, MAG, CYAN), "ui/weakpoint.png")
+    save(pixel_marker(7, MAG, CYAN), "ui/weakpoint_small.png")
+    save(pixel_marker(11, MAG, CYAN), "ui/weakpoint_boss.png")
+    cr = canvas(9)
+    cr[4, 0:3] = cr[4, 6:9] = cr[0:3, 4] = cr[6:9, 4] = (*WHITE, 255)
+    cr[4, 4] = (*CYAN, 255)
+    save(cr, "ui/crosshair.png")
+    arrow = canvas(7, 9)
+    for y in range(4):
+        arrow[y, 3 - y:4 + y] = (*CYAN, 255)
+    arrow[4:9, 2:5] = (*CYAN, 255)
+    save(arrow, "ui/guide_arrow.png")
+    orb = canvas(14)
+    paint(orb, m_ring(14, 14, 7, 7, 6.0, 1.5), (255, 72, 196))
+    paint(orb, m_ring(14, 14, 7, 7, 3.8, 1.5), CYAN)
+    paint(orb, m_disc(14, 14, 7, 7, 1.8), WHITE)
+    save(orb, "ui/life_orb.png", "redesenho de art-source/ProjetoFinal_TCC/ui/life_orb.png")
     save(Image.new("RGBA", (1, 1), (255, 255, 255, 255)), "ui/pixel.png")
+
+    # Painéis: o hud_panel do TCC é pixel art em blocos de 8 px; amostrado a
+    # cada 4 px (2 por bloco) ele fica na escala única sem perda. Os painéis
+    # ciano e vermelho são o mesmo desenho recolorido.
+    hud = load(SRC_TCC, "ui/hud_panel.png")[2::4, 2::4].copy()
+    save(hud, "ui/panel.png", "art-source/ProjetoFinal_TCC/ui/hud_panel.png (reduzido 4x sem perda)")
+    lil = sorted({c for c in palette_of(hud) if sum(c) > 400}, key=sum)
+    save(recolor(hud, {c: (NEON_CYAN2 if i == 0 else NEON_CYAN) for i, c in enumerate(lil)}), "ui/panel_cyan.png",
+         "art-source/ProjetoFinal_TCC/ui/hud_panel.png (recolorido)")
+    save(recolor(hud, {c: (RED if i == 0 else PALE_RED) for i, c in enumerate(lil)}), "ui/panel_red.png",
+         "art-source/ProjetoFinal_TCC/ui/hud_panel.png (recolorido)")
+    h, w = hud.shape[:2]
+    cols = [x for x in range(w) if np.abs(hud[:, x].astype(int) - hud[:, w // 2]).sum() > 0]
+    rws = [y for y in range(h) if np.abs(hud[y].astype(int) - hud[h // 2]).sum() > 0]
+    manifest["ninepatch_px"] = {"left": max(x for x in cols if x < w // 2) + 1,
+                                "right": w - min(x for x in cols if x > w // 2),
+                                "top": max(y for y in rws if y < h // 2) + 1,
+                                "bottom": h - min(y for y in rws if y > h // 2)}
     return info
 
 
-def build_ui_and_world():
-    # ---- UI oficial (cópia 1:1; o jogo usa NinePatch com bordas nativas)
-    for src, dst in [("ui/hud_panel.png", "ui/hud_panel.png"), ("ui/enemy_painel.png", "ui/enemy_panel.png"),
-                     ("ui/diolog_painel.png", "ui/dialog_panel.png"), ("ui/life_orb.png", "ui/life_orb.png")]:
-        save(load(src), dst)
-
-    # Cortes de NinePatch: até onde a borda deixa de ser igual à linha/coluna
-    # do meio (inclui os detalhes de canto, que assim nunca esticam).
-    patches = {}
-    for name in ("hud_panel", "enemy_panel", "dialog_panel"):
-        pa = arr(Image.open(OUT / f"ui/{name}.png").convert("RGBA")).astype(int)
-        h, w = pa.shape[:2]
-        cols = [x for x in range(w) if np.abs(pa[:, x] - pa[:, w // 2]).sum() > 0]
-        rows = [y for y in range(h) if np.abs(pa[y] - pa[h // 2]).sum() > 0]
-        patches[name] = {
-            "left": max(x for x in cols if x < w // 2) + 1, "right": w - min(x for x in cols if x > w // 2),
-            "top": max(y for y in rows if y < h // 2) + 1, "bottom": h - min(y for y in rows if y > h // 2)}
-    manifest["ninepatch"] = patches
-
-    # ---- fundo: 9 camadas 480x270 (desenhadas a 4x) + composição para menus
+def build_world():
+    # ---- fundo (já está na escala 4: 480x270 -> 1920x1080)
     layers = ["ceu", "nuvem1", "nuvem2", "nuvem3", "nuvem4", "montanhas", "estruturas-fundo", "lago", "chao"]
     comp = Image.new("RGBA", (480, 270))
     for i, name in enumerate(layers):
-        im = load(f"fundo/{name}.png")
-        save(im, f"background/{i:02d}_{name}.png")
+        im = Image.open(SRC_TCC / f"fundo/{name}.png").convert("RGBA")
+        clean = name.replace("estruturas-fundo", "estruturas")
+        save(im, f"background/{i:02d}_{clean}.png", f"art-source/ProjetoFinal_TCC/fundo/{name}.png")
         comp.alpha_composite(im)
-    save(comp, "background/menu.png")
+    save(comp, "background/menu.png", "composição de art-source/ProjetoFinal_TCC/fundo/*")
 
-    # ---- mundo
-    for name in ("gate", "portal", "wall"):
-        save(load(f"word/{name}.png"), f"world/{name}.png")
-    crystal = load("word/crystal.png")
-    crystal = crystal.crop(crystal.getchannel("A").getbbox())
-    save(crystal, "world/crystal.png")
+    # ---- plataformas (16 px = 64 de mundo), redesenho de word/platform*.png
+    for name, top1, top2 in [("platform", NEON_MAG, NEON_MAG2), ("platform_alt", NEON_CYAN, NEON_CYAN2)]:
+        col = np.zeros((16, 1, 4), dtype=np.uint8)
+        col[:] = (*PANEL_DARK, 255)
+        col[0], col[1], col[2], col[15] = (*top1, 255), (*top2, 255), (*PANEL_TOP, 255), (*PANEL_EDGE, 255)
+        module = np.repeat(col, 12, axis=1)
+        module[4, 2:10] = module[11, 2:10] = (*PANEL_LINE, 255)       # caixa com cantos cortados
+        module[5:11, 1] = module[5:11, 10] = (*PANEL_LINE, 255)
+        module[8, 4:8] = (*TEAL, 255)                                   # traço no meio da caixa
+        module[14, 3:8] = (*DASH, 255)                                  # traço ciano de baixo
+        cap = np.repeat(col, 2, axis=1)
+        cap[1:15, 0] = (*PANEL_EDGE, 255)
+        cap[15, 0] = (0, 0, 0, 0)
+        src = f"redesenho de art-source/ProjetoFinal_TCC/word/{name}.png"
+        save(cap, f"world/{name}_cap.png", src)
+        save(module, f"world/{name}_module.png", src)
+        save(col, f"world/{name}_fill.png", src)
 
-    platform_info = {}
-    for name in ("platform", "platform_alt"):
-        p = load(f"word/{name}.png")
-        top = p.getchannel("A").getbbox()[1]
-        p = p.crop((0, top, 256, 64))
-        # ponta (6 px), módulo caixa+vão (54 px) e uma coluna lisa de preenchimento
-        save(p.crop((0, 0, 6, p.height)), f"world/{name}_cap.png")
-        save(p.crop((6, 0, 60, p.height)), f"world/{name}_module.png")
-        save(p.crop((6, 0, 7, p.height)), f"world/{name}_fill.png")
-        platform_info[name] = {"height": p.height, "cap": 6, "module": 54}
+    # ---- piso: tile 16x32 (64x128 de mundo)
+    g = np.zeros((32, 16, 4), dtype=np.uint8)
+    g[:] = (*PANEL_DARK, 255)
+    g[0], g[1], g[2] = (*NEON_MAG, 255), (*NEON_MAG2, 255), (*PANEL_TOP, 255)
+    for y in (11, 21, 31):
+        g[y] = (*PANEL_LINE, 255)
+    g[3:11, 0] = g[22:31, 0] = (*PANEL_LINE, 255)
+    g[12:21, 8] = (*PANEL_LINE, 255)
+    g[5, 5:11] = (*DASH, 255)
+    save(g, "world/ground.png", "gerado no estilo de art-source/ProjetoFinal_TCC/word/platform.png")
 
-    # ---- piso do mundo: tile 64 x 126 (FLOOR_Y) no estilo das plataformas
-    def ground(top_color, top2):
-        a = np.zeros((126, 64, 4), dtype=np.uint8)
-        a[:, :] = (*PANEL_DARK, 255)
-        a[0:2] = (*top_color, 255)
-        a[2] = (*top2, 255)
-        a[3:5] = (27, 28, 54, 255)
-        for y in range(34, 126, 32):
-            a[y] = (*PANEL_LINE, 255)
-        for band, y0 in enumerate(range(5, 126, 32)):
-            x = 0 if band % 2 == 0 else 32
-            a[y0:min(126, y0 + 29), x] = (*PANEL_LINE, 255)
-        a[12:14, 20:34] = (*CYAN, 200)  # detalhe ciano como nas plataformas
-        a[12:14, 20:34, :3] = (84, 180, 215)
-        return img(a)
-    save(ground(NEON_MAG, (173, 61, 203)), "world/ground.png")
-    save(ground(NEON_CYAN, (40, 170, 190)), "world/ground_alt.png")
+    # ---- portão: 22x75 (88x300 de mundo = a colisão), redesenho de word/gate.png
+    gate = canvas(22, 75)
+    body = np.zeros((75, 22), dtype=bool)
+    body[1:74, 2:20] = True
+    body[1, 2] = body[1, 19] = body[73, 2] = body[73, 19] = False
+    paint(gate, body, VOID)
+    paint(gate, outline(body), NEON_MAG)
+    gate[4:71, 10:12] = (*LILAC, 255)
+    for y in range(6, 71, 8):
+        gate[y, 6:16] = (*CYAN, 255)
+    save(gate, "world/gate.png", "redesenho de art-source/ProjetoFinal_TCC/word/gate.png")
 
-    # ---- checkpoint: cristal oficial sobre base escura com filete ciano
-    base_w, base_h = 64, 20
-    cp = Image.new("RGBA", (64, crystal.height + base_h))
-    cp.alpha_composite(crystal, ((64 - crystal.width) // 2, 0))
-    b = np.zeros((base_h, base_w, 4), dtype=np.uint8)
-    b[:, 6:58] = (*PANEL_DARK, 255)
-    b[0:2, 6:58] = (*NEON_CYAN, 255)
-    b[:, 6] = b[:, 57] = (*PANEL_LINE, 255)
-    cp.alpha_composite(img(b), (0, crystal.height))
-    save(cp, "world/checkpoint.png")
+    # ---- portal: 64x79 (256x316 de mundo), redesenho de word/portal.png
+    W, H = 64, 79
+    yy, xx = np.mgrid[0:H, 0:W]
+    e = ((xx + 0.5 - W / 2) / (W / 2 - 1)) ** 2 + ((yy + 0.5 - H / 2) / (H / 2 - 1)) ** 2
+    portal = canvas(W, H)
+    for lim, col in [(1.0, PORTAL_1), (0.82, PORTAL_2), (0.68, CYAN), (0.60, PORTAL_IN)]:
+        paint(portal, e <= lim, col)
+    rng = np.random.default_rng(29)
+    inner = np.argwhere(e <= 0.45)
+    for y, x in inner[rng.choice(len(inner), 14, replace=False)]:
+        portal[y, x] = (*CYAN, 255)
+    portal[H // 2 - 4:H // 2 + 4, 6:8] = (*MAG, 255)
+    portal[H // 2 - 4:H // 2 + 4, W - 8:W - 6] = (*MAG, 255)
+    save(portal, "world/portal.png", "redesenho de art-source/ProjetoFinal_TCC/word/portal.png")
 
-    # ---- cacho de cristais (decoração)
-    cl = Image.new("RGBA", (128, crystal.height + 8))
-    cl.alpha_composite(crystal, (0, 8))
-    cl.alpha_composite(crystal, (64, 8))
-    cl.alpha_composite(crystal, (32, 0))
-    save(cl, "world/crystal_cluster.png")
-
-    # ---- arco em ruína: duas colunas (wall) + verga feita do módulo da plataforma
-    wall = load("word/wall.png")
-    module = load("word/platform.png")
-    module = module.crop((0, module.getchannel("A").getbbox()[1], 128, 64))
-    arch = Image.new("RGBA", (200, 256))
-    arch.alpha_composite(wall, (0, 0))
-    arch.alpha_composite(wall.crop((0, 60, 64, 256)), (136, 60))
-    arch.alpha_composite(module.crop((0, 0, 128, 40)), (40, 0))
-    save(arch, "world/arch.png")
-    save(wall.crop((0, 96, 64, 256)), "world/wall_broken.png")
-    return platform_info
+    # ---- cristal (projetofinal-29 tem prioridade sobre word/crystal.png do TCC)
+    cr = load(SRC_29, "cristal.png")
+    cr[..., 3] = np.where(cr[..., 3] >= 128, 255, 0)
+    save(cr, "world/crystal.png", "art-source/projetofinal-29/cristal.png")
 
 
 # ================================================================ preview
@@ -915,54 +781,50 @@ def contact_sheet():
         groups.setdefault(rel.rsplit("/", 1)[0], []).append(rel)
     for group, rels in groups.items():
         ims = [Image.open(OUT / r).convert("RGBA") for r in sorted(rels)]
-        scale = max(1, min(8, 128 // max(max(i.size) for i in ims)))
-        w = sum(i.width * scale + 6 for i in ims)
-        h = max(i.height * scale for i in ims)
-        cols_w = min(w, 1800)
-        sheet = Image.new("RGBA", (cols_w, 20 + (h + 6) * (w // cols_w + 1)), (40, 40, 48, 255))
-        x = y = 0
-        for im in ims:
-            big = im.resize((im.width * scale, im.height * scale), Image.NEAREST)
-            if x + big.width > cols_w:
-                x, y = 0, y + h + 6
-            bg = Image.new("RGBA", big.size, (70, 70, 80, 255))
-            bg.alpha_composite(big)
-            sheet.paste(bg, (x, y))
-            x += big.width + 6
+        big = [im.resize((im.width * PIXEL, im.height * PIXEL), Image.NEAREST) for im in ims]
+        width = 1800
+        x = y = rowh = 0
+        places = []
+        for b in big:
+            if x + b.width > width and x > 0:
+                x, y, rowh = 0, y + rowh + 6, 0
+            places.append((x, y))
+            x += b.width + 6
+            rowh = max(rowh, b.height)
+        sheet = Image.new("RGBA", (width, y + rowh + 6), (40, 40, 48, 255))
+        for b, (px, py) in zip(big, places):
+            bg = Image.new("RGBA", b.size, (70, 70, 82, 255))
+            bg.alpha_composite(b)
+            sheet.paste(bg, (px, py))
         sheet.save(PREVIEW / (group.replace("/", "_") + ".png"))
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--preview", action="store_true", help="grava contact sheets em tmp/asset-preview/")
+    ap.add_argument("--preview", action="store_true")
     args = ap.parse_args()
-    if not SRC.is_dir():
-        raise SystemExit(f"Pasta oficial não encontrada: {SRC}")
+    for d in (SRC_29, SRC_TCC):
+        if not d.is_dir():
+            raise SystemExit(f"Pasta de arte não encontrada: {d}")
     before = {p.relative_to(OUT).as_posix() for p in OUT.rglob("*") if p.is_file()} if OUT.is_dir() else set()
 
-    # núcleo de referência para as formas desenhadas: o do triângulo oficial
-    ref = Image.new("RGBA", (ENEMY_CANVAS, ENEMY_CANVAS))
-    ref.paste(load("enemies/triangle.png"), ((ENEMY_CANVAS - 128) // 2,) * 2)
-
     manifest["player"] = build_player()
-    manifest["enemies"] = build_enemies(ref)
-    manifest["boss"] = build_boss(ref)
-    manifest["fx"] = build_fx()
-    manifest["platform"] = build_ui_and_world()
-    manifest["scales"] = {"background": BG_SCALE, "player": PLAYER_SCALE, "enemy": ENEMY_SCALE,
-                          "boss": BOSS_SCALE, "world": 1, "portal": 2}
+    manifest["enemies"] = build_enemies()
+    manifest["boss"] = build_boss()
+    manifest["shots"] = build_shots()
+    manifest["fx"] = build_fx_ui()
+    build_world()
+    manifest["sources"] = dict(sorted(sources.items()))
     manifest["files"] = sorted(written)
-    (OUT / "manifest.json").write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    (OUT / "manifest.json").write_text(json.dumps(manifest, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
 
     stale = sorted(before - set(written) - {"manifest.json"})
-    print(f"{len(written)} arquivos gerados em {OUT.relative_to(ROOT)}")
+    print(f"{len(written)} arquivos gerados em {OUT.relative_to(ROOT).as_posix()}")
     if stale:
-        print("Arquivos antigos que não são mais gerados (não apagados):")
-        for s in stale:
-            print("  ", s)
+        print(f"{len(stale)} arquivo(s) antigo(s) não são mais gerados (não apagados); ex.: {stale[:3]}")
     if args.preview:
         contact_sheet()
-        print(f"previews em {PREVIEW.relative_to(ROOT)}")
+        print(f"folhas de contato em {PREVIEW.relative_to(ROOT).as_posix()}")
 
 
 if __name__ == "__main__":

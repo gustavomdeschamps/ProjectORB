@@ -1,5 +1,7 @@
 package com.delmartec.projectorb.entities;
 
+import com.delmartec.projectorb.utils.Constants;
+
 /**
  * As formas de combate e o chefe geométrico.
  *
@@ -11,10 +13,9 @@ package com.delmartec.projectorb.entities;
  * pontos fracos caem EM CIMA dos marcadores desenhados.
  *
  * Medidas em pixels do canvas nativo; os métodos devolvem pixels de mundo
- * (x escala inteira).
+ * (x Constants.PIXEL_SCALE, a escala única do jogo).
  *
- * canvas     — lado do canvas quadrado do sprite.
- * scale      — escala inteira de desenho.
+ * canvas     — lado do canvas quadrado do sprite (ímpar: o centro é um pixel).
  * baseline   — linhas vazias abaixo do pixel mais baixo em repouso (inclui os
  *              arcos): é essa linha que encosta no chão.
  * sides      — lados do polígono do corpo (0 = círculo).
@@ -23,12 +24,12 @@ package com.delmartec.projectorb.entities;
  * outerR     — raio circunscrito do contorno do corpo.
  */
 public enum EnemyType {
-    //        canvas scale baseline sides startDeg markerR outerR
-    TRIANGLE(144, 2, 31, 3, 90f, 52f, 60f, "TRIÂNGULO"),
-    SQUARE  (144, 2, 20, 4, 45f, 47.6f, 70.71f, "QUADRADO"),
-    DIAMOND (144, 2, 10, 4, 0f, 52f, 60f, "LOSANGO"),
-    HEXAGON (144, 2, 10, 6, 90f, 52f, 60f, "HEXÁGONO"),
-    BOSS    (224, 2, 6, 6, 90f, 91f, 105f, "NÚCLEO GEOMÉTRICO");
+    //        canvas baseline sides startDeg markerR outerR
+    TRIANGLE(73, 16, 3, 90f, 26f, 30f, "TRIÂNGULO"),
+    SQUARE  (73, 9, 4, 45f, 24f, 35.355f, "QUADRADO"),
+    DIAMOND (73, 6, 4, 0f, 26f, 30f, "LOSANGO"),
+    HEXAGON (73, 6, 6, 90f, 26f, 30f, "HEXÁGONO"),
+    BOSS    (113, 4, 6, 90f, 45.5f, 52.5f, "NÚCLEO GEOMÉTRICO");
 
     private final int canvas;
     private final int scale;
@@ -41,10 +42,10 @@ public enum EnemyType {
     private final float halfW;
     private final float halfH;
 
-    EnemyType(int canvas, int scale, int baseline, int sides, float startDeg,
+    EnemyType(int canvas, int baseline, int sides, float startDeg,
               float markerR, float outerR, String displayName) {
         this.canvas = canvas;
-        this.scale = scale;
+        this.scale = Constants.PIXEL_SCALE;
         this.baseline = baseline;
         this.sides = sides;
         this.startDeg = startDeg;

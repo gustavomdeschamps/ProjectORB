@@ -1,18 +1,21 @@
 """Audita assets/sprites/ contra o manifest.json gravado por build_orb_assets.py.
 
 Checa:
-- todo arquivo listado existe, é RGBA e não está vazio;
-- todos os frames de uma animação têm o mesmo canvas (e o canvas do manifesto);
-- a contagem de frames no disco bate com o manifesto (o jogo lê por prefixo);
-- os pontos fracos que o jogo calcula (raio dos marcadores em EnemyType) caem
-  sobre pixels de marcador magenta desenhados no frame idle_01 de cada inimigo;
-- a baseline do manifesto bate com a linha mais baixa ocupada em repouso.
+- todo arquivo listado existe, é RGBA, não está vazio e tem alfa binário
+  (0/255: pixel art de verdade, sem franja antialiasada);
+- a contagem de frames no disco bate com o manifesto (o jogo lê por prefixo)
+  e todos os frames de uma animação têm o canvas do manifesto;
+- o ORB só usa cores da paleta do idle canônico;
+- os pontos fracos que o jogo calcula (EnemyType: raio dos marcadores)
+  caem sobre pixels de marcador magenta desenhados em idle_01;
+- os números de EnemyType.java (canvas, baseline, raios) batem com o manifesto.
 
 Uso: python tools/audit_orb_assets.py   (código de saída 1 se houver erro)
 """
 
 import json
 import math
+import re
 import sys
 from pathlib import Path
 
@@ -21,6 +24,7 @@ from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
 SPRITES = ROOT / "assets" / "sprites"
+ENEMY_JAVA = ROOT / "core/src/main/java/com/delmartec/projectorb/entities/EnemyType.java"
 MAG = np.array([205, 69, 231])
 
 m = json.loads((SPRITES / "manifest.json").read_text(encoding="utf-8"))
@@ -36,11 +40,13 @@ for rel in m["files"]:
     if not path.is_file():
         errors.append(f"faltando: {rel}")
         continue
-    with Image.open(path) as im:
-        if im.mode != "RGBA":
-            errors.append(f"não é RGBA: {rel}")
-        if im.getchannel("A").getbbox() is None:
-            errors.append(f"vazio: {rel}")
+    a = rgba(rel)
+    if a[..., 3].max() == 0:
+        errors.append(f"vazio: {rel}")
+    if rel.startswith("background/"):
+        continue  # camadas oficiais do TCC, desenhadas com meios-tons próprios
+    if not np.isin(a[..., 3], (0, 255)).all():
+        errors.append(f"alfa não binário: {rel}")
 
 
 def check_anims(prefix, info):
@@ -53,47 +59,45 @@ def check_anims(prefix, info):
             errors.append(f"{prefix}/{anim}: canvas {sizes} != {info['canvas']}")
 
 
-def lowest_rest_row(prefix):
-    low = 0
-    for p in list(SPRITES.glob(f"{prefix}/idle_*.png")) + list(SPRITES.glob(f"{prefix}/move_*.png")):
-        a = np.array(Image.open(p).convert("RGBA"))
-        ys = np.nonzero(a[..., 3] >= 128)[0]
-        low = max(low, int(ys.max()))
-    return low
+check_anims("player", m["player"])
+pal = {tuple(c) for c in m["orb_palette"]}
+for p in sorted(SPRITES.glob("player/*.png")):
+    a = rgba(p.relative_to(SPRITES).as_posix())
+    extra = {tuple(int(v) for v in c) for c in a[a[..., 3] > 0][:, :3]} - pal
+    if extra:
+        errors.append(f"{p.name}: {len(extra)} cor(es) fora da paleta do ORB")
 
-
-def weak_points(kind, info):
-    r = info["weak_r_px"]
-    n, start = {"triangle": (3, 90), "square": (4, 0), "diamond": (4, 0), "hexagon": (6, 90),
-                "boss": (6, 90)}[kind]
-    return [(r * math.cos(math.radians(start + i * 360 / n)), r * math.sin(math.radians(start + i * 360 / n)))
-            for i in range(n)]
-
+java = ENEMY_JAVA.read_text(encoding="utf-8")
+rows = {name: [float(v) for v in vals.split(",")] for name, vals in
+        re.findall(r"^\s*(TRIANGLE|SQUARE|DIAMOND|HEXAGON|BOSS)\s*\(([\d.,\s f]+?),\s*\"", java, re.M)
+        for vals in [vals.replace("f", "")]}
+names = {"triangle": "TRIANGLE", "square": "SQUARE", "diamond": "DIAMOND", "hexagon": "HEXAGON", "boss": "BOSS"}
 
 report = {}
-check_anims("player", m["player"])
 for kind, info in list(m["enemies"].items()) + [("boss", m["boss"])]:
     prefix = "boss" if kind == "boss" else f"enemies/{kind}"
     check_anims(prefix, info)
-    low = lowest_rest_row(prefix)
-    if info["canvas"] - 1 - low != info["baseline_px"]:
-        errors.append(f"{kind}: baseline {info['baseline_px']} != medida {info['canvas'] - 1 - low}")
-    if kind in ("circle", "pentagon"):
-        continue  # arte gerada, sem EnemyType no jogo (ainda)
+    if kind not in names:
+        continue  # círculo e pentágono: arte pronta, sem EnemyType (decisão da Fase 0)
+    canvas_, baseline, sides, start, marker_r, outer_r = rows[names[kind]]
+    expect = (info["canvas"], info["baseline_px"], info["sides"], info["start_deg"], info["marker_r_px"],
+              info["outer_r_px"])
+    got = (canvas_, baseline, sides, start, marker_r, outer_r)
+    if any(abs(g - e) > 0.01 for g, e in zip(got, expect)):
+        errors.append(f"EnemyType.{names[kind]} {got} != manifesto {expect}")
     a = rgba(f"{prefix}/idle_01.png")
-    cx, cy = info["center_px"]
-    hits = []
-    for lx, ly in weak_points(kind, info):
-        x, y = cx + lx, cy - ly
-        # procura pixel de marcador magenta num raio de 5 px do ponto fraco
-        x0, x1 = int(x - 5), int(x + 6)
-        y0, y1 = int(y - 5), int(y + 6)
-        win = a[max(0, y0):y1, max(0, x0):x1]
-        near = np.abs(win[..., :3] - MAG).sum(axis=2) < 90
-        hits.append(bool(near.any()))
-        if not near.any():
-            errors.append(f"{kind}: ponto fraco em ({x:.1f},{y:.1f}) sem marcador desenhado por perto")
-    report[kind] = f"{sum(hits)}/{len(hits)} pontos fracos sobre marcadores"
+    c = info["canvas"] / 2
+    n, st = {"triangle": (3, 90), "square": (4, 0), "diamond": (4, 0), "hexagon": (6, 90), "boss": (6, 90)}[kind]
+    hits = 0
+    for i in range(n):
+        ang = math.radians(st + i * 360 / n)
+        x, y = c + marker_r * math.cos(ang), c - marker_r * math.sin(ang)
+        win = a[int(y - 3):int(y + 4), int(x - 3):int(x + 4)]
+        if (np.abs(win[..., :3] - MAG).sum(axis=2) < 30).any():
+            hits += 1
+        else:
+            errors.append(f"{kind}: ponto fraco em ({x:.1f},{y:.1f}) sem marcador desenhado")
+    report[kind] = f"{hits}/{n} pontos fracos sobre marcadores"
 
 for k, v in report.items():
     print(f"{k:9s} {v}")

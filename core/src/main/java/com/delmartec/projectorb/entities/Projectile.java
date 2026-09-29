@@ -12,6 +12,13 @@ public class Projectile {
     public final int damage;
     public final boolean boss;
     public float life = 3.5f;
+    /** Arte do tiro (só visual): um dos STYLE_*. */
+    public int style = STYLE_PLAYER;
+
+    public static final int STYLE_PLAYER = 0;
+    public static final int STYLE_ENEMY = 1;
+    public static final int STYLE_BOSS_ORB = 2;
+    public static final int STYLE_BOSS_VOLLEY = 3;
 
     // Reutilizado: bounds() era chamado por projétil por frame em dois laços
     // diferentes e alocava um Rectangle novo a cada vez.

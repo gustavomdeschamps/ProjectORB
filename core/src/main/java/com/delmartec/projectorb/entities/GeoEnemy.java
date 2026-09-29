@@ -232,10 +232,12 @@ public final class GeoEnemy {
     private void addRadial(List<Projectile> projectiles, int count, float speed, int damage, boolean boss, double offset) {
         for (int i = 0; i < count; i++) {
             double a = offset + i * Math.PI * 2.0 / count;
-            projectiles.add(new Projectile(x, y,
+            Projectile p = new Projectile(x, y,
                 (float)Math.cos(a) * speed,
                 (float)Math.sin(a) * speed,
-                boss ? 15f : 12f, true, damage, boss));
+                boss ? 15f : 12f, true, damage, boss);
+            p.style = boss ? Projectile.STYLE_BOSS_ORB : Projectile.STYLE_ENEMY;
+            projectiles.add(p);
         }
     }
 
@@ -248,10 +250,12 @@ public final class GeoEnemy {
         dx /= len;
         dy /= len;
         double base = Math.atan2(dy, dx) + angleOffset;
-        projectiles.add(new Projectile(originX, originY,
+        Projectile p = new Projectile(originX, originY,
             (float)Math.cos(base) * speed,
             (float)Math.sin(base) * speed,
-            boss ? 15f : 12f, true, damage, boss));
+            boss ? 15f : 12f, true, damage, boss);
+        p.style = boss ? Projectile.STYLE_BOSS_VOLLEY : Projectile.STYLE_ENEMY;
+        projectiles.add(p);
     }
 
     // -------------------------------------------------------------- acertos

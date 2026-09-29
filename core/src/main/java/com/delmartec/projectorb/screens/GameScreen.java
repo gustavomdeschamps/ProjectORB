@@ -550,7 +550,7 @@ public class GameScreen extends ScreenAdapter {
         // arte ficarem na grade. Levemente rebaixado em brilho para o cenário
         // nunca competir com personagem, pontos fracos e projéteis.
         float span = Constants.VIEW_WIDTH;
-        int step = Constants.BACKGROUND_SCALE;
+        int step = Constants.PIXEL_SCALE;
         game.batch.setColor(0.74f, 0.76f, 0.88f, 1f);
         for (int layer = 0; layer < backgroundLayers.length; layer++) {
             float scroll = Math.round(worldCamera.position.x * PARALLAX[layer] / step) * step;
@@ -591,16 +591,17 @@ public class GameScreen extends ScreenAdapter {
             game.batch.setColor(0.35f, 0.75f, 1f, 0.20f);
             game.batch.draw(game.assets.pixel, gateRect.x + 34f, Constants.FLOOR_Y, 20f, 760f);
             game.batch.setColor(Color.WHITE);
-            // gate.png tem exatamente a largura da colisão (88 px) e vai em 1x.
+            // gate.png x PIXEL_SCALE tem exatamente a largura da colisão (88 px).
             game.batch.draw(game.assets.gate, gateRect.x, Constants.FLOOR_Y,
-                game.assets.gate.getWidth(), game.assets.gate.getHeight());
+                game.assets.gate.getWidth() * Constants.PIXEL_SCALE,
+                game.assets.gate.getHeight() * Constants.PIXEL_SCALE);
         }
 
         if (portalActive) {
             float pulse = 0.88f + 0.12f * MathUtils.sin(gameTime * 4f);
             game.batch.setColor(1f, 1f, 1f, pulse);
-            float pw = game.assets.portal.getWidth() * 2f;
-            float ph = game.assets.portal.getHeight() * 2f;
+            float pw = game.assets.portal.getWidth() * Constants.PIXEL_SCALE;
+            float ph = game.assets.portal.getHeight() * Constants.PIXEL_SCALE;
             game.batch.draw(game.assets.portal,
                 PORTAL_BOUNDS.x + PORTAL_BOUNDS.width / 2f - pw / 2f, Constants.FLOOR_Y, pw, ph);
             game.batch.setColor(Color.WHITE);
@@ -612,7 +613,7 @@ public class GameScreen extends ScreenAdapter {
         drawEffects();
 
         boolean onTarget = isAimOnWeakPoint();
-        float aimSize = game.assets.crosshair.getWidth() * 2f;
+        float aimSize = game.assets.crosshair.getWidth() * Constants.PIXEL_SCALE;
         game.batch.setColor(onTarget ? AIM_LOCK : Color.WHITE);
         game.batch.draw(game.assets.crosshair,
             mouseWorld.x - aimSize / 2f, mouseWorld.y - aimSize / 2f, aimSize, aimSize);
@@ -644,17 +645,18 @@ public class GameScreen extends ScreenAdapter {
             return;
         }
 
-        // Plataformas elevadas em 1x, montadas com as peças da arte oficial:
+        // Plataformas elevadas montadas com peças de pixel art na escala única:
         // ponta + módulos inteiros (caixa + vão) + colunas lisas que absorvem
         // a sobra + ponta espelhada. Nada é esticado fora da escala inteira.
         // A cor alterna por zona só para o mapa não ficar monótono.
         boolean alt = MathUtils.clamp((int)(r.x / 1900f), 0, 5) % 2 == 1;
         Assets.PlatformSkin skin = alt ? game.assets.platformAlt : game.assets.platform;
         TextureRegion capRight = alt ? platformAltCapRight : platformCapRight;
-        int cap = skin.cap.getWidth();
-        int module = skin.module.getWidth();
-        int h = skin.module.getHeight();
-        int inner = Math.round(r.width) - cap * 2;
+        int px = Constants.PIXEL_SCALE;
+        int cap = skin.cap.getWidth() * px;
+        int module = skin.module.getWidth() * px;
+        int h = skin.module.getHeight() * px;
+        int inner = Math.round(r.width / px) * px - cap * 2;
         int modules = Math.max(0, inner / module);
         int spare = inner - modules * module;
         int fillLeft = spare / 2;
@@ -677,13 +679,14 @@ public class GameScreen extends ScreenAdapter {
     }
 
     private void drawGround(Rectangle r) {
-        // Tile 64x126 em 1x: a altura é exatamente FLOOR_Y.
+        // Tile 16x32 de arte (64x128 de mundo); o topo coincide com FLOOR_Y.
         Texture tile = game.assets.ground;
-        float tileW = tile.getWidth();
+        float tileW = tile.getWidth() * Constants.PIXEL_SCALE;
+        float tileH = tile.getHeight() * Constants.PIXEL_SCALE;
         float start = Math.max(r.x, (float)Math.floor((worldCamera.position.x - 1100f) / tileW) * tileW);
         float end = Math.min(r.x + r.width, worldCamera.position.x + 1100f);
         for (float x = start; x < end; x += tileW) {
-            game.batch.draw(tile, x, Constants.FLOOR_Y - tile.getHeight(), tileW, tile.getHeight());
+            game.batch.draw(tile, x, Constants.FLOOR_Y - tileH, tileW, tileH);
         }
     }
 
@@ -769,12 +772,12 @@ public class GameScreen extends ScreenAdapter {
     }
 
     private void drawWeakPointIndicators(GeoEnemy enemy) {
-        // O pulso é de brilho, não de escala: o marcador fica sempre em 2x.
+        // O pulso é de brilho, não de escala: o marcador fica na escala única.
         float pulse = 0.82f + 0.18f * MathUtils.sin(enemy.getStateTime() * 5f);
         float markerSize = enemy.weakPointMarkerSize();
         Texture marker = markerSize >= 44f ? game.assets.weakPointBoss
             : markerSize <= 30f ? game.assets.weakPointSmall : game.assets.weakPoint;
-        float size = marker.getWidth() * 2f;
+        float size = marker.getWidth() * Constants.PIXEL_SCALE;
 
         game.batch.setColor(1f, 1f, 1f, pulse);
         for (WeakPoint point : enemy.getWeakPoints()) {
@@ -787,33 +790,42 @@ public class GameScreen extends ScreenAdapter {
     }
 
     private void drawProjectiles() {
-        // Tamanhos nativos x escala inteira: 11 px x4 = 44 e 18 px x3 = 54.
-        float playerSize = game.assets.playerShot.getWidth() * 4f;
-        for (Projectile p : playerProjectiles) {
-            game.batch.draw(game.assets.playerShot, p.x - playerSize / 2f, p.y - playerSize / 2f,
-                playerSize, playerSize);
-        }
-        for (Projectile p : enemyProjectiles) {
-            Texture texture = p.boss ? game.assets.bossShot : game.assets.enemyShot;
-            float size = texture.getWidth() * (p.boss ? 3f : 4f);
-            game.batch.draw(texture, p.x - size / 2f, p.y - size / 2f, size, size);
-        }
+        for (Projectile p : playerProjectiles) drawShot(p);
+        for (Projectile p : enemyProjectiles) drawShot(p);
+    }
+
+    /**
+     * Um dos 8 sprites pré-girados (passos de 45°), posicionado para que a
+     * cabeça do tiro fique exatamente na posição/colisão do projétil.
+     */
+    private void drawShot(Projectile p) {
+        float angle = MathUtils.atan2(p.vy, p.vx);
+        int dir = Math.floorMod(Math.round(angle / (MathUtils.PI / 4f)), 8);
+        Texture texture = game.assets.shots[p.style][dir];
+        float snapped = dir * MathUtils.PI / 4f;
+        float[] head = Assets.SHOT_HEAD[p.style];
+        float px = Constants.PIXEL_SCALE;
+        float hx = (head[0] * MathUtils.cos(snapped) - head[1] * MathUtils.sin(snapped)) * px;
+        float hy = (head[0] * MathUtils.sin(snapped) + head[1] * MathUtils.cos(snapped)) * px;
+        float w = texture.getWidth() * px;
+        float h = texture.getHeight() * px;
+        game.batch.draw(texture, p.x - hx - w / 2f, p.y - hy - h / 2f, w, h);
     }
 
     private void drawEffects() {
         for (EffectBurst effect : effects) {
             Animation<TextureRegion> animation = switch (effect.kind) {
                 case HIT -> game.assets.hitBurst;
-                case VOID -> game.assets.voidBurst;
+                case VOID -> effect.size >= 250f ? game.assets.voidBurstBig
+                    : effect.size >= 150f ? game.assets.voidBurstMid : game.assets.voidBurst;
                 case DASH -> game.assets.dashTrail;
             };
-            // O crescimento está desenhado nos frames; o tamanho pedido vira a
-            // escala inteira mais próxima do frame nativo.
+            // O crescimento está desenhado nos frames; o tamanho pedido escolhe
+            // a variante (normal/média/grande), sempre na escala única.
             TextureRegion frame = animation.getKeyFrame(
                 Math.min(0.999f, effect.time / effect.duration) * animation.getAnimationDuration());
-            float scale = Math.max(1, Math.round(effect.size / frame.getRegionWidth()));
-            float w = frame.getRegionWidth() * scale;
-            float h = frame.getRegionHeight() * scale;
+            float w = frame.getRegionWidth() * Constants.PIXEL_SCALE;
+            float h = frame.getRegionHeight() * Constants.PIXEL_SCALE;
             game.batch.draw(frame, effect.x - w / 2f, effect.y - h / 2f, w, h);
         }
         game.batch.setColor(Color.WHITE);
@@ -870,9 +882,9 @@ public class GameScreen extends ScreenAdapter {
         game.batch.draw(game.assets.pixel, 64f, 936f,
             436f * player.getHealth() / (float)Constants.MAX_HEALTH, 13f);
         game.batch.setColor(Color.WHITE);
-        float orb = game.assets.lifeOrbSmall.getWidth() * 2f;
+        float orb = game.assets.lifeOrb.getWidth() * Constants.PIXEL_SCALE;
         for (int i = 0; i < player.getLives(); i++)
-            game.batch.draw(game.assets.lifeOrbSmall, 369f + i * 36f, 974f, orb, orb);
+            game.batch.draw(game.assets.lifeOrb, 330f + i * 60f, 960f, orb, orb);
     }
 
     private void drawEnemyHud() {

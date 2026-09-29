@@ -12,22 +12,21 @@ public final class Constants {
     // ESCALA E ANCORAGEM DOS SPRITES (assets/sprites/, medidos por
     // tools/build_orb_assets.py e gravados em sprites/manifest.json)
     //
-    // Toda arte é desenhada em escala INTEIRA do tamanho nativo: fundo 4x,
-    // player 4x, inimigos e boss 2x, mundo e UI 1x. Escala fracionária
-    // deixaria pixels de tamanhos desiguais.
+    // ESCALA ÚNICA: 1 pixel de arte = PIXEL_SCALE pixels de mundo, para TUDO
+    // (fundo, ORB, inimigos, boss, mundo, efeitos e UI). Assim os pixels têm o
+    // mesmo tamanho em todo o jogo e nada é reamostrado.
     //
     // O player vive num canvas 48x48; a linha mais baixa dos pés fica a 4 px
     // da borda. Converter isso em fração da altura desenhada é o que mantém o
     // sprite colado no chão — é a ÚNICA fonte de verdade do alinhamento
     // vertical do player. A dos inimigos fica em EnemyType.
     // ---------------------------------------------------------------------
-    public static final int BACKGROUND_SCALE = 4;
+    public static final int PIXEL_SCALE = 4;
     public static final int PLAYER_CANVAS = 48;
-    public static final int PLAYER_SCALE = 4;
     public static final float CHAR_BASELINE = 4f / PLAYER_CANVAS;
 
-    public static final float PLAYER_W = PLAYER_CANVAS * PLAYER_SCALE;
-    public static final float PLAYER_H = PLAYER_CANVAS * PLAYER_SCALE;
+    public static final float PLAYER_W = PLAYER_CANVAS * PIXEL_SCALE;
+    public static final float PLAYER_H = PLAYER_CANVAS * PIXEL_SCALE;
 
     public static final float PLAYER_HIT_W = 58f;
     public static final float PLAYER_HIT_H = 78f;

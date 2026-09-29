@@ -54,17 +54,29 @@ public class Assets {
     public final Animation<TextureRegion> bossEnraged;
     public final Animation<TextureRegion> bossDeath;
 
-    // EFEITOS / MIRA (tamanhos nativos pequenos, desenhados em escala inteira)
-    public final Texture weakPoint;      // 17 px
-    public final Texture weakPointSmall; // 15 px
-    public final Texture weakPointBoss;  // 22 px
+    // EFEITOS / MIRA (desenhados a PIXEL_SCALE como todo o resto)
+    public final Texture weakPoint;      // 9 px
+    public final Texture weakPointSmall; // 7 px
+    public final Texture weakPointBoss;  // 11 px
     public final Texture guideArrow;
     public final Texture crosshair;
-    public final Texture playerShot;
-    public final Texture enemyShot;
-    public final Texture bossShot;
+    /**
+     * Tiros de projetofinal-29 em 8 direções pré-desenhadas (índice = ângulo /
+     * 45°, anti-horário a partir da direita): girar em ângulo livre quebraria
+     * a grade de pixel. Primeiro índice: Projectile.STYLE_*.
+     */
+    public final Texture[][] shots = new Texture[4][8];
+    /**
+     * Onde fica a "cabeça" de cada tiro no sprite apontando para a direita,
+     * em pixels de arte a partir do centro do canvas 32x32 (x para a frente,
+     * y para cima). Medido pelo gerador (manifest.json, "shots.head_px"): é
+     * esse ponto que coincide com a posição/colisão do projétil.
+     */
+    public static final float[][] SHOT_HEAD = { { 6.87f, 0.35f }, { 4.0f, 0.28f }, { 5.61f, 0.56f }, { 5.09f, 0.85f } };
     public final Animation<TextureRegion> hitBurst;
     public final Animation<TextureRegion> voidBurst;
+    public final Animation<TextureRegion> voidBurstMid;
+    public final Animation<TextureRegion> voidBurstBig;
     public final Animation<TextureRegion> dashTrail;
 
     // MUNDO
@@ -80,10 +92,9 @@ public class Assets {
 
     // UI
     public final Texture lifeOrb;
-    public final Texture lifeOrbSmall;
-    public final Texture hudPanel;
-    public final Texture enemyPanel;
-    public final Texture dialogPanel;
+    public final Texture panel;
+    public final Texture panelCyan;
+    public final Texture panelRed;
     public final Texture pixel;
     public final Texture orbShadow;
 
@@ -123,17 +134,20 @@ public class Assets {
         bossDeath = animation(0.12f, "boss/death_", Animation.PlayMode.NORMAL);
         enemyAnims.put(EnemyType.BOSS, anims(bossIdle, bossIdle, bossOrbs, bossIdle, bossDeath));
 
-        weakPoint = load("ui/weakpoint_17.png");
-        weakPointSmall = load("ui/weakpoint_15.png");
-        weakPointBoss = load("ui/weakpoint_22.png");
+        weakPoint = load("ui/weakpoint.png");
+        weakPointSmall = load("ui/weakpoint_small.png");
+        weakPointBoss = load("ui/weakpoint_boss.png");
         guideArrow = load("ui/guide_arrow.png");
         crosshair = load("ui/crosshair.png");
 
-        playerShot = load("fx/player_shot.png");
-        enemyShot = load("fx/enemy_shot.png");
-        bossShot = load("fx/boss_shot.png");
+        String[] shotRoles = { "player", "enemy", "boss_orb", "boss_volley" };
+        for (int role = 0; role < shotRoles.length; role++) {
+            for (int dir = 0; dir < 8; dir++) shots[role][dir] = load("fx/shot_" + shotRoles[role] + "_" + dir + ".png");
+        }
         hitBurst = animation(1f, "fx/hit_burst_", Animation.PlayMode.NORMAL);
         voidBurst = animation(1f, "fx/void_burst_", Animation.PlayMode.NORMAL);
+        voidBurstMid = animation(1f, "fx/void_burst_mid_", Animation.PlayMode.NORMAL);
+        voidBurstBig = animation(1f, "fx/void_burst_big_", Animation.PlayMode.NORMAL);
         dashTrail = animation(1f, "fx/dash_trail_", Animation.PlayMode.NORMAL);
 
         ground = load("world/ground.png");
@@ -151,17 +165,16 @@ public class Assets {
             load("background/03_nuvem3.png"),
             load("background/04_nuvem4.png"),
             load("background/05_montanhas.png"),
-            load("background/06_estruturas-fundo.png"),
+            load("background/06_estruturas.png"),
             load("background/07_lago.png"),
             load("background/08_chao.png"),
         };
         menuBackground = load("background/menu.png");
 
         lifeOrb = load("ui/life_orb.png");
-        lifeOrbSmall = load("ui/life_orb_small.png");
-        hudPanel = load("ui/hud_panel.png");
-        enemyPanel = load("ui/enemy_panel.png");
-        dialogPanel = load("ui/dialog_panel.png");
+        panel = load("ui/panel.png");
+        panelCyan = load("ui/panel_cyan.png");
+        panelRed = load("ui/panel_red.png");
         pixel = load("ui/pixel.png");
 
         Pixmap shadow = new Pixmap(64, 24, Pixmap.Format.RGBA8888);
