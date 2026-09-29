@@ -50,6 +50,7 @@ public final class BackgroundTour {
         public void create() {
             super.create();
             startGame();
+            ((GameScreen) getScreen()).skipTutorial();
         }
 
         @Override

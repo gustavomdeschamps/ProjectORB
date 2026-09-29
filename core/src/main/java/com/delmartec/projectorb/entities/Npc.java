@@ -28,6 +28,8 @@ public final class Npc {
     private float stateTime;
     private boolean facingRight = true;
     private boolean visible = true;
+    /** Se definido, o NPC olha para este x em vez de olhar para o jogador. */
+    private Float lookAtX;
 
     /**
      * @param canvas     lado do canvas do sprite, em pixels de arte
@@ -47,7 +49,7 @@ public final class Npc {
 
     public void update(float delta, float playerX) {
         stateTime += delta;
-        facingRight = playerX >= x;
+        facingRight = (lookAtX != null ? lookAtX : playerX) >= x;
         Animation<TextureRegion> a = anims.get(state);
         if (a != null && a.getPlayMode() == Animation.PlayMode.NORMAL && a.isAnimationFinished(stateTime)) {
             setState(restState);
@@ -76,6 +78,9 @@ public final class Npc {
         batch.draw(frame, x - size / 2f, drawY, size / 2f, size / 2f, size, size,
             facingRight ? 1f : -1f, 1f, 0f);
     }
+
+    /** Olhar para um ponto (ex.: apontar para o alvo); null volta a olhar o jogador. */
+    public void lookAt(Float worldX) { this.lookAtX = worldX; }
 
     public String getName() { return name; }
     public String getState() { return state; }

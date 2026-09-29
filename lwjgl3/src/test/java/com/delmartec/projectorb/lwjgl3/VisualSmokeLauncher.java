@@ -64,37 +64,69 @@ public final class VisualSmokeLauncher {
                 startGame();
                 stage++;
             } else if (stage == 3 && elapsed > 3.5f) {
-                capture("04-gameplay.png");
+                capture("04-tutorial-pi.png");
+                tutorialAt(9);   // passo do alvo de treino
+                stage++;
+            } else if (stage == 4 && elapsed > 4.4f) {
+                capture("04b-tutorial-alvo.png");
+                ((GameScreen) getScreen()).skipTutorial();
+                stage++;
+            } else if (stage == 5 && elapsed > 5.0f) {
+                capture("04c-gameplay.png");
                 jumpToSection(1, 2420f);
                 stage++;
-            } else if (stage == 4 && elapsed > 4.3f) {
+            } else if (stage == 6 && elapsed > 5.8f) {
                 capture("05-diamond.png");
                 jumpToSection(2, 4020f);
                 stage++;
-            } else if (stage == 5 && elapsed > 5.1f) {
+            } else if (stage == 7 && elapsed > 6.6f) {
                 capture("06-triangle.png");
                 jumpToSection(3, 6260f);
                 stage++;
-            } else if (stage == 6 && elapsed > 5.9f) {
+            } else if (stage == 8 && elapsed > 7.4f) {
                 capture("07-square.png");
                 jumpToSection(4, 8060f);
                 stage++;
-            } else if (stage == 7 && elapsed > 6.7f) {
+            } else if (stage == 9 && elapsed > 8.2f) {
                 capture("08-hexagon.png");
                 jumpToSection(5, 10480f);
                 stage++;
-            } else if (stage == 8 && elapsed > 7.5f) {
+            } else if (stage == 10 && elapsed > 9.0f) {
                 capture("09-boss.png");
                 setScreen(new GameOverScreen(this, 64f, 3, 18, 4, 2480));
                 stage++;
-            } else if (stage == 9 && elapsed > 8.3f) {
+            } else if (stage == 11 && elapsed > 9.8f) {
                 capture("10-defeat.png");
                 setScreen(new VictoryScreen(this, 172f, 2, 34, 5, 8420, 29));
                 stage++;
-            } else if (stage == 10 && elapsed > 9.1f) {
+            } else if (stage == 12 && elapsed > 10.6f) {
                 capture("11-victory.png");
                 stage++;
                 Gdx.app.exit();
+            }
+        }
+
+        /** Leva o tutorial do Pi direto para um passo (e mostra o alvo). */
+        private void tutorialAt(int step) {
+            try {
+                GameScreen screen = (GameScreen) getScreen();
+                Field target = GameScreen.class.getDeclaredField("targetActive");
+                target.setAccessible(true);
+                target.setBoolean(screen, true);
+                Field started = GameScreen.class.getDeclaredField("tutorialStarted");
+                started.setAccessible(true);
+                started.setBoolean(screen, true);
+                Field fs = GameScreen.class.getDeclaredField("piScript");
+                fs.setAccessible(true);
+                Field fp = GameScreen.class.getDeclaredField("piPortrait");
+                fp.setAccessible(true);
+                Field fl = GameScreen.class.getDeclaredField("piListener");
+                fl.setAccessible(true);
+                screen.startDialogue((com.delmartec.projectorb.dialogue.DialogueScript) fs.get(screen), step,
+                    (com.badlogic.gdx.graphics.g2d.TextureRegion) fp.get(screen),
+                    (com.delmartec.projectorb.dialogue.DialogueRunner.Listener) fl.get(screen));
+            } catch (ReflectiveOperationException e) {
+                throw new RuntimeException(e);
             }
         }
 
@@ -107,6 +139,7 @@ public final class VisualSmokeLauncher {
                 Field playerField = GameScreen.class.getDeclaredField("player");
                 playerField.setAccessible(true);
                 ((Player) playerField.get(screen)).respawn(playerX, 230f);
+                screen.skipTutorial();
                 Method spawn = GameScreen.class.getDeclaredMethod("spawnSection", int.class, boolean.class);
                 spawn.setAccessible(true);
                 spawn.invoke(screen, section, false);

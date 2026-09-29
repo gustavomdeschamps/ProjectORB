@@ -44,6 +44,8 @@ public final class SectionRespawnCheck {
         public void create() {
             super.create();
             startGame();
+            // o tutorial do Pi trava os controles; estes testes são sobre outra coisa
+            ((GameScreen) getScreen()).skipTutorial();
         }
 
         @Override

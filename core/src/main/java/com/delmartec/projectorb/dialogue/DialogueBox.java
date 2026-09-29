@@ -15,7 +15,8 @@ import com.delmartec.projectorb.utils.UiRenderer;
  */
 public final class DialogueBox {
     private static final int PX = Constants.PIXEL_SCALE;
-    private static final float X = 240f, Y = 40f, W = 1440f, H = 232f;
+    // Na faixa de cima, abaixo do HUD: embaixo ela cobria o ORB e o NPC.
+    private static final float X = 240f, Y = 676f, W = 1440f, H = 232f;
     private static final float TEXT_X = X + 196f;
     private static final float TEXT_W = W - 196f - 64f;
     private static final Color NAME = new Color(0.96f, 0.18f, 0.82f, 1f);

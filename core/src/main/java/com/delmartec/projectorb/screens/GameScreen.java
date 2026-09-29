@@ -17,7 +17,9 @@ import com.badlogic.gdx.utils.viewport.Viewport;
 import com.delmartec.projectorb.ProjectOrbGame;
 import com.delmartec.projectorb.dialogue.DialogueBox;
 import com.delmartec.projectorb.dialogue.DialogueRunner;
+import com.delmartec.projectorb.dialogue.DialogueLine;
 import com.delmartec.projectorb.dialogue.DialogueScript;
+import com.delmartec.projectorb.entities.Npc;
 import com.delmartec.projectorb.entities.EffectBurst;
 import com.delmartec.projectorb.entities.EnemyType;
 import com.delmartec.projectorb.entities.GeoEnemy;
@@ -123,6 +125,38 @@ public class GameScreen extends ScreenAdapter {
     private boolean learnedJump;
     private boolean learnedDash;
     private boolean learnedShoot;
+
+    // ---- Tutorial com o Pi (seção 0) --------------------------------------
+    /** Linha dos pés do Pi e posição: perto de onde o ORB pousa. */
+    private static final float PI_X = 470f;
+    /** Alvo de treino: um ponto fraco iluminado flutuando. */
+    private static final float TARGET_X = 860f, TARGET_Y = 520f;
+    private final Npc pi;
+    private final DialogueScript piScript;
+    private final TextureRegion piPortrait;
+    private boolean tutorialStarted;
+    private boolean tutorialDone;
+    /** Passo em que o tutorial estava (retoma daqui se o ORB morrer). */
+    private int tutorialStep;
+    private boolean targetActive;
+    private final DialogueRunner.Listener piListener = new DialogueRunner.Listener() {
+        @Override public void onLineStart(DialogueScript script, int index, DialogueLine line) {
+            tutorialStep = index;
+            if ("spawnTarget".equals(line.event)) targetActive = true;
+            pi.play(line.anim != null ? line.anim : "talk");
+            // apontando: vira para o alvo (ou para o caminho à direita), não para o ORB
+            pi.lookAt("point".equals(line.anim) ? (targetActive ? TARGET_X : PI_X + 1000f) : null);
+            if ("openGate".equals(line.event)) {
+                sectionCleared[0] = true;
+                game.audio.weakPoint();
+            }
+        }
+
+        @Override public void onFinished(DialogueScript script) {
+            tutorialDone = true;
+            pi.setState("idle");
+        }
+    };
     private float resumeGuard = 0f;
     /** Diálogo em andamento (Pi, Octógono). Ver startDialogue(). */
     private final DialogueRunner dialogue = new DialogueRunner();
@@ -147,6 +181,12 @@ public class GameScreen extends ScreenAdapter {
         hudCamera.position.set(Constants.VIEW_WIDTH / 2f, Constants.VIEW_HEIGHT / 2f, 0f);
         worldCamera.update();
         hudCamera.update();
+        pi = new Npc("pi", game.assets.npcAnimations("pi", 0.12f,
+            new String[] { "idle", "walk", "talk", "point" }, new String[] { "wave", "cheer", "appear" }),
+            Constants.PLAYER_CANVAS, 4, "idle", PI_X, Constants.FLOOR_Y);
+        piScript = DialogueScript.load(Gdx.files.internal("dialogue/pi_tutorial.json"));
+        piPortrait = game.assets.npcPortrait("pi");
+        pi.play("appear");
         spawnSection(0, false);
         updateGate();
     }
@@ -242,12 +282,16 @@ public class GameScreen extends ScreenAdapter {
         player.update(delta, level.getPlatforms(), gateActive ? gateRect : null, acceptActions);
 
         if (Math.abs(player.getX() - 210f) > 75f) learnedMove = true;
+        // "andar" = movimento de verdade (não só estar longe do nascimento)
+        if (Math.abs(player.getVx()) > 60f && player.isGrounded()) dialogueSignal("move");
         if (player.consumeJumpEvent()) {
             learnedJump = true;
+            dialogueSignal(player.getJumpCount() >= 2 ? "doubleJump" : "jump");
             game.audio.jump();
         }
         if (player.consumeDashEvent()) {
             learnedDash = true;
+            dialogueSignal("dash");
             game.audio.dash();
             shake(0.08f, 6f);
         }
@@ -259,6 +303,7 @@ public class GameScreen extends ScreenAdapter {
             dashFxTimer = 0.045f;
         }
 
+        if (currentSection == 0) pi.update(delta, player.getX());
         updateMouseWorld();
         handleShooting(acceptActions);
         updateEnemies(delta);
@@ -284,10 +329,7 @@ public class GameScreen extends ScreenAdapter {
     }
 
     private void updateSectionProgress() {
-        if (currentSection == 0 && !sectionCleared[0] && player.getX() > 1530f) {
-            sectionCleared[0] = true;
-            feedback("MOVIMENTO DOMINADO - siga para a câmara", 1.8f);
-        }
+        updateTutorial();
 
         if (currentSection < 5 && sectionCleared[currentSection]) {
             Section next = level.getSection(currentSection + 1);
@@ -398,6 +440,7 @@ public class GameScreen extends ScreenAdapter {
 
         shotCooldown = Constants.SHOT_COOLDOWN;
         learnedShoot = true;
+        dialogueSignal("shoot");
         player.notifyShot();
         game.audio.shoot();
     }
@@ -429,6 +472,15 @@ public class GameScreen extends ScreenAdapter {
 
         for (Projectile p : playerProjectiles) {
             if (p.dead()) continue;
+            if (targetActive && hitsTrainingTarget(p)) {
+                p.life = 0f;
+                targetActive = false;
+                crystals++;
+                game.audio.weakPoint();
+                effects.add(new EffectBurst(TARGET_X, TARGET_Y, EffectBurst.Kind.HIT, 105f, 0.30f));
+                dialogueSignal("hitTarget");
+                continue;
+            }
             for (GeoEnemy enemy : enemies) {
                 if (enemy.isDefeated()) continue;
                 GeoEnemy.HitResult result = enemy.testPlayerProjectile(p);
@@ -504,6 +556,54 @@ public class GameScreen extends ScreenAdapter {
             effect.update(delta);
             if (effect.dead()) iterator.remove();
         }
+    }
+
+    /**
+     * Tutorial do Pi: ele se materializa (appear) e, quando termina, começa o
+     * roteiro. Se o diálogo não está ativo e o tutorial não acabou (ex.: o ORB
+     * morreu), retoma do passo em que estava.
+     */
+    private void updateTutorial() {
+        if (tutorialDone || currentSection != 0) return;
+        if (!tutorialStarted) {
+            if (!pi.getState().equals("appear") || pi.isAnimationFinished()) {
+                tutorialStarted = true;
+                startDialogue(piScript, 0, piPortrait, piListener);
+            }
+            return;
+        }
+        if (!dialogue.isActive()) startDialogue(piScript, tutorialStep, piPortrait, piListener);
+        // Sem animação própria na fala: fala enquanto escreve, repousa depois.
+        DialogueLine line = dialogue.isActive() ? dialogue.line() : null;
+        if (line != null && line.anim == null) pi.setState(dialogue.isLineComplete() ? "idle" : "talk");
+        if (line != null && "talk".equals(line.anim) && dialogue.isLineComplete()) pi.setState("idle");
+    }
+
+    /**
+     * Pula o tutorial (portão da seção 0 aberto). Usado pelos testes
+     * automatizados e pelo smoke visual, que precisam dos controles livres.
+     */
+    public void skipTutorial() {
+        tutorialStarted = true;
+        tutorialDone = true;
+        targetActive = false;
+        dialogue.stop();
+        sectionCleared[0] = true;
+        pi.setState("idle");
+    }
+
+    private boolean hitsTrainingTarget(Projectile p) {
+        // mesmo teste de varredura dos pontos fracos (raio 24 + raio do tiro)
+        float r = 24f + p.radius;
+        float dx = p.x - p.prevX, dy = p.y - p.prevY;
+        float len2 = dx * dx + dy * dy;
+        float t = len2 < 1e-6f ? 0f : MathUtils.clamp(((TARGET_X - p.prevX) * dx + (targetY() - p.prevY) * dy) / len2, 0f, 1f);
+        float cx = p.prevX + dx * t - TARGET_X, cy = p.prevY + dy * t - targetY();
+        return cx * cx + cy * cy <= r * r;
+    }
+
+    private float targetY() {
+        return TARGET_Y + (game.settings.isReducedMotion() ? 0f : MathUtils.sin(gameTime * 2.4f) * 12f);
     }
 
     private void handleLifeLost() {
@@ -649,6 +749,15 @@ public class GameScreen extends ScreenAdapter {
 
         drawEnemies();
         drawProjectiles();
+        if (currentSection == 0) pi.draw(game.batch);
+        if (targetActive) {
+            Texture marker = game.assets.weakPointBoss;
+            float size = marker.getWidth() * Constants.PIXEL_SCALE;
+            float pulse = 0.8f + 0.2f * MathUtils.sin(gameTime * 6f);
+            game.batch.setColor(1f, 1f, 1f, game.settings.isReducedMotion() ? 1f : pulse);
+            game.batch.draw(marker, TARGET_X - size / 2f, targetY() - size / 2f, size, size);
+            game.batch.setColor(Color.WHITE);
+        }
         drawPlayer();
         drawEffects();
 
@@ -662,6 +771,10 @@ public class GameScreen extends ScreenAdapter {
     }
 
     private boolean isAimOnWeakPoint() {
+        if (targetActive) {
+            float dx = mouseWorld.x - TARGET_X, dy = mouseWorld.y - targetY();
+            if (dx * dx + dy * dy <= 36f * 36f) return true;
+        }
         for (GeoEnemy enemy : enemies) {
             if (enemy.isDefeated()) continue;
             for (WeakPoint point : enemy.getWeakPoints()) {
@@ -1059,13 +1172,9 @@ public class GameScreen extends ScreenAdapter {
     private void drawBannerAndHints() {
         String hint = null;
         if (portalActive) hint = playerAtPortal() ? "E  ATRAVESSAR O RIFT" : "SIGA PARA O PORTAL";
-        else if (currentSection == 0 && !learnedMove) hint = "A / D  MOVER";
-        else if (currentSection == 0 && !learnedJump) hint = "ESPAÇO  PULAR";
-        else if (currentSection == 0 && !learnedDash) hint = "SHIFT  DASH";
-        else if (currentSection == 0 && !learnedShoot) hint = "MOUSE  MIRAR E ATIRAR";
         if (hint != null) game.ui.text(hint, 32f, 52f, UiRenderer.TEXT, HINT, false); // sobre o piso escuro
 
-        if (bannerTimer > 0f) {
+        if (bannerTimer > 0f && !dialogue.isActive()) {
             float alpha = Math.min(1f, bannerTimer);
             Section section = level.getSection(currentSection);
             fade.set(BANNER_TITLE).a = alpha;

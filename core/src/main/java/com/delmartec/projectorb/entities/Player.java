@@ -344,6 +344,8 @@ public class Player {
     public boolean isDashing() { return dashTimer > 0f; }
     public boolean isInvulnerable() { return invulnerable > 0f; }
     public float getDashCooldown() { return dashCooldown; }
+    /** 2 = acabou de usar o salto duplo (o tutorial do Pi usa isso). */
+    public int getJumpCount() { return jumpCount; }
     public boolean consumeJumpEvent() { boolean v = jumpedThisFrame; jumpedThisFrame = false; return v; }
     public boolean consumeDashEvent() { boolean v = dashedThisFrame; dashedThisFrame = false; return v; }
 }

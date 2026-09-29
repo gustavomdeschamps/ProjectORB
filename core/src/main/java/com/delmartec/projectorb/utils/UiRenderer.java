@@ -119,14 +119,19 @@ public final class UiRenderer {
     public float text(String text, float x, float baselineY, int pixelScale, Color color, boolean centered) {
         BitmapFont face = pixelScale > TEXT ? titleFont : font;
         face.getData().setScale(pixelScale);
-        layout.setText(face, text);
-        float left = Math.round(centered ? x - layout.width / 2f : x);
-        float base = Math.round(baselineY);
+        // A cor fica gravada no GlyphLayout no setText: sombra e texto são
+        // montados cada um com a sua cor (antes a sombra herdava a cor da
+        // chamada anterior).
         face.setColor(SHADOW.r, SHADOW.g, SHADOW.b, color.a);
+        layout.setText(face, text);
+        float width = layout.width;
+        float left = Math.round(centered ? x - width / 2f : x);
+        float base = Math.round(baselineY);
         face.draw(batch, layout, left + pixelScale, base - pixelScale);
         face.setColor(color);
-        face.draw(batch, text, left, base);
-        return layout.width;
+        layout.setText(face, text);
+        face.draw(batch, layout, left, base);
+        return width;
     }
 
     /** Largura do texto na escala dada (para alinhar à direita). */
