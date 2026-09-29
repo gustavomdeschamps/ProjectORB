@@ -87,14 +87,24 @@ public class Player {
             dashTimer -= delta;
             x += vx * delta;
             resolveHorizontal(platforms, gate);
-            // O dash antigo congelava o eixo Y por completo: o jogador
-            // atravessava o topo das plataformas sem nunca resolver a colisão
-            // vertical e o estado "grounded" ficava velho. Agora o dash é
-            // horizontal mas continua respeitando o cenário.
+            // O dash é puramente horizontal: y não é integrado (sem gravidade)
+            // enquanto ele dura. A colisão vertical ainda roda para que o dash
+            // no ar respeite teto e plataformas, mas ela só age quando há
+            // sobreposição — parado exatamente no topo do piso ela não
+            // encontra nada, porque Rectangle.overlaps é estrito. Por isso o
+            // apoio é testado explicitamente logo abaixo dos pés: dash no chão
+            // continua grounded (jumpCount = 0) e dash que sai de uma borda
+            // conta como saída de borda.
             boolean wasGrounded = grounded;
-            grounded = false;
             resolveVertical(platforms, gate);
-            if (!grounded && wasGrounded) coyoteTimer = Constants.COYOTE_TIME;
+            grounded = hasSupport(platforms, gate);
+            if (grounded) {
+                jumpCount = 0;
+                coyoteTimer = 0f;
+            } else if (wasGrounded) {
+                coyoteTimer = Constants.COYOTE_TIME;
+                jumpCount = 1;
+            }
             clampToWorld();
             setVisualState(VisualState.DASH, delta);
             return;
@@ -190,6 +200,14 @@ public class Player {
             x = leftGap < rightGap ? r.x - half : r.x + r.width + half;
         }
         vx = 0f;
+    }
+
+    /** Há chão/plataforma encostando nos pés (sonda de 1 px abaixo da caixa)? */
+    private boolean hasSupport(List<Platform> platforms, Rectangle gate) {
+        Rectangle probe = getBounds();
+        probe.y -= 1f;
+        for (Platform p : platforms) if (probe.overlaps(p.bounds)) return true;
+        return gate != null && probe.overlaps(gate);
     }
 
     private void resolveVertical(List<Platform> platforms, Rectangle gate) {
