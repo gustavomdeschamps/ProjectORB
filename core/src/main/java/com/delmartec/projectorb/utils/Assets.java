@@ -107,6 +107,14 @@ public class Assets {
     public final Texture hudLampOff;
     private final Map<String, Texture> propIcons = new HashMap<>();
 
+    // Tela "Como jogar" (A4): teclas e mouse em pixel art
+    public final Texture key;
+    public final Texture keyLit;
+    public final Texture arrowLeft;
+    public final Texture arrowRight;
+    public final Texture mouse;
+    public final Texture mouseLit;
+
     /** Peças de plataforma em 1x: ponta, módulo repetível e coluna lisa. */
     public static final class PlatformSkin {
         public final Texture cap;
@@ -186,6 +194,12 @@ public class Assets {
         panelCyan = load("ui/panel_cyan.png");
         panelRed = load("ui/panel_red.png");
         pixel = load("ui/pixel.png");
+        key = load("ui/key.png");
+        keyLit = load("ui/key_lit.png");
+        arrowLeft = load("ui/arrow_left.png");
+        arrowRight = load("ui/arrow_right.png");
+        mouse = load("ui/mouse.png");
+        mouseLit = load("ui/mouse_lit.png");
         hudOrb = load("ui/hud_orb.png");
         hudCrystal = load("ui/hud_crystal.png");
         hudDash = load("ui/hud_dash.png");

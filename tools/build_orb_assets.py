@@ -135,9 +135,12 @@ def m_poly(w, h, pts, ss=8):
 
 
 def outline(m):
+    """Borda de 1 px (4-vizinhança). Fora do canvas conta como vazio: formas
+    que encostam na borda também ganham contorno (np.roll dava a volta)."""
+    p = np.pad(m, 1, constant_values=False)
     er = m.copy()
     for dy, dx in ((1, 0), (-1, 0), (0, 1), (0, -1)):
-        er &= np.roll(np.roll(m, dy, 0), dx, 1)
+        er &= p[1 + dy:1 + dy + m.shape[0], 1 + dx:1 + dx + m.shape[1]]
     return m & ~er
 
 
@@ -947,6 +950,42 @@ def build_hud():
     icons["hex_symmetry"] = dots(a, [(c - 6, c), (c + 5, c)], MAG)
     for name, a in icons.items():
         save(a, f"ui/prop_{name}.png")
+
+    # ---- teclas e mouse da tela "Como jogar" (A4)
+    def keycap(face, edge, depth):
+        k = canvas(11, 12)
+        body = np.zeros((12, 11), dtype=bool)
+        body[0:12, 0:11] = True
+        body[0, 0] = body[0, 10] = body[11, 0] = body[11, 10] = False
+        paint(k, body, depth)                         # lateral/profundidade
+        top = body.copy()
+        top[9:, :] = False                            # tampa: 3 px mais alta
+        paint(k, top, face)
+        paint(k, outline(body), edge)
+        return k
+    save(keycap(BAND, OUTLINE, MARK_IN), "ui/key.png")
+    save(keycap(SPOKE, MAG, OUTLINE), "ui/key_lit.png")
+    for name, rows in (("arrow_left", ["..w....", ".ww....", "wwwwwww", ".ww....", "..w...."]),
+                       ("arrow_right", ["....w..", "....ww.", "wwwwwww", "....ww.", "....w.."])):
+        ar = canvas(7, 5)
+        for y, row in enumerate(rows):
+            for x, ch in enumerate(row):
+                if ch == "w":
+                    ar[y, x] = (*WHITE, 255)
+        save(ar, f"ui/{name}.png")
+    for name, left in (("mouse", BAND), ("mouse_lit", MAG)):
+        m = canvas(12, 17)
+        shape = np.zeros((17, 12), dtype=bool)
+        shape[:, :] = m_poly(12, 17, [(1.5, 3), (3, 0.8), (9, 0.8), (10.5, 3), (10.5, 13), (8.5, 16.2), (3.5, 16.2), (1.5, 13)])
+        paint(m, shape, BAND)
+        lb = shape.copy()
+        lb[7:, :] = False
+        lb[:, 6:] = False
+        paint(m, lb, left)
+        paint(m, outline(shape), OUTLINE)
+        m[0:7, 6] = (*OUTLINE, 255)                    # divisão dos botões
+        m[7, 1:11] = (*OUTLINE, 255)
+        save(m, f"ui/{name}.png")
 
     # polígono do chefe: hexágono com 6 lâmpadas (o código acende/apaga)
     B = 29
