@@ -465,12 +465,21 @@ public class GameScreen extends ScreenAdapter {
                 totalCorrectHits, totalWrongHits, score));
             return;
         }
-        spawnSection(currentSection, true);
+        if (sectionCleared[currentSection]) {
+            // A seção já estava resolvida (ex.: um projétil inimigo ainda no ar
+            // depois da morte do inimigo). Não refaz a luta: os inimigos não
+            // voltam, o portão continua aberto e o portal final continua ativo.
+            enemyProjectiles.clear();
+            playerProjectiles.clear();
+            feedback("VIDA PERDIDA - seção já resolvida", 2.2f);
+        } else {
+            spawnSection(currentSection, true);
+            // O boss volta a existir, então o portal precisa voltar a ficar
+            // inativo — senão dava para pular a luta e vencer direto.
+            if (currentSection == 5) portalActive = false;
+            feedback("VIDA PERDIDA - tentativa reiniciada", 2.2f);
+        }
         effects.clear();
-        // O boss volta a existir, então o portal precisa voltar a ficar
-        // inativo — senão dava para pular a luta e vencer direto.
-        if (currentSection == 5) portalActive = false;
-        feedback("VIDA PERDIDA - tentativa reiniciada", 2.2f);
         shake(0.28f, 16f);
     }
 
