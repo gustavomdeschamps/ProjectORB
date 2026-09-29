@@ -35,7 +35,8 @@ public final class PlayerMovementCheck {
         dashOnGroundKeepsGrounded();
         dashOffLedgeCountsAsLeavingLedge();
         jumpsFromGround();
-        jumpsAfterWalkingOffLedge();
+        jumpsAfterWalkingOffLedge(0);
+        jumpsAfterWalkingOffLedge(20); // bem depois da antiga janela de coyote (0,11 s)
 
         System.out.println(failures.isEmpty() ? "PLAYER MOVEMENT CHECK: PASS" : "PLAYER MOVEMENT CHECK: FAIL");
         for (String f : failures) System.out.println("  - " + f);
@@ -102,7 +103,7 @@ public final class PlayerMovementCheck {
         expect(countJumps(p, platforms) == 2, "no chão: 1 salto no chão + 1 no ar");
     }
 
-    private static void jumpsAfterWalkingOffLedge() {
+    private static void jumpsAfterWalkingOffLedge(int fallFrames) {
         List<Platform> platforms = floor();
         platforms.add(new Platform(500, 400, 200, 64));
         just.clear();
@@ -114,7 +115,8 @@ public final class PlayerMovementCheck {
         while (p.isGrounded() && guard++ < 120) step(p, platforms, 1);
         held.clear();
         expect(!p.isGrounded(), "deveria sair da borda andando");
-        expect(countJumps(p, platforms) == 1, "saída de borda andando: 1 salto no ar");
+        step(p, platforms, fallFrames);
+        expect(countJumps(p, platforms) == 1, "saída de borda andando (+" + fallFrames + " frames): 1 salto no ar");
     }
 
     /** Aperta ESPAÇO várias vezes, ainda no ar, e conta quantos saltos saíram. */

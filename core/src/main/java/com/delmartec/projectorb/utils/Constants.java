@@ -41,8 +41,6 @@ public final class Constants {
     public static final float DASH_SPEED = 1120f;
     public static final float DASH_TIME = 0.17f;
     public static final float DASH_COOLDOWN = 0.65f;
-    /** Tolerância para pular logo depois de sair de uma borda. */
-    public static final float COYOTE_TIME = 0.11f;
     /** Tolerância para o salto registrado pouco antes de tocar o chão. */
     public static final float JUMP_BUFFER = 0.11f;
 

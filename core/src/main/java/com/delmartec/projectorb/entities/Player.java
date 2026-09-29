@@ -24,7 +24,6 @@ public class Player {
     private int jumpCount = 0;
     private boolean grounded = false;
     private boolean facingRight = true;
-    private float coyoteTimer = 0f;
     private float jumpBuffer = 0f;
     private float dashTimer = 0f;
     private float dashCooldown = 0f;
@@ -63,7 +62,6 @@ public class Player {
         invulnerable = Math.max(0f, invulnerable - delta);
         shootVisual = Math.max(0f, shootVisual - delta);
         hurtVisual = Math.max(0f, hurtVisual - delta);
-        coyoteTimer = Math.max(0f, coyoteTimer - delta);
         jumpBuffer = Math.max(0f, jumpBuffer - delta);
         jumpedThisFrame = false;
         dashedThisFrame = false;
@@ -94,17 +92,12 @@ public class Player {
             // encontra nada, porque Rectangle.overlaps é estrito. Por isso o
             // apoio é testado explicitamente logo abaixo dos pés: dash no chão
             // continua grounded (jumpCount = 0) e dash que sai de uma borda
-            // conta como saída de borda.
+            // conta como saída de borda (primeiro salto consumido).
             boolean wasGrounded = grounded;
             resolveVertical(platforms, gate);
             grounded = hasSupport(platforms, gate);
-            if (grounded) {
-                jumpCount = 0;
-                coyoteTimer = 0f;
-            } else if (wasGrounded) {
-                coyoteTimer = Constants.COYOTE_TIME;
-                jumpCount = 1;
-            }
+            if (grounded) jumpCount = 0;
+            else if (wasGrounded) jumpCount = 1;
             clampToWorld();
             setVisualState(VisualState.DASH, delta);
             return;
@@ -114,11 +107,13 @@ public class Player {
         float change = move == 0f ? Constants.PLAYER_FRICTION : Constants.PLAYER_ACCEL;
         vx = approach(vx, target, change * delta);
 
-        boolean canJump = grounded || coyoteTimer > 0f || jumpCount < 2;
+        // Regra: 1 salto a partir do chão + 1 no ar. Sair de uma borda
+        // (andando ou em dash) consome o primeiro. "grounded" sempre implica
+        // jumpCount == 0, então o contador sozinho decide.
+        boolean canJump = jumpCount < 2;
         if (jumpBuffer > 0f && canJump) {
             vy = Constants.JUMP_SPEED;
             grounded = false;
-            coyoteTimer = 0f;
             jumpBuffer = 0f;
             jumpCount++;
             jumpedThisFrame = true;
@@ -150,9 +145,8 @@ public class Player {
         resolveVertical(platforms, gate);
 
         if (!grounded && wasGrounded && !jumpedThisFrame) {
-            // Saiu da borda andando: ganha coyote time e o primeiro salto
-            // passa a contar como consumido (antes dava dois saltos no ar).
-            coyoteTimer = Constants.COYOTE_TIME;
+            // Saiu da borda andando: o primeiro salto passa a contar como
+            // consumido (antes dava dois saltos no ar).
             jumpCount = 1;
         }
 
@@ -224,7 +218,6 @@ public class Player {
             vy = 0f;
             grounded = true;
             jumpCount = 0;
-            coyoteTimer = 0f;
         } else {
             y = r.y - half;
             vy = 0f;
@@ -284,7 +277,6 @@ public class Player {
         dashTimer = 0f;
         dashCooldown = 0f;
         jumpBuffer = 0f;
-        coyoteTimer = 0f;
         jumpCount = 0;
         shootVisual = 0f;
         hurtVisual = 0f;
