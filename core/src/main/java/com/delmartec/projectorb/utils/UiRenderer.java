@@ -15,6 +15,7 @@ public final class UiRenderer {
     public static final Color SUCCESS = new Color(0.40f, 1f, 0.76f, 1f);
     public static final Color SOFT_TEXT = new Color(0.76f, 0.82f, 1f, 1f);
     private static final Color DISABLED_TEXT = new Color(0.55f, 0.57f, 0.68f, 1f);
+    private static final Color SHADOW = new Color(0.02f, 0.02f, 0.06f, 1f);
 
     private final SpriteBatch batch;
     private final BitmapFont font;
@@ -87,24 +88,52 @@ public final class UiRenderer {
             batch.draw(assets.lifeOrb, bounds.x + 58f, oy, orb, orb);
             batch.draw(assets.lifeOrb, bounds.x + bounds.width - 58f - orb, oy, orb, orb);
         }
-        float fontScale = (pressed ? 1.47f : 1.55f) * 1.8f;
-        font.getData().setScale(fontScale);
-        layout.setText(font, text);
-        float available = bounds.width - 250f;
-        if (layout.width > available) {
-            font.getData().setScale(fontScale * available / layout.width);
-            layout.setText(font, text);
-        }
-        font.setColor(enabled ? Color.WHITE : DISABLED_TEXT);
-        font.draw(batch, layout, bounds.x + bounds.width / 2f - layout.width / 2f,
-            bounds.y + bounds.height / 2f + 12f - inset);
+        text(text, bounds.x + bounds.width / 2f, bounds.y + bounds.height / 2f + 12f - inset, TEXT,
+            enabled ? Color.WHITE : DISABLED_TEXT, true);
+    }
+
+    /** Texto corrido e HUD: 1 pixel da fonte = 1 pixel de arte (4 de mundo). */
+    public static final int TEXT = Constants.PIXEL_SCALE;
+    /** Títulos: 2 e 3 pixels de arte por pixel da fonte (ainda escala inteira). */
+    public static final int TITLE = Constants.PIXEL_SCALE * 2;
+    public static final int TITLE_BIG = Constants.PIXEL_SCALE * 3;
+
+    /**
+     * Converte a escala antiga (relativa à Inconsolata 18 px) para a escala
+     * inteira mais próxima da Silkscreen: texto 4, títulos 8 ou 12.
+     */
+    public static int pixelScale(float legacyScale) {
+        if (legacyScale >= 3.3f) return TITLE_BIG;
+        if (legacyScale >= 2.3f) return TITLE;
+        return TEXT;
     }
 
     public void textCentered(String text, float centerX, float baselineY, float scale, Color color) {
-        BitmapFont face = scale >= 2.3f ? titleFont : font;
-        face.getData().setScale(scale * 1.8f * (face == titleFont ? 18f / 96f : 1f));
-        face.setColor(color);
+        text(text, centerX, baselineY, pixelScale(scale), color, true);
+    }
+
+    /**
+     * Texto em escala inteira com sombra de 1 pixel de fonte (sem caixa, sem
+     * brilho). centered=true centraliza em x.
+     */
+    public float text(String text, float x, float baselineY, int pixelScale, Color color, boolean centered) {
+        BitmapFont face = pixelScale > TEXT ? titleFont : font;
+        face.getData().setScale(pixelScale);
         layout.setText(face, text);
-        face.draw(batch, layout, centerX - layout.width / 2f, baselineY);
+        float left = Math.round(centered ? x - layout.width / 2f : x);
+        float base = Math.round(baselineY);
+        face.setColor(SHADOW.r, SHADOW.g, SHADOW.b, color.a);
+        face.draw(batch, layout, left + pixelScale, base - pixelScale);
+        face.setColor(color);
+        face.draw(batch, text, left, base);
+        return layout.width;
+    }
+
+    /** Largura do texto na escala dada (para alinhar à direita). */
+    public float textWidth(String text, int pixelScale) {
+        BitmapFont face = pixelScale > TEXT ? titleFont : font;
+        face.getData().setScale(pixelScale);
+        layout.setText(face, text);
+        return layout.width;
     }
 }

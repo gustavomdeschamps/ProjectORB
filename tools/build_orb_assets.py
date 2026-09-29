@@ -797,7 +797,9 @@ def build_world():
             # na continuação natural da última coluna (a[period + x]) e chega
             # ao conteúdo original (a[x]). Some a emenda sem espelhar e sem
             # meio-tom (pixel art pura).
-            for x in range(L):
+            # só onde a emenda é grande (lago, chão): nas silhuetas de cor única
+            # o pontilhado aparecia mais que o degrau de 1-3 px do corte seco
+            for x in (range(L) if seam > 20 else ()):
                 t = (x + 0.5) / L
                 take_orig = BAYER4[np.arange(270) % 4, x % 4] < t
                 out[take_orig, x] = a[take_orig, x]
@@ -872,6 +874,93 @@ def build_world():
     save(cr, "world/crystal.png", "art-source/projetofinal-29/cristal.png")
 
 
+# ================================================================ HUD (A3)
+
+def build_hud():
+    """Ícones do HUD em pixel art, na paleta do jogo e na escala única.
+
+    Nada de caixas, degradês ou brilho: formas de 1 px, cor sólida.
+    """
+    # rosto do ORB: recorte do idle canônico (sem reamostrar)
+    idle = load(SRC_29, "personagem principal/Personagem principal.png")
+    face = idle[3:23, 5:27].copy()
+    face[~m_disc(22, 20, 11.5, 10.0, 10.6)] = 0   # só a esfera, sem os braços
+    save(face, "ui/hud_orb.png", "recorte de art-source/projetofinal-29/personagem principal/Personagem principal.png")
+
+    # cristal pequeno, redesenhado com a paleta do cristal oficial
+    cr = load(SRC_29, "cristal.png")
+    cpal = sorted(palette_of(cr), key=sum)
+    dark, mid, light, hi = cpal[0], cpal[len(cpal) // 3], cpal[2 * len(cpal) // 3], cpal[-1]
+    icon = canvas(7, 12)
+    shape = ["..ddd..", ".dmmmd.", "dmlhlmd", "dmlhlmd", "dmlhlmd", "dmllmmd", "dmlhmmd", "dmlhmmd",
+             "dmllmmd", ".dmmmd.", "..dmd..", "...d..."]
+    cmap = {"d": dark, "m": mid, "l": light, "h": hi}
+    for y, row in enumerate(shape):
+        for x, ch in enumerate(row):
+            if ch in cmap:
+                icon[y, x] = (*cmap[ch], 255)
+    save(icon, "ui/hud_crystal.png", "redesenho pequeno de art-source/projetofinal-29/cristal.png")
+
+    # dash: duas setas ">>" (7 linhas, ponta 3 px à frente)
+    dash = canvas(9, 9)
+    for k, col in ((0, CYAN), (4, PALE_CYAN)):
+        for i, dx in enumerate((0, 1, 2, 3, 2, 1, 0)):
+            dash[i + 1, k + dx] = (*col, 255)
+            if k + dx + 1 < 9:
+                dash[i + 1, k + dx + 1] = (*col, 255)
+    save(dash, "ui/hud_dash.png")
+
+    # ícones de propriedade (15x15): forma em contorno + o que é pedido em destaque
+    S = 15
+    c = S / 2
+
+    def base(n, start, r=6.0):
+        a = canvas(S)
+        pts = poly(c, r, n, start)
+        paint(a, outline(m_poly(S, S, pts)), OUTLINE)
+        return a, pts
+
+    def dots(a, pts, col=WHITE, r=1.0):
+        for x, y in pts:
+            paint(a, m_disc(S, S, math.floor(x) + 0.5, math.floor(y) + 0.5, r), col)
+        return a
+
+    icons = {}
+    a, pts = base(3, 90)
+    icons["tri_vertices"] = dots(a, pts)
+    a, pts = base(4, 0)
+    icons["diamond_vertices"] = dots(a, pts)
+    a, pts = base(4, 45, 7.0)
+    icons["square_sides"] = dots(a, poly(c, 7.0 * math.cos(math.pi / 4), 4, 0), MAG)
+    a, pts = base(6, 90)
+    icons["hex_vertices"] = dots(a, pts)
+    a, pts = base(6, 90)
+    for x, y in pts:  # ângulo: um "L" de 2 px apontando para dentro em cada vértice
+        paint(a, m_disc(S, S, math.floor(x) + 0.5 + (c - x) * 0.25, math.floor(y) + 0.5 + (c - y) * 0.25, 0.8), CYAN)
+    icons["hex_angles"] = a
+    a, pts = base(6, 90)
+    icons["hex_sides"] = dots(a, poly(c, 6 * math.cos(math.pi / 6), 6, 0), MAG)
+    a, pts = base(6, 90)
+    icons["hex_cores"] = dots(a, poly(c, 3.2, 3, 90), CYAN)
+    a, pts = base(6, 90)
+    a[1:14:2, 7] = (*CYAN, 255)  # eixo de simetria tracejado
+    icons["hex_symmetry"] = dots(a, [(c - 6, c), (c + 5, c)], MAG)
+    for name, a in icons.items():
+        save(a, f"ui/prop_{name}.png")
+
+    # polígono do chefe: hexágono com 6 lâmpadas (o código acende/apaga)
+    B = 29
+    hexa = canvas(B)
+    paint(hexa, outline(m_poly(B, B, poly(B / 2, 13, 6, 90))), OUTLINE)
+    paint(hexa, outline(m_poly(B, B, poly(B / 2, 5, 6, 90))), TEAL)
+    save(hexa, "ui/hud_boss_hex.png")
+    for name, col, ring in (("hud_lamp_on", WHITE, MAG), ("hud_lamp_off", SPOKE, MARK_IN)):
+        lamp = canvas(5)
+        paint(lamp, m_disc(5, 5, 2.5, 2.5, 2.5), ring)
+        paint(lamp, m_disc(5, 5, 2.5, 2.5, 1.2), col)
+        save(lamp, f"ui/{name}.png")
+
+
 # ================================================================ preview
 
 def contact_sheet():
@@ -914,6 +1003,7 @@ def main():
     manifest["shots"] = build_shots()
     manifest["fx"] = build_fx_ui()
     build_world()
+    build_hud()
     manifest["sources"] = dict(sorted(sources.items()))
     manifest["files"] = sorted(written)
     (OUT / "manifest.json").write_text(json.dumps(manifest, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")

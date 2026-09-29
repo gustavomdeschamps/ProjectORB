@@ -27,6 +27,15 @@ import java.util.List;
 public final class GeoEnemy {
     public enum HitResult { NONE, WEAK_POINT, ROUND_COMPLETE, WRONG, DEFEATED }
 
+    /** Propriedade geométrica pedida na rodada atual (o HUD mostra o ícone). */
+    public enum TargetProperty {
+        VERTICES("VÉRTICES"), SIDES("LADOS"), ANGLES("ÂNGULOS"), CORES("NÚCLEOS"), SYMMETRY("SIMETRIA");
+
+        public final String label;
+
+        TargetProperty(String label) { this.label = label; }
+    }
+
     private final EnemyType type;
     private final float homeX;
     private final float groundY;
@@ -535,6 +544,20 @@ public final class GeoEnemy {
             case DIAMOND -> "ATIRE NOS 4 VÉRTICES DO LOSANGO";
             case HEXAGON -> "ATIRE NOS 6 ÂNGULOS ILUMINADOS";
             case BOSS -> request.toUpperCase();
+        };
+    }
+
+    public TargetProperty getTargetProperty() {
+        return switch (type) {
+            case TRIANGLE, DIAMOND -> TargetProperty.VERTICES;
+            case SQUARE -> TargetProperty.SIDES;
+            case HEXAGON -> TargetProperty.ANGLES;
+            case BOSS -> {
+                int phase = getBossPhase();
+                if (phase == 1) yield TargetProperty.CORES;
+                int round = phase == 0 ? completedRounds : completedRounds - 3;
+                yield round == 0 ? TargetProperty.VERTICES : round == 1 ? TargetProperty.SIDES : TargetProperty.SYMMETRY;
+            }
         };
     }
 

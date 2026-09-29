@@ -854,73 +854,154 @@ public class GameScreen extends ScreenAdapter {
         game.batch.setProjectionMatrix(hudCamera.combined);
         game.batch.begin();
 
+        // Cantos diferentes para coisas diferentes: ORB em cima à esquerda,
+        // alvo/chefe em cima à direita, cristais embaixo à direita, seção e
+        // dicas embaixo à esquerda. Sem caixas, degradês ou brilho.
         drawPlayerHud();
-        drawEnemyHud();
-        drawStatsHud();
-        drawCombatHelp();
-        drawBannerAndFeedback();
+        drawTargetHud();
+        drawCrystalHud();
+        drawBannerAndHints();
 
         game.batch.setColor(Color.WHITE);
         game.batch.end();
     }
 
-    private void drawPlayerHud() {
-        hudPanel(28f, 890f, 520f, 165f);
-        game.font.getData().setScale(1.65f);
-        game.font.setColor(Color.WHITE);
-        game.font.draw(game.batch, "ORB", 62f, 1009f);
-        game.font.getData().setScale(1.55f);
-        game.font.setColor(0.82f, 0.88f, 1f, 1f);
-        game.font.draw(game.batch, "VIDA " + player.getHealth() + "/" + Constants.MAX_HEALTH, 62f, 970f);
-        game.batch.setColor(0.10f, 0.08f, 0.18f, 1f);
-        game.batch.draw(game.assets.pixel, 62f, 934f, 440f, 17f);
-        game.batch.setColor(0.91f, 0.27f, 0.78f, 1f);
-        game.batch.draw(game.assets.pixel, 64f, 936f,
-            436f * player.getHealth() / (float)Constants.MAX_HEALTH, 13f);
-        game.batch.setColor(Color.WHITE);
-        float orb = game.assets.lifeOrb.getWidth() * Constants.PIXEL_SCALE;
-        for (int i = 0; i < player.getLives(); i++)
-            game.batch.draw(game.assets.lifeOrb, 330f + i * 60f, 960f, orb, orb);
+    // ---- HUD em pixels: tudo alinhado à grade de PIXEL_SCALE -------------
+
+    private static final int PX = Constants.PIXEL_SCALE;
+    private static final Color CODEX_LOCKED_TITLE = new Color(0.42f, 0.44f, 0.55f, 1f);
+    private static final Color CODEX_LOCKED_TEXT = new Color(0.36f, 0.38f, 0.48f, 1f);
+    private static final Color HUD_ON = new Color(0.96f, 0.18f, 0.82f, 1f);
+    private static final Color HUD_OFF = new Color(0.24f, 0.13f, 0.36f, 1f);
+    private static final Color HUD_DASH_ON = new Color(0.32f, 0.85f, 0.92f, 1f);
+    private static final Color HUD_DASH_OFF = new Color(0.12f, 0.28f, 0.36f, 1f);
+    private static final Color HUD_LABEL = new Color(0.82f, 0.70f, 1f, 1f);
+    private static final Color HUD_TEXT = new Color(0.95f, 0.94f, 1f, 1f);
+    private static final Color HUD_COUNT = new Color(1f, 0.89f, 0.55f, 1f);
+    private static final Color HINT = new Color(0.76f, 0.82f, 1f, 1f);
+    private static final Color BANNER_TITLE = new Color(0.96f, 0.94f, 1f, 1f);
+    private static final Color BANNER_SUB = new Color(0.48f, 0.88f, 1f, 1f);
+    private static final Color FEEDBACK = new Color(1f, 0.72f, 0.94f, 1f);
+    private final Color fade = new Color();
+
+    /** Pixels de um anel (raio interno..externo, em pixels de arte), do topo no sentido horário. */
+    private static int[][] ring(float inner, float outer) {
+        List<int[]> cells = new ArrayList<>();
+        int r = (int)Math.ceil(outer);
+        for (int y = -r; y <= r; y++) {
+            for (int x = -r; x <= r; x++) {
+                double d = Math.hypot(x + 0.5, y + 0.5);
+                if (d >= inner && d < outer) cells.add(new int[] { x, y });
+            }
+        }
+        cells.sort((a, b) -> Double.compare(clockwise(a), clockwise(b)));
+        return cells.toArray(new int[0][]);
     }
 
-    private void drawEnemyHud() {
+    private static double clockwise(int[] c) {
+        double a = Math.atan2(c[0] + 0.5, c[1] + 0.5); // 0 no topo, cresce no sentido horário
+        return a < 0 ? a + Math.PI * 2 : a;
+    }
+
+    private static final int[][] HEALTH_RING = ring(12f, 14f);
+    private static final int[][] DASH_RING = ring(6f, 7f);
+
+    /** Desenha o anel com a fração 'filled' acesa (a partir do topo, horário). */
+    private void drawRing(int[][] cells, float cx, float cy, float filled, Color on, Color off) {
+        int lit = Math.round(cells.length * MathUtils.clamp(filled, 0f, 1f));
+        for (int k = 0; k < cells.length; k++) {
+            game.batch.setColor(k < lit ? on : off);
+            game.batch.draw(game.assets.pixel, cx + cells[k][0] * PX, cy + cells[k][1] * PX, PX, PX);
+        }
+        game.batch.setColor(Color.WHITE);
+    }
+
+    private void drawIcon(Texture texture, float x, float y) {
+        game.batch.draw(texture, x, y, texture.getWidth() * PX, texture.getHeight() * PX);
+    }
+
+    private void drawPlayerHud() {
+        // Rosto do ORB (recorte do idle) dentro do anel de vida.
+        float cx = 104f, cy = 976f;
+        drawRing(HEALTH_RING, cx, cy, player.getHealth() / (float)Constants.MAX_HEALTH, HUD_ON, HUD_OFF);
+        Texture face = game.assets.hudOrb;
+        drawIcon(face, cx - face.getWidth() * PX / 2f, cy - face.getHeight() * PX / 2f);
+
+        // Vidas: uma life_orb por vida, em fileira.
+        float orb = game.assets.lifeOrb.getWidth() * PX;
+        for (int i = 0; i < player.getLives(); i++) {
+            drawIcon(game.assets.lifeOrb, cx + 76f + i * (orb + 8f), cy - orb / 2f);
+        }
+
+        // Dash: anel que recarrega em volta do ícone, sem texto.
+        float dx = cx + 76f + 3 * (orb + 8f) + 44f;
+        float ready = 1f - player.getDashCooldown() / Constants.DASH_COOLDOWN;
+        drawRing(DASH_RING, dx, cy, ready, HUD_DASH_ON, HUD_DASH_OFF);
+        Texture dash = game.assets.hudDash;
+        if (ready < 1f) game.batch.setColor(1f, 1f, 1f, 0.45f);
+        drawIcon(dash, dx - dash.getWidth() * PX / 2f + PX / 2f, cy - dash.getHeight() * PX / 2f + PX / 2f);
+        game.batch.setColor(Color.WHITE);
+    }
+
+    private void drawTargetHud() {
         GeoEnemy active = firstActiveEnemy();
         if (active == null) return;
+        float right = 1888f;
+        GeoEnemy.TargetProperty property = active.getTargetProperty();
 
-        float x = 600f;
-        game.ui.dangerPanel(x, 900f, 720f, 155f);
-        game.font.getData().setScale(1.45f);
-        game.font.setColor(1f, 0.87f, 0.98f, 1f);
-        game.font.draw(game.batch, active.getType().displayName(), x + 35f, 1010f);
-        game.font.getData().setScale(1.43f);
-        game.font.setColor(1f, 0.89f, 0.55f, 1f);
-        game.font.draw(game.batch, "ALVOS " + active.getRemainingWeakPoints()
-            + "/" + active.getWeakPointCount(), x + 535f, 1010f);
-        game.font.getData().setScale(1.38f);
-        game.font.setColor(Color.WHITE);
-        game.font.draw(game.batch, active.getExplicitInstruction(), x + 35f, 974f);
-        game.batch.setColor(0.07f, 0.035f, 0.11f, 1f);
-        game.batch.draw(game.assets.pixel, x + 35f, 937f, 650f, 13f);
+        if (active.getType().isBoss()) {
+            // O chefe vira o próprio polígono: uma lâmpada por rodada, que se
+            // apaga quando a rodada é resolvida.
+            Texture hex = game.assets.hudBossHex;
+            float size = hex.getWidth() * PX;
+            float hx = right - size, hy = 1048f - size;
+            drawIcon(hex, hx, hy);
+            float ccx = hx + size / 2f, ccy = hy + size / 2f;
+            int remaining = active.getTotalRounds() - active.getCompletedRounds();
+            for (int i = 0; i < 6; i++) {
+                double a = Math.toRadians(90 + 60 * i);
+                float ox = Math.round(13 * Math.cos(a)) * PX, oy = Math.round(13 * Math.sin(a)) * PX;
+                Texture lamp = i < remaining ? game.assets.hudLampOn : game.assets.hudLampOff;
+                drawIcon(lamp, ccx + ox - lamp.getWidth() * PX / 2f + PX / 2f, ccy + oy - lamp.getHeight() * PX / 2f + PX / 2f);
+            }
+            right = hx - 16f;
+        }
+
+        Texture icon = game.assets.propertyIcon(active.getType(), property);
+        float isz = icon.getWidth() * PX;
+        drawIcon(icon, right - isz, 1048f - isz);
+        float textRight = right - isz - 16f;
+        String name = active.getType().displayName();
+        String count = active.getRemainingWeakPoints() + "/" + active.getWeakPointCount();
+        game.ui.text(name, textRight - game.ui.textWidth(name, UiRenderer.TEXT), 1036f, UiRenderer.TEXT, HUD_LABEL, false);
+        String line = property.label + "  " + count;
+        float lw = game.ui.textWidth(line, UiRenderer.TEXT);
+        game.ui.text(property.label, textRight - lw, 1000f, UiRenderer.TEXT, HUD_TEXT, false);
+        game.ui.text(count, textRight - game.ui.textWidth(count, UiRenderer.TEXT), 1000f, UiRenderer.TEXT, HUD_COUNT, false);
+
+        // Carga do ataque inimigo em 8 pips (telegrafia), não em barra.
         float charge = active.isAttacking() ? 1f : Math.min(1f, active.getCharge());
-        game.batch.setColor(charge > 0.75f ? CHARGE_HIGH : CHARGE_LOW);
-        game.batch.draw(game.assets.pixel, x + 37f, 939f, 646f * charge, 9f);
+        int lit = (int)Math.ceil(charge * 8);
+        for (int k = 0; k < 8; k++) {
+            game.batch.setColor(k < lit ? (charge > 0.75f ? CHARGE_HIGH : CHARGE_LOW) : HUD_OFF);
+            game.batch.draw(game.assets.pixel, textRight - (8 - k) * 3 * PX + PX, 956f, 2 * PX, 2 * PX);
+        }
         game.batch.setColor(Color.WHITE);
+
+        if (feedbackTimer > 0f) {
+            fade.set(FEEDBACK).a = Math.min(1f, feedbackTimer);
+            game.ui.text(feedback, 1888f - game.ui.textWidth(feedback, UiRenderer.TEXT), 912f,
+                UiRenderer.TEXT, fade, false);
+        }
     }
 
-    private void drawStatsHud() {
-        int minutes = (int)(gameTime / 60f);
-        int seconds = (int)(gameTime % 60f);
-
-        hudPanel(1505f, 900f, 385f, 155f);
-        game.font.getData().setScale(1.5f);
-        game.font.setColor(Color.WHITE);
-        game.font.draw(game.batch, String.format("CRISTAIS %03d", crystals), 1540f, 1010f);
-        game.font.draw(game.batch, String.format("SCORE %06d", score), 1540f, 976f);
-        game.font.draw(game.batch, String.format("TEMPO %02d:%02d", minutes, seconds), 1540f, 952f);
-    }
-
-    private void hudPanel(float x, float y, float width, float height) {
-        game.ui.hudPanel(x, y, width, height);
+    private void drawCrystalHud() {
+        // Um único contador discreto.
+        Texture icon = game.assets.hudCrystal;
+        float x = 1888f - icon.getWidth() * PX;
+        drawIcon(icon, x, 32f);
+        String n = Integer.toString(crystals);
+        game.ui.text(n, x - 12f - game.ui.textWidth(n, UiRenderer.TEXT), 64f, UiRenderer.TEXT, HUD_TEXT, false);
     }
 
     private String objectiveText() {
@@ -930,41 +1011,28 @@ public class GameScreen extends ScreenAdapter {
         return active == null ? "SIGA PARA A DIREITA" : "RESOLVA A FORMA " + active.getType().displayName();
     }
 
-    private void drawCombatHelp() {
-        String hint;
-        if (portalActive) hint = playerAtPortal() ? "E  -  ATRAVESSAR O RIFT" : "SIGA PARA O PORTAL";
-        else if (currentSection == 0 && !learnedMove) hint = "A / D  -  MOVA ORB ATÉ O SINAL";
-        else if (currentSection == 0 && !learnedJump) hint = "ESPAÇO  -  SALTE SOBRE AS RUÍNAS";
-        else if (currentSection == 0 && !learnedDash) hint = "SHIFT  -  USE O DASH";
-        else if (currentSection == 0 && !learnedShoot) hint = "MOUSE  -  MIRE E ATIRE";
-        else hint = "ACERTE OS ALVOS  -  DESVIE DOS ATAQUES";
+    private void drawBannerAndHints() {
+        String hint = null;
+        if (portalActive) hint = playerAtPortal() ? "E  ATRAVESSAR O RIFT" : "SIGA PARA O PORTAL";
+        else if (currentSection == 0 && !learnedMove) hint = "A / D  MOVER";
+        else if (currentSection == 0 && !learnedJump) hint = "ESPAÇO  PULAR";
+        else if (currentSection == 0 && !learnedDash) hint = "SHIFT  DASH";
+        else if (currentSection == 0 && !learnedShoot) hint = "MOUSE  MIRAR E ATIRAR";
+        if (hint != null) game.ui.text(hint, 32f, 52f, UiRenderer.TEXT, HINT, false); // sobre o piso escuro
 
-        game.batch.setColor(0.018f, 0.014f, 0.05f, 0.91f);
-        game.batch.draw(game.assets.pixel, 560f, 22f, 800f, 68f);
-        game.batch.setColor(Color.WHITE);
-        game.ui.textCentered(hint, 960f, 67f, 1.03f, Color.WHITE);
-    }
-
-    private void drawBannerAndFeedback() {
         if (bannerTimer > 0f) {
             float alpha = Math.min(1f, bannerTimer);
-            game.batch.setColor(0.018f, 0.012f, 0.05f, 0.86f * alpha);
-            game.batch.draw(game.assets.pixel, 575f, 570f, 770f, 104f);
-            game.batch.setColor(Color.WHITE);
             Section section = level.getSection(currentSection);
-            game.ui.textCentered(section.title, 960f, 642f, 1.45f,
-                new Color(0.96f, 0.94f, 1f, alpha));
-            game.ui.textCentered(section.subtitle, 960f, 606f, 0.75f,
-                new Color(0.48f, 0.88f, 1f, alpha));
+            fade.set(BANNER_TITLE).a = alpha;
+            game.ui.text(section.title, 32f, 300f, UiRenderer.TITLE, fade, false);
+            fade.set(BANNER_SUB).a = alpha;
+            game.ui.text(section.subtitle, 32f, 248f, UiRenderer.TEXT, fade, false);
         }
-
-        if (feedbackTimer > 0f) {
-            game.batch.setColor(0.025f, 0.012f, 0.06f, 0.88f);
-            game.batch.draw(game.assets.pixel, 655f, 842f, 610f, 48f);
-            game.batch.setColor(Color.WHITE);
-            game.font.getData().setScale(1.55f);
-            game.font.setColor(1f, 0.72f, 0.94f, Math.min(1f, feedbackTimer));
-            game.font.draw(game.batch, feedback, 720f, 874f);
+        // Sem inimigo ativo (seção resolvida, tutorial), o recado vai para
+        // o canto das mensagens de progresso, acima do banner.
+        if (feedbackTimer > 0f && firstActiveEnemy() == null) {
+            fade.set(FEEDBACK).a = Math.min(1f, feedbackTimer);
+            game.ui.text(feedback, 32f, 360f, UiRenderer.TEXT, fade, false);
         }
     }
 
@@ -1036,12 +1104,10 @@ public class GameScreen extends ScreenAdapter {
             game.batch.setColor(unlocked ? 0.055f : 0.025f, 0.04f, unlocked ? 0.11f : 0.055f, 0.95f);
             game.batch.draw(game.assets.pixel, 430f, y - 54f, 1060f, 72f);
             game.batch.setColor(Color.WHITE);
-            game.font.getData().setScale(1.66f);
-            game.font.setColor(unlocked ? UiRenderer.MAGENTA : new Color(0.42f, 0.44f, 0.55f, 1f));
-            game.font.draw(game.batch, unlocked ? title : "???", 470f, y - 5f);
-            game.font.getData().setScale(1.33f);
-            game.font.setColor(unlocked ? Color.WHITE : new Color(0.36f, 0.38f, 0.48f, 1f));
-            game.font.draw(game.batch, unlocked ? fact : "Encontre esta forma para registrar a descoberta.", 770f, y - 5f);
+            game.ui.text(unlocked ? title : "???", 470f, y - 5f, UiRenderer.TEXT,
+                unlocked ? UiRenderer.MAGENTA : CODEX_LOCKED_TITLE, false);
+            game.ui.text(unlocked ? fact : "Encontre esta forma para registrar.", 470f, y - 41f,
+                UiRenderer.TEXT, unlocked ? Color.WHITE : CODEX_LOCKED_TEXT, false);
             y -= 105f;
         }
         game.ui.textCentered("C / TAB / ESC  -  VOLTAR À PARTIDA", 960f, 165f, 0.84f,

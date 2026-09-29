@@ -3,7 +3,7 @@ package com.delmartec.projectorb.lwjgl3;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.PixmapIO;
-import com.badlogic.gdx.utils.ScreenUtils;
+import com.badlogic.gdx.graphics.glutils.FrameBuffer;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Application;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration;
 import com.delmartec.projectorb.ProjectOrbGame;
@@ -32,7 +32,8 @@ public final class VisualSmokeLauncher {
 
         Lwjgl3ApplicationConfiguration config = new Lwjgl3ApplicationConfiguration();
         config.setTitle("Project ORB — Visual Smoke Test");
-        config.setWindowedMode(1280, 720);
+        // -Dsmoke.width/-Dsmoke.height: 1920x1080 mostra a pixel art 1:1.
+        config.setWindowedMode(Integer.getInteger("smoke.width", 1280), Integer.getInteger("smoke.height", 720));
         config.setForegroundFPS(60);
         config.useVsync(false);
         new Lwjgl3Application(new SmokeGame(output), config);
@@ -114,17 +115,28 @@ public final class VisualSmokeLauncher {
             }
         }
 
+        /**
+         * Renderiza a tela atual num FrameBuffer 1920x1080 (a resolução nativa
+         * do jogo) e grava: assim a captura é 1:1 com a pixel art em qualquer
+         * monitor, sem a reamostragem da janela.
+         */
         private void capture(String name) {
-            Pixmap pixmap = ScreenUtils.getFrameBufferPixmap(0, 0,
-                Gdx.graphics.getBackBufferWidth(), Gdx.graphics.getBackBufferHeight());
-            Pixmap flipped = new Pixmap(pixmap.getWidth(), pixmap.getHeight(), pixmap.getFormat());
-            for (int y = 0; y < pixmap.getHeight(); y++) {
-                flipped.drawPixmap(pixmap, 0, y, pixmap.getWidth(), 1,
-                    0, pixmap.getHeight() - 1 - y, pixmap.getWidth(), 1);
+            int w = 1920, h = 1080;
+            FrameBuffer fbo = new FrameBuffer(Pixmap.Format.RGBA8888, w, h, false);
+            fbo.begin();
+            getScreen().resize(w, h);
+            getScreen().render(0f);
+            Pixmap pixmap = Pixmap.createFromFrameBuffer(0, 0, w, h);
+            fbo.end();
+            getScreen().resize(Gdx.graphics.getBackBufferWidth(), Gdx.graphics.getBackBufferHeight());
+            Pixmap flipped = new Pixmap(w, h, pixmap.getFormat());
+            for (int y = 0; y < h; y++) {
+                flipped.drawPixmap(pixmap, 0, y, w, 1, 0, h - 1 - y, w, 1);
             }
             PixmapIO.writePNG(Gdx.files.absolute(output + File.separator + name), flipped);
             flipped.dispose();
             pixmap.dispose();
+            fbo.dispose();
         }
     }
 }

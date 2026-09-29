@@ -24,20 +24,24 @@ public class ProjectOrbGame extends Game {
     @Override
     public void create() {
         batch = new SpriteBatch();
-        FreeTypeFontGenerator generator = new FreeTypeFontGenerator(Gdx.files.internal("fonts/Inconsolata-Bold.ttf"));
+        // Silkscreen (OFL, fonts/Silkscreen-OFL.txt): pixel font desenhada numa
+        // grade de 8 px por em. Gerada a 8 px, sem antialiasing (mono) e com
+        // filtro Nearest; o UiRenderer a desenha só em escalas inteiras, então
+        // cada pixel da letra tem o mesmo tamanho dos pixels da arte.
+        FreeTypeFontGenerator generator = new FreeTypeFontGenerator(Gdx.files.internal("fonts/Silkscreen-Regular.ttf"));
         FreeTypeFontGenerator.FreeTypeFontParameter text = new FreeTypeFontGenerator.FreeTypeFontParameter();
-        text.size = 18;
+        text.size = 8;
+        text.mono = true;
         text.characters = FreeTypeFontGenerator.DEFAULT_CHARS
             + "ÁÀÂÃÉÊÍÓÔÕÚÜÇáàâãéêíóôõúüç°º";
-        text.minFilter = Texture.TextureFilter.Linear;
-        text.magFilter = Texture.TextureFilter.Linear;
+        text.minFilter = Texture.TextureFilter.Nearest;
+        text.magFilter = Texture.TextureFilter.Nearest;
         font = generator.generateFont(text);
-        FreeTypeFontGenerator.FreeTypeFontParameter titles = new FreeTypeFontGenerator.FreeTypeFontParameter();
-        titles.size = 96;
-        titles.characters = text.characters;
-        titles.minFilter = Texture.TextureFilter.Linear;
-        titles.magFilter = Texture.TextureFilter.Linear;
-        titleFont = generator.generateFont(titles);
+        font.setUseIntegerPositions(true);
+        // Instância separada para títulos: a escala do BitmapFont é estado
+        // compartilhado, e os títulos usam escalas maiores.
+        titleFont = generator.generateFont(text);
+        titleFont.setUseIntegerPositions(true);
         generator.dispose();
         assets = new Assets();
         settings = new GameSettings();

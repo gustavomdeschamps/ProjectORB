@@ -98,6 +98,15 @@ public class Assets {
     public final Texture pixel;
     public final Texture orbShadow;
 
+    // HUD (A3): ícones em pixel art, desenhados a PIXEL_SCALE
+    public final Texture hudOrb;
+    public final Texture hudCrystal;
+    public final Texture hudDash;
+    public final Texture hudBossHex;
+    public final Texture hudLampOn;
+    public final Texture hudLampOff;
+    private final Map<String, Texture> propIcons = new HashMap<>();
+
     /** Peças de plataforma em 1x: ponta, módulo repetível e coluna lisa. */
     public static final class PlatformSkin {
         public final Texture cap;
@@ -177,6 +186,16 @@ public class Assets {
         panelCyan = load("ui/panel_cyan.png");
         panelRed = load("ui/panel_red.png");
         pixel = load("ui/pixel.png");
+        hudOrb = load("ui/hud_orb.png");
+        hudCrystal = load("ui/hud_crystal.png");
+        hudDash = load("ui/hud_dash.png");
+        hudBossHex = load("ui/hud_boss_hex.png");
+        hudLampOn = load("ui/hud_lamp_on.png");
+        hudLampOff = load("ui/hud_lamp_off.png");
+        for (String name : new String[] { "tri_vertices", "diamond_vertices", "square_sides", "hex_angles",
+            "hex_vertices", "hex_sides", "hex_cores", "hex_symmetry" }) {
+            propIcons.put(name, load("ui/prop_" + name + ".png"));
+        }
 
         Pixmap shadow = new Pixmap(64, 24, Pixmap.Format.RGBA8888);
         for (int y = 0; y < 24; y++) {
@@ -213,6 +232,23 @@ public class Assets {
     // Acesso por tipo: o render e a lógica leem a MESMA animação, então as
     // durações nunca divergem do que aparece na tela.
     // ------------------------------------------------------------------
+
+    /** Ícone da propriedade pedida: forma do inimigo + o que acertar em destaque. */
+    public Texture propertyIcon(EnemyType type, com.delmartec.projectorb.entities.GeoEnemy.TargetProperty property) {
+        String key = switch (type) {
+            case TRIANGLE -> "tri_vertices";
+            case DIAMOND -> "diamond_vertices";
+            case SQUARE -> "square_sides";
+            case HEXAGON -> "hex_angles";
+            case BOSS -> switch (property) {
+                case SIDES -> "hex_sides";
+                case CORES -> "hex_cores";
+                case SYMMETRY -> "hex_symmetry";
+                default -> "hex_vertices";
+            };
+        };
+        return propIcons.get(key);
+    }
 
     public Animation<TextureRegion> enemyIdle(EnemyType type) { return enemyAnims.get(type)[0]; }
     public Animation<TextureRegion> enemyMove(EnemyType type) { return enemyAnims.get(type)[1]; }
