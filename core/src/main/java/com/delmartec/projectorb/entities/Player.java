@@ -54,7 +54,11 @@ public class Player {
         this.deathDuration = deathDuration;
     }
 
-    public void update(float delta, List<Platform> platforms, Rectangle gate) {
+    /**
+     * @param acceptActions false logo após sair da pausa/códex: pulo e dash
+     *                      são ignorados (o movimento A/D continua valendo).
+     */
+    public void update(float delta, List<Platform> platforms, Rectangle gate, boolean acceptActions) {
         dashCooldown = Math.max(0f, dashCooldown - delta);
         invulnerable = Math.max(0f, invulnerable - delta);
         shootVisual = Math.max(0f, shootVisual - delta);
@@ -71,7 +75,8 @@ public class Player {
             return;
         }
 
-        if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) jumpBuffer = Constants.JUMP_BUFFER;
+        if (!acceptActions) jumpBuffer = 0f;
+        else if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) jumpBuffer = Constants.JUMP_BUFFER;
 
         float move = 0f;
         if (Gdx.input.isKeyPressed(Input.Keys.A) || Gdx.input.isKeyPressed(Input.Keys.LEFT)) move -= 1f;
@@ -109,7 +114,7 @@ public class Player {
             jumpedThisFrame = true;
         }
 
-        if ((Gdx.input.isKeyJustPressed(Input.Keys.SHIFT_LEFT) ||
+        if (acceptActions && (Gdx.input.isKeyJustPressed(Input.Keys.SHIFT_LEFT) ||
              Gdx.input.isKeyJustPressed(Input.Keys.SHIFT_RIGHT)) && dashCooldown <= 0f) {
             float dir = move != 0f ? Math.signum(move) : (facingRight ? 1f : -1f);
             vx = dir * Constants.DASH_SPEED;

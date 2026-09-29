@@ -43,6 +43,12 @@ public class GameScreen extends ScreenAdapter {
      * mundo e ficar fora dela.
      */
     private static final Rectangle PORTAL_BOUNDS = new Rectangle(11580f, Constants.FLOOR_Y, 340f, 300f);
+    /**
+     * Ao sair da pausa ou do códex, pulo/dash/tiro/interação ficam bloqueados
+     * por este tempo. Sem isso, o ESPAÇO que confirmava "CONTINUAR" virava um
+     * pulo e o clique no botão virava um tiro no mesmo frame.
+     */
+    private static final float RESUME_INPUT_GUARD = 0.15f;
 
     private final ProjectOrbGame game;
     private final LevelDemo level = new LevelDemo();
@@ -106,6 +112,9 @@ public class GameScreen extends ScreenAdapter {
     private boolean learnedJump;
     private boolean learnedDash;
     private boolean learnedShoot;
+    private float resumeGuard = 0f;
+    /** O botão do mouse precisa ser solto antes do próximo tiro. */
+    private boolean waitShootRelease = false;
 
     public GameScreen(ProjectOrbGame game) {
         this.game = game;
@@ -142,10 +151,16 @@ public class GameScreen extends ScreenAdapter {
 
         if ((Gdx.input.isKeyJustPressed(Input.Keys.C) || Gdx.input.isKeyJustPressed(Input.Keys.TAB)) && !paused) {
             codexOpen = !codexOpen;
+            if (!codexOpen) guardResumeInput();
         }
         if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
-            if (codexOpen) codexOpen = false;
-            else paused = !paused;
+            if (codexOpen) {
+                codexOpen = false;
+                guardResumeInput();
+            } else {
+                paused = !paused;
+                if (!paused) guardResumeInput();
+            }
         }
         if (paused && handlePauseInput()) return;
 
@@ -162,8 +177,15 @@ public class GameScreen extends ScreenAdapter {
         if (paused) renderPause();
     }
 
+    private void guardResumeInput() {
+        resumeGuard = RESUME_INPUT_GUARD;
+        waitShootRelease = true;
+    }
+
     private void update(float delta) {
         gameTime += delta;
+        resumeGuard = Math.max(0f, resumeGuard - delta);
+        boolean acceptActions = resumeGuard <= 0f;
         shotCooldown = Math.max(0f, shotCooldown - delta);
         feedbackTimer = Math.max(0f, feedbackTimer - delta);
         shakeTimer = Math.max(0f, shakeTimer - delta);
@@ -173,7 +195,7 @@ public class GameScreen extends ScreenAdapter {
         updateSectionProgress();
         updateGate();
 
-        player.update(delta, level.getPlatforms(), gateActive ? gateRect : null);
+        player.update(delta, level.getPlatforms(), gateActive ? gateRect : null, acceptActions);
 
         if (Math.abs(player.getX() - 210f) > 75f) learnedMove = true;
         if (player.consumeJumpEvent()) {
@@ -194,7 +216,7 @@ public class GameScreen extends ScreenAdapter {
         }
 
         updateMouseWorld();
-        handleShooting();
+        handleShooting(acceptActions);
         updateEnemies(delta);
         updateProjectiles(delta);
         updateEffects(delta);
@@ -202,7 +224,7 @@ public class GameScreen extends ScreenAdapter {
         if (player.getY() < -120f && player.getHealth() > 0) player.forceDeath();
         if (player.isDeathAnimationFinished()) handleLifeLost();
 
-        if (portalActive && playerAtPortal() && Gdx.input.isKeyJustPressed(Input.Keys.E)) {
+        if (acceptActions && portalActive && playerAtPortal() && Gdx.input.isKeyJustPressed(Input.Keys.E)) {
             game.audio.victory();
             game.setScreen(new VictoryScreen(game, gameTime, player.getLives(), totalCorrectHits,
                 totalWrongHits, score, crystals));
@@ -301,8 +323,14 @@ public class GameScreen extends ScreenAdapter {
         worldViewport.unproject(mouseWorld);
     }
 
-    private void handleShooting() {
-        if (player.getHealth() <= 0 || !Gdx.input.isButtonPressed(Input.Buttons.LEFT) || shotCooldown > 0f) return;
+    private void handleShooting(boolean acceptActions) {
+        boolean pressed = Gdx.input.isButtonPressed(Input.Buttons.LEFT);
+        if (waitShootRelease) {
+            // O clique que fechou a pausa ainda pode estar pressionado.
+            if (!pressed) waitShootRelease = false;
+            return;
+        }
+        if (!acceptActions || player.getHealth() <= 0 || !pressed || shotCooldown > 0f) return;
 
         float dx = mouseWorld.x - player.getX();
         float dy = mouseWorld.y - player.getY();
@@ -1023,7 +1051,10 @@ public class GameScreen extends ScreenAdapter {
         if (!activate) return false;
 
         switch (pauseSelected) {
-            case 0 -> paused = false;
+            case 0 -> {
+                paused = false;
+                guardResumeInput();
+            }
             case 1 -> { game.startGame(); return true; }
             case 2 -> { game.setScreen(new OptionsScreen(game, this)); return true; }
             case 3 -> { game.showMenu(); return true; }
