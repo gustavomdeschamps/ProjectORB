@@ -1,0 +1,47 @@
+{
+  "passScore": 4,
+  "questions": [
+    {
+      "concept": "VÉRTICES",
+      "prompt": "Um triângulo tem quantos vértices? E quanto somam os seus ângulos internos?",
+      "options": ["3 vértices e 180°", "3 vértices e 360°", "4 vértices e 360°", "6 vértices e 180°"],
+      "answer": 0,
+      "explanation": "Os 3 lados se encontram em 3 vértices, os pontos que você acertou, e os 3 ângulos internos de qualquer triângulo somam 180°."
+    },
+    {
+      "concept": "LADOS",
+      "prompt": "O que todo quadrado tem?",
+      "options": ["4 lados iguais e 4 ângulos retos (90°)", "4 lados iguais e 4 ângulos de 60°", "2 pares de lados iguais e nenhum ângulo reto", "4 lados diferentes e 4 ângulos de 90°"],
+      "answer": 0,
+      "explanation": "Quadrado é o polígono de 4 lados de mesma medida e 4 ângulos de 90°: por isso você mirou no meio de cada lado."
+    },
+    {
+      "concept": "VÉRTICES OPOSTOS",
+      "prompt": "No losango, as diagonais ligam os vértices opostos. Como elas se cruzam?",
+      "options": ["São perpendiculares e se cortam ao meio", "São paralelas e nunca se cruzam", "Se cruzam num dos vértices", "Uma é sempre o dobro da outra"],
+      "answer": 0,
+      "explanation": "Vértices opostos são os que não dividem lado; as diagonais que os ligam se cruzam a 90° e cada uma corta a outra no ponto médio."
+    },
+    {
+      "concept": "ÂNGULOS",
+      "prompt": "Quantos lados tem um hexágono? E quanto somam os seus ângulos internos?",
+      "options": ["6 lados e 720°", "6 lados e 360°", "8 lados e 1080°", "5 lados e 540°"],
+      "answer": 0,
+      "explanation": "A soma dos ângulos internos é (lados − 2) × 180°: para 6 lados, 4 × 180° = 720°."
+    },
+    {
+      "concept": "ÂNGULOS",
+      "prompt": "Eu sou um octógono regular. Quanto mede cada um dos meus ângulos internos?",
+      "options": ["135°", "120°", "108°", "150°"],
+      "answer": 0,
+      "explanation": "Tenho 8 lados: (8 − 2) × 180° = 1080°, divididos por 8 ângulos iguais dá 135° cada."
+    },
+    {
+      "concept": "SIMETRIA E ROTAÇÃO",
+      "prompt": "Um hexágono regular coincide com ele mesmo a cada quantos graus de rotação? E quantos eixos de simetria ele tem?",
+      "options": ["A cada 60° e 6 eixos", "A cada 90° e 4 eixos", "A cada 60° e 3 eixos", "A cada 120° e 6 eixos"],
+      "answer": 0,
+      "explanation": "360° ÷ 6 = 60°. São 6 eixos: 3 passam por vértices opostos e 3 pelo meio de lados opostos, como no Núcleo que você venceu."
+    }
+  ]
+}

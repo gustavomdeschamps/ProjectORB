@@ -136,6 +136,40 @@ public final class UiRenderer {
         return width;
     }
 
+    /**
+     * Quebra gulosa trocando espaços por quebras de linha (mesmo comprimento
+     * do texto original, o que permite máquina de escrever sem palavras pulando).
+     */
+    public String wrap(String text, float width, int pixelScale) {
+        StringBuilder out = new StringBuilder(text);
+        int lineStart = 0, lastSpace = -1;
+        for (int i = 0; i < out.length(); i++) {
+            char c = out.charAt(i);
+            if (c == '\n') { lineStart = i + 1; lastSpace = -1; continue; }
+            if (c == ' ') lastSpace = i;
+            if (textWidth(out.substring(lineStart, i + 1), pixelScale) > width && lastSpace > lineStart) {
+                out.setCharAt(lastSpace, '\n');
+                lineStart = lastSpace + 1;
+                lastSpace = -1;
+            }
+        }
+        return out.toString();
+    }
+
+    public static final int OPTION_NORMAL = 0, OPTION_HOVER = 1, OPTION_RIGHT = 2, OPTION_WRONG = 3, OPTION_DIM = 4;
+
+    /** Alternativa de quiz: moldura conforme o estado, texto alinhado à esquerda. */
+    public void option(Rectangle b, String text, int style) {
+        NinePatch patch = style == OPTION_WRONG ? dangerPatch
+            : (style == OPTION_HOVER || style == OPTION_RIGHT) ? dialogPatch : hudPatch;
+        batch.setColor(1f, 1f, 1f, style == OPTION_DIM ? 0.5f : 1f);
+        patch.draw(batch, b.x, b.y, b.width, b.height);
+        batch.setColor(Color.WHITE);
+        Color c = style == OPTION_DIM ? DISABLED_TEXT : style == OPTION_WRONG ? DANGER
+            : style == OPTION_RIGHT ? CYAN : Color.WHITE;
+        text(text, b.x + 56f, b.y + b.height / 2f + 12f, TEXT, c, false);
+    }
+
     /** Largura do texto na escala dada (para alinhar à direita). */
     public float textWidth(String text, int pixelScale) {
         BitmapFont face = pixelScale > TEXT ? titleFont : font;
