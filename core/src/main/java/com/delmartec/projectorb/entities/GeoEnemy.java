@@ -259,36 +259,44 @@ public final class GeoEnemy {
     public HitResult testPlayerProjectile(Projectile p) {
         if (defeated || p.enemy || p.dead()) return HitResult.NONE;
 
+        // Varredura do segmento percorrido neste frame (prev -> atual) contra
+        // cada ponto: a 1220 px/s com delta de 1/30 s o tiro anda ~40 px por
+        // frame e, testando só a posição final, tiros de raspão atravessavam
+        // o círculo de acerto (38 px) sem tocá-lo. Vale o primeiro contato.
         float pointRadius = weakPointHitRadius();
+        float rr = pointRadius + p.radius;
+        WeakPoint first = null;
+        float firstT = Float.MAX_VALUE;
         for (WeakPoint point : weakPoints) {
             if (point.hit) continue;
-            float wx = point.worldX(x, effectiveRotation());
-            float wy = point.worldY(y, effectiveRotation());
-            float dx = p.x - wx;
-            float dy = p.y - wy;
-            float rr = pointRadius + p.radius;
-            if (dx * dx + dy * dy <= rr * rr) {
-                point.hit = true;
-                p.life = 0f;
-                flash = 0.12f;
-                hurtVisual = hurtDuration;
-
-                if (allWeakPointsHit()) {
-                    int oldPhase = getBossPhase();
-                    completedRounds++;
-                    charge = 0f;
-                    attackTimer = -1f;
-                    if (completedRounds >= totalRounds) {
-                        defeated = true;
-                        deathVisual = 0f;
-                        return HitResult.DEFEATED;
-                    }
-                    if (type.isBoss() && getBossPhase() != oldPhase) powerUpVisual = powerUpDuration;
-                    buildRequest();
-                    return HitResult.ROUND_COMPLETE;
-                }
-                return HitResult.WEAK_POINT;
+            float t = sweepCircle(p.prevX, p.prevY, p.x, p.y,
+                point.worldX(x, effectiveRotation()), point.worldY(y, effectiveRotation()), rr);
+            if (t >= 0f && t < firstT) {
+                firstT = t;
+                first = point;
             }
+        }
+        if (first != null) {
+            first.hit = true;
+            p.life = 0f;
+            flash = 0.12f;
+            hurtVisual = hurtDuration;
+
+            if (allWeakPointsHit()) {
+                int oldPhase = getBossPhase();
+                completedRounds++;
+                charge = 0f;
+                attackTimer = -1f;
+                if (completedRounds >= totalRounds) {
+                    defeated = true;
+                    deathVisual = 0f;
+                    return HitResult.DEFEATED;
+                }
+                if (type.isBoss() && getBossPhase() != oldPhase) powerUpVisual = powerUpDuration;
+                buildRequest();
+                return HitResult.ROUND_COMPLETE;
+            }
+            return HitResult.WEAK_POINT;
         }
 
         // Só conta como erro se o tiro atingir de fato o corpo e não estiver
@@ -305,6 +313,26 @@ public final class GeoEnemy {
         }
 
         return HitResult.NONE;
+    }
+
+    /**
+     * Menor t em [0, 1] em que o segmento (x0,y0)->(x1,y1) toca o círculo de
+     * centro (cx,cy) e raio r; -1 se não toca.
+     */
+    private static float sweepCircle(float x0, float y0, float x1, float y1, float cx, float cy, float r) {
+        float fx = x0 - cx;
+        float fy = y0 - cy;
+        float c = fx * fx + fy * fy - r * r;
+        if (c <= 0f) return 0f;
+        float dx = x1 - x0;
+        float dy = y1 - y0;
+        float a = dx * dx + dy * dy;
+        if (a < 1e-6f) return -1f;
+        float b = 2f * (fx * dx + fy * dy);
+        float disc = b * b - 4f * a * c;
+        if (disc < 0f) return -1f;
+        float t = (-b - (float)Math.sqrt(disc)) / (2f * a);
+        return t >= 0f && t <= 1f ? t : -1f;
     }
 
     private boolean hitsBody(float worldX, float worldY, float padding) {

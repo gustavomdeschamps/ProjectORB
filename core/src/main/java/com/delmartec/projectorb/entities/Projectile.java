@@ -5,6 +5,8 @@ import com.delmartec.projectorb.utils.Constants;
 
 public class Projectile {
     public float x, y, vx, vy;
+    /** Posição no início do último update: o teste de acerto varre prev -> atual. */
+    public float prevX, prevY;
     public final float radius;
     public final boolean enemy;
     public final int damage;
@@ -17,10 +19,13 @@ public class Projectile {
 
     public Projectile(float x, float y, float vx, float vy, float radius, boolean enemy, int damage, boolean boss) {
         this.x = x; this.y = y; this.vx = vx; this.vy = vy;
+        this.prevX = x; this.prevY = y;
         this.radius = radius; this.enemy = enemy; this.damage = damage; this.boss = boss;
     }
 
     public void update(float delta) {
+        prevX = x;
+        prevY = y;
         x += vx * delta;
         y += vy * delta;
         life -= delta;
