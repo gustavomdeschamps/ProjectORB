@@ -1046,6 +1046,94 @@ def build_pi():
             "palette": sorted(list(c) for c in PI_PALETTE)}
 
 
+# ================================================================ NPC Octógono (E1)
+
+def octo_frame(theta=0.0, eyes="open", mouth="smile", look=(0, 0), flash=0.0, dy=0, dots=0, light=0):
+    """Octógono regular no gabarito dos inimigos, mas amigável: marcadores
+    ciano (os inimigos usam magenta), núcleo maior com rosto."""
+    S = ENEMY_C
+    c = S // 2
+    ro = 30.0
+    markers = [snap(c, 26, 22.5 + 45 * i) for i in range(8)]
+    a = draw_body(S, 8, 22.5, ro, markers)
+    a = recolor(a, {MAG: CYAN, MARK_IN: TEAL})           # marcadores ciano: não é inimigo
+    a = draw_arcs(a, theta, T["arc_r"], cols=(CYAN, MAG))
+    # núcleo-rosto: anel magenta, miolo escuro
+    face_r = 10.5
+    paint(a, m_disc(S, S, S / 2, S / 2, face_r + 0.5), DARK)
+    paint(a, m_ring(S, S, S / 2, S / 2, face_r, 1.0), MAG)
+    ex, ey = look
+    for ox in (-4, 3):                                    # olhos 2x3
+        x0, y0 = c + ox + ex, c - 3 + ey
+        if eyes == "open":
+            a[y0:y0 + 3, x0:x0 + 2] = (*WHITE, 255)
+        elif eyes == "happy":                             # ^ ^
+            a[y0 + 1, x0] = a[y0, x0 + 1] = (*PALE_CYAN, 255)
+            if x0 + 2 < S:
+                a[y0 + 1, x0 + 2] = (*PALE_CYAN, 255)
+        elif eyes == "closed":
+            a[y0 + 2, x0:x0 + 2] = (*WHITE, 255)
+        elif eyes == "sad":                               # caídos para fora
+            a[y0 + 1, x0:x0 + 2] = (*WHITE, 255)
+            a[y0 + 2, x0 + (0 if ox < 0 else 1)] = (*WHITE, 255)
+        elif eyes == "up":                                # pensando: olhando para cima
+            a[y0 - 1:y0 + 2, x0:x0 + 2] = (*WHITE, 255)
+    my = c + 3
+    if mouth == "smile":
+        a[my, c - 3] = a[my, c + 3] = (*LILAC, 255)
+        a[my + 1, c - 2:c + 3] = (*LILAC, 255)
+    elif mouth == "open":
+        a[my:my + 3, c - 2:c + 3] = (*LILAC, 255)
+        a[my + 1, c - 1:c + 2] = (*SPOKE, 255)
+    elif mouth == "small":
+        a[my + 1, c - 1:c + 2] = (*LILAC, 255)
+    elif mouth == "flat":
+        a[my + 1, c - 2:c + 3] = (*LILAC, 255)
+    elif mouth == "frown":
+        a[my + 2, c - 3] = a[my + 2, c + 3] = (*LILAC, 255)
+        a[my + 1, c - 2:c + 3] = (*LILAC, 255)
+    for k in range(dots):                                 # "..." pensando
+        a[c - 16, c + 10 + 3 * k] = (*PALE_CYAN, 255)
+    if flash:
+        for (x, y) in markers:
+            paint(a, m_disc(S, S, x + 0.5, y + 0.5, 2.5), WHITE if flash >= 0.66 else PALE_CYAN)
+    if light:
+        a = lighten(a, light)
+    return shift(a, 0, dy)
+
+
+def build_octo():
+    anims = {
+        "idle": [octo_frame(theta=t, eyes=e) for t, e in
+                 ((0, "open"), (6, "open"), (10, "open"), (6, "open"), (0, "open"), (-6, "closed"))],
+        "talk": [octo_frame(mouth=m) for m in ("smile", "open", "small", "open")],
+        "think": [octo_frame(theta=20 * i, eyes="up", mouth="flat", dots=(i % 3) + 1) for i in range(6)],
+        "happy": [octo_frame(theta=30 * i, eyes="happy", mouth="open", flash=f, dy=d)
+                  for i, (f, d) in enumerate(((0.4, 0), (1.0, -1), (0.7, -2), (0.4, -1), (0.2, 0), (0, 0)))],
+        "sad": [octo_frame(theta=-4 * i, eyes="sad", mouth="frown", dy=1 if i % 2 else 0) for i in range(4)],
+        "cheer": [octo_frame(theta=45 * i, eyes="happy", mouth="open", flash=1.0 if i % 2 == 0 else 0.4,
+                             dy=[0, -2, -3, -2, 0, -1][i]) for i in range(6)],
+    }
+    base = anims["idle"][0]
+    rng = np.random.default_rng(1080)
+    S = ENEMY_C
+    sparks = [(int(x), int(y)) for x, y in rng.integers(4, S - 4, size=(14, 2))]
+    appear = []
+    for i in range(8):
+        t = i / 7
+        f = dither(base, 1.0 - t) if t > 0.3 else canvas(S)
+        for x, y in sparks:
+            px_, py_ = round(x + (S // 2 - x) * t), round(y + (S // 2 - y) * t)
+            f[py_, px_] = (*(PALE_CYAN if i % 2 == 0 else LILAC), 255)
+        appear.append(f)
+    anims["appear"] = appear
+    counts = write_anims("npc/octo", anims)
+    c = S // 2
+    save(base[c - 16:c + 17, c - 20:c + 21].copy(), "npc/octo/portrait.png")
+    low = max(bbox(f)[3] for f in anims["idle"])
+    return {"canvas": S, "frames": counts, "baseline_px": S - 1 - low}
+
+
 # ================================================================ HUD (A3)
 
 def build_hud():
@@ -1213,6 +1301,7 @@ def main():
     build_world()
     build_hud()
     manifest["npc_pi"] = build_pi()
+    manifest["npc_octo"] = build_octo()
     manifest["sources"] = dict(sorted(sources.items()))
     manifest["files"] = sorted(written)
     (OUT / "manifest.json").write_text(json.dumps(manifest, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
