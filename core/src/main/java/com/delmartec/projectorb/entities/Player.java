@@ -291,7 +291,16 @@ public class Player {
         if (grounded && hurtVisual <= 0f && dashTimer <= 0f) setVisualState(VisualState.ATTACK, 0f);
     }
 
+    /** |vy| abaixo disto conta como ápice do pulo (frame do meio). */
+    private static final float JUMP_APEX_SPEED = 260f;
+
     public TextureRegion getFrame(Assets assets) {
+        if (visualState == VisualState.JUMP) {
+            // subida / ápice / descida escolhidos pela velocidade vertical,
+            // não pelo tempo: o pé recolhe subindo e estende descendo.
+            int index = vy > JUMP_APEX_SPEED ? 0 : vy < -JUMP_APEX_SPEED ? 2 : 1;
+            return assets.orbJump.getKeyFrame(index * assets.orbJump.getFrameDuration());
+        }
         Animation<TextureRegion> animation = switch (visualState) {
             case IDLE -> assets.orbIdle;
             case WALK -> assets.orbWalk;

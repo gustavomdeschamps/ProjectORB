@@ -533,12 +533,74 @@ def build_player():
         return shift(r, int(round(PLAYER_C / 2 - (bb[0] + bb[2] + 1) / 2)), FEET - bb[3])
 
     I, B, R, J, S = base["idle"], base["blink"], base["run"], base["jump"], base["shoot"]
+    top, bot = rows(I)
+    # Idle canônico (32x32) no canvas: linhas 3..22 = corpo+braços; 23..29 =
+    # pernas e pés. Deslocamento do canvas em relação ao arquivo 32x32:
+    oy = bot - 29
+    ox = int(round(PLAYER_C / 2 - 16))
+    LEG_TOP = 23 + oy
+    left_leg = np.zeros(I.shape[:2], dtype=bool)
+    right_leg = np.zeros(I.shape[:2], dtype=bool)
+    left_leg[LEG_TOP:, :PLAYER_C // 2] = True
+    right_leg[LEG_TOP:, PLAYER_C // 2:] = True
+
+    def walk_frame(body_dy, lift_l, lift_r):
+        """Corpo/olhos idênticos ao idle; só o quique e os pés mudam."""
+        out = canvas(PLAYER_C)
+        for mask, lift in ((left_leg, lift_l), (right_leg, lift_r)):
+            leg = np.where(mask[..., None], I, 0).astype(np.uint8)
+            if body_dy < 0:
+                # corpo subiu: a coxa cresce 1 px para não abrir fresta
+                leg[LEG_TOP - 1] = np.where(mask[LEG_TOP][:, None], I[LEG_TOP], 0)
+            leg = shift(leg, 1 if lift else 0, -lift)   # pé levantado sobe e avança
+            out = np.where(leg[..., 3:4] > 0, leg, out)
+        body = I.copy()
+        body[LEG_TOP:] = 0
+        body = shift(body, 0, body_dy)
+        return np.where(body[..., 3:4] > 0, body, out).astype(np.uint8)
+
+    def extend_legs(a, n):
+        """Pernas estendidas (descida do pulo): repete a linha da canela."""
+        out = a.copy()
+        shin = LEG_TOP + 1
+        for _ in range(n):
+            out = np.concatenate([out[1:shin + 1], out[shin:shin + 1], out[shin + 1:]], axis=0)
+        return out
+
+    def tuck(a, n):
+        """Pés recolhidos: some n linhas da canela, os pés sobem (corpo parado)."""
+        shin = LEG_TOP + 1
+        out = np.concatenate([a[:shin], a[shin + n:], np.zeros_like(a[:n])], axis=0)
+        return out
+
+    def stretch_head(a, n=1):
+        """Estica a cabeça duplicando uma linha ACIMA do visor (olhos iguais)."""
+        row = top + 3
+        out = a.copy()
+        for _ in range(n):
+            out = np.concatenate([out[1:row + 1], out[row:row + 1], out[row + 1:]], axis=0)
+        return out
+
+    def trail(a, steps):
+        """Rastro do dash: cópias atrás, pontilhadas, na própria paleta."""
+        out = canvas(PLAYER_C)
+        for k, lvl in zip(range(steps, 0, -1), (0.75, 0.5, 0.3)):
+            ghost = dither(lighten_orb(shift(a, -4 * k, 0), pal, 1), lvl)
+            out = np.where(ghost[..., 3:4] > 0, ghost, out)
+        return np.where(a[..., 3:4] > 0, a, out).astype(np.uint8)
+
     anims = {
-        "idle": [I, I, squash(I), squash(I), I, B],
-        "walk": [R, shift(R, 0, -1), I, R, shift(R, 0, -1), I],
-        "jump": [J, stretch(J)],
-        "dash": [lean(R, 1), lean(R, 2), lean(R, 3), lean(R, 2), lean(R, 1)],
-        "attack": [S, shift(S, -1, 0), S, I],
+        # idle exatamente como a referência; o piscar oficial 1x a cada 12 frames
+        "idle": [I] * 11 + [B],
+        "walk": [walk_frame(1, 0, 0), walk_frame(0, 2, 0), walk_frame(-1, 1, 0),
+                 walk_frame(1, 0, 0), walk_frame(0, 0, 2), walk_frame(-1, 0, 1)],
+        # subida / ápice / descida (o jogo escolhe pela velocidade vertical)
+        # O "pulando" oficial tem o ORB ~15% menor que o idle (esfera de 17-18
+        # px contra 20-21): não é coerente, então o pulo é redesenhado do idle.
+        "jump": [stretch_head(tuck(I, 3), 1), tuck(I, 2), extend_legs(I, 2)],
+        "dash": [trail(lean(R, 1), 1), trail(lean(R, 2), 2), trail(lean(R, 3), 3), trail(lean(R, 2), 2),
+                 trail(lean(R, 1), 1)],
+        "attack": [lighten_orb(S, pal, 1), shift(S, -1, 0), S, I],
         "hurt": [lighten_orb(I, pal, 2), shift(lighten_orb(I, pal, 1), -1, 0), shift(I, 1, 0), I],
         "death": [lighten_orb(I, pal, 2), squash(I, 2), rot_grounded(I), dither(rot_grounded(I), 0.4),
                   dither(rot_grounded(I), 0.8)],

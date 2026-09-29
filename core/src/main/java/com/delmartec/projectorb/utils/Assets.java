@@ -114,7 +114,8 @@ public class Assets {
     public Assets() {
         orbIdle = animation(0.16f, "player/idle_", Animation.PlayMode.LOOP);
         orbWalk = animation(0.09f, "player/walk_", Animation.PlayMode.LOOP);
-        orbJump = animation(0.22f, "player/jump_", Animation.PlayMode.LOOP_PINGPONG);
+        // subida/ápice/descida: o Player escolhe o frame pela velocidade vertical
+        orbJump = animation(0.22f, "player/jump_", Animation.PlayMode.NORMAL);
         orbDash = animation(0.034f, "player/dash_", Animation.PlayMode.NORMAL);
         orbAttack = animation(0.07f, "player/attack_", Animation.PlayMode.NORMAL);
         orbHurt = animation(0.09f, "player/hurt_", Animation.PlayMode.NORMAL);
