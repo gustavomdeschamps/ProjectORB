@@ -9,27 +9,25 @@ public final class Constants {
     public static final float WORLD_HEIGHT = 1080f;
 
     // ---------------------------------------------------------------------
-    // ANCORAGEM DOS SPRITES PROCESSADOS
+    // ESCALA E ANCORAGEM DOS SPRITES (assets/sprites/, medidos por
+    // tools/build_orb_assets.py e gravados em sprites/manifest.json)
     //
-    // O pacote FINAL foi normalizado com baseline fixa: todo frame de
-    // personagem vive em um canvas 224x224 e encosta no chão na linha 209,
-    // ou seja, sobra sempre 15 px vazios abaixo do corpo. O boss usa o mesmo
-    // critério em 384x384 (linha 359, 25 px de sobra).
+    // Toda arte é desenhada em escala INTEIRA do tamanho nativo: fundo 4x,
+    // player 4x, inimigos e boss 2x, mundo e UI 1x. Escala fracionária
+    // deixaria pixels de tamanhos desiguais.
     //
-    // Converter isso em fração da altura desenhada é o que mantém o sprite
-    // colado no chão em qualquer escala. É a ÚNICA fonte de verdade do
-    // alinhamento vertical — nada de multiplicadores mágicos espalhados pelo
-    // render.
+    // O player vive num canvas 48x48; a linha mais baixa dos pés fica a 4 px
+    // da borda. Converter isso em fração da altura desenhada é o que mantém o
+    // sprite colado no chão — é a ÚNICA fonte de verdade do alinhamento
+    // vertical do player. A dos inimigos fica em EnemyType.
     // ---------------------------------------------------------------------
-    public static final float CHAR_BASELINE = 15f / 224f;
-    public static final float BOSS_BASELINE = 25f / 384f;
+    public static final int BACKGROUND_SCALE = 4;
+    public static final int PLAYER_CANVAS = 48;
+    public static final int PLAYER_SCALE = 4;
+    public static final float CHAR_BASELINE = 4f / PLAYER_CANVAS;
 
-    /** Escala 1:1 com o canvas de origem: evita reamostragem extra da pixel art. */
-    public static final float PLAYER_W = 224f;
-    public static final float PLAYER_H = 224f;
-    /** Escala de combate: formas legíveis sem cobrir plataformas nem alvos. */
-    public static final float ENEMY_SIZE = 280f;
-    public static final float BOSS_SIZE = 500f;
+    public static final float PLAYER_W = PLAYER_CANVAS * PLAYER_SCALE;
+    public static final float PLAYER_H = PLAYER_CANVAS * PLAYER_SCALE;
 
     public static final float PLAYER_HIT_W = 58f;
     public static final float PLAYER_HIT_H = 78f;

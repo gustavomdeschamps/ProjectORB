@@ -46,7 +46,7 @@ public final class HowToPlayScreen extends ScreenAdapter {
         game.batch.setProjectionMatrix(camera.combined);
         game.batch.begin();
         game.batch.setColor(0.62f, 0.67f, 0.87f, 1f);
-        game.batch.draw(game.assets.backgroundRuins, -40f, -25f, 2000f, 1125f);
+        game.batch.draw(game.assets.menuBackground, 0f, 0f, Constants.VIEW_WIDTH, Constants.VIEW_HEIGHT); // 480x270 a 4x
         game.batch.setColor(Color.WHITE);
         game.ui.panel(420f, 120f, 1080f, 850f, UiRenderer.CYAN, 1f);
         game.ui.textCentered("COMO JOGAR", 960f, 830f, 2.8f, Color.WHITE);

@@ -72,7 +72,7 @@ public final class OptionsScreen extends ScreenAdapter {
         game.batch.setProjectionMatrix(camera.combined);
         game.batch.begin();
         game.batch.setColor(0.72f, 0.74f, 0.88f, 1f);
-        game.batch.draw(game.assets.backgroundRuins, -40f, -25f, 2000f, 1125f);
+        game.batch.draw(game.assets.menuBackground, 0f, 0f, Constants.VIEW_WIDTH, Constants.VIEW_HEIGHT); // 480x270 a 4x
         game.batch.setColor(0.005f, 0.004f, 0.025f, 0.68f);
         game.batch.draw(game.assets.pixel, 0f, 0f, Constants.VIEW_WIDTH, Constants.VIEW_HEIGHT);
         game.batch.setColor(Color.WHITE);

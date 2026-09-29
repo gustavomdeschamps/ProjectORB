@@ -376,70 +376,68 @@ public final class GeoEnemy {
 
     // ------------------------------------------------------- pontos fracos
 
+    /*
+     * Posições dos pontos fracos: todas saem de EnemyType.markerRadius(), o
+     * raio medido dos marcadores desenhados no sprite. Assim os alvos caem
+     * exatamente em cima dos vértices (ou do meio dos lados, no quadrado).
+     */
     private void buildRequest() {
         weakPoints.clear();
-        float hw = type.halfWidth();
-        float hh = type.halfHeight();
+        float r = type.markerRadius();
 
         switch (type) {
             case TRIANGLE -> {
                 request = "Meus três vértices me sustentam.";
-                weakPoints.add(new WeakPoint(0f, hh * 0.78f));
-                weakPoints.add(new WeakPoint(-hw * 0.70f, -hh * 0.72f));
-                weakPoints.add(new WeakPoint(hw * 0.70f, -hh * 0.72f));
+                addEllipse(3, r, r, Math.PI / 2);
             }
             case SQUARE -> {
                 request = "Meus quatro lados são iguais.";
-                weakPoints.add(new WeakPoint(0f, hh * 0.76f));
-                weakPoints.add(new WeakPoint(hw * 0.76f, 0f));
-                weakPoints.add(new WeakPoint(0f, -hh * 0.76f));
-                weakPoints.add(new WeakPoint(-hw * 0.76f, 0f));
+                // marcadores no meio dos lados (direita, cima, esquerda, baixo)
+                addEllipse(4, r, r, 0);
             }
             case DIAMOND -> {
                 request = "Meus quatro vértices se opõem dois a dois.";
-                weakPoints.add(new WeakPoint(0f, hh * 0.76f));
-                weakPoints.add(new WeakPoint(hw * 0.76f, 0f));
-                weakPoints.add(new WeakPoint(0f, -hh * 0.76f));
-                weakPoints.add(new WeakPoint(-hw * 0.76f, 0f));
+                addEllipse(4, r, r, 0);
             }
             case HEXAGON -> {
                 request = "Seis ângulos fecham o meu contorno.";
-                addEllipse(6, hw * 0.74f, hh * 0.76f, Math.PI / 2);
+                addEllipse(6, r, r, Math.PI / 2);
             }
             case BOSS -> buildBossRequest();
         }
     }
 
     private void buildBossRequest() {
-        float hw = type.halfWidth();
-        float hh = type.halfHeight();
+        // Hexágono de marcadores com raio r: vértices em 90° + k·60°, meio dos
+        // lados em r·cos 30°, deslocado 30°. Os três núcleos da fase do espelho
+        // estão desenhados a r/2, em 90°, 210° e 330°.
+        float r = type.markerRadius();
+        float side = r * (float)Math.cos(Math.PI / 6);
         int phase = getBossPhase();
 
         if (phase == 0) {
             if (completedRounds == 0) {
                 request = "FASE 1 - acerte os 6 VÉRTICES.";
-                addEllipse(6, hw * 0.70f, hh * 0.75f, Math.PI / 2);
+                addEllipse(6, r, r, Math.PI / 2);
             } else {
                 request = "FASE 1 - agora acerte os 6 LADOS.";
-                addEllipse(6, hw * 0.70f, hh * 0.75f, Math.PI / 2 + Math.PI / 6);
+                addEllipse(6, side, side, Math.PI / 2 + Math.PI / 6);
             }
         } else if (phase == 1) {
             request = "FASE 2 - o reflexo é falso: acerte os 3 NÚCLEOS reais.";
-            weakPoints.add(new WeakPoint(0f, hh * 0.45f));
-            weakPoints.add(new WeakPoint(-hw * 0.55f, -hh * 0.35f));
-            weakPoints.add(new WeakPoint(hw * 0.55f, -hh * 0.35f));
+            addEllipse(3, r * 0.5f, r * 0.5f, Math.PI / 2);
         } else {
-            int r = completedRounds - 3;
-            if (r == 0) {
+            int round = completedRounds - 3;
+            if (round == 0) {
                 request = "FASE 3 - VÉRTICES em rotação.";
-                addEllipse(6, hw * 0.70f, hh * 0.75f, Math.PI / 2);
-            } else if (r == 1) {
+                addEllipse(6, r, r, Math.PI / 2);
+            } else if (round == 1) {
                 request = "FASE 3 - LADOS em rotação.";
-                addEllipse(6, hw * 0.70f, hh * 0.75f, Math.PI / 2 + Math.PI / 6);
+                addEllipse(6, side, side, Math.PI / 2 + Math.PI / 6);
             } else {
                 request = "FASE 3 - acerte os pontos SIMÉTRICOS.";
-                weakPoints.add(new WeakPoint(-hw * 0.70f, 0f));
-                weakPoints.add(new WeakPoint(hw * 0.70f, 0f));
+                weakPoints.add(new WeakPoint(-side, 0f));
+                weakPoints.add(new WeakPoint(side, 0f));
             }
         }
     }

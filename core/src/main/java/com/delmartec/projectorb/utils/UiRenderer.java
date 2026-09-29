@@ -20,8 +20,12 @@ public final class UiRenderer {
     private final BitmapFont font;
     private final BitmapFont titleFont;
     private final Assets assets;
-    private final NinePatch menuPatch;
-    private final NinePatch buttonPatch;
+    // Painéis oficiais (sprites/ui/) em NinePatch 1x. Os cortes vêm de
+    // sprites/manifest.json ("ninepatch"): incluem os detalhes de canto, então
+    // só as faixas lisas das bordas e o miolo esticam — sem distorcer pixel.
+    private final NinePatch dialogPatch;
+    private final NinePatch hudPatch;
+    private final NinePatch dangerPatch;
     private final GlyphLayout layout = new GlyphLayout();
 
     public UiRenderer(SpriteBatch batch, BitmapFont font, BitmapFont titleFont, Assets assets) {
@@ -29,17 +33,30 @@ public final class UiRenderer {
         this.font = font;
         this.titleFont = titleFont;
         this.assets = assets;
-        menuPatch = new NinePatch(assets.menuFrame, 78, 78, 78, 78);
-        buttonPatch = new NinePatch(assets.buttonFrame, 72, 72, 45, 45);
+        dialogPatch = new NinePatch(assets.dialogPanel, 64, 73, 26, 22);
+        hudPatch = new NinePatch(assets.hudPanel, 48, 56, 16, 16);
+        dangerPatch = new NinePatch(assets.enemyPanel, 40, 44, 13, 11);
     }
 
     public void panel(float x, float y, float width, float height, Color accent, float alpha) {
         batch.setColor(1f, 1f, 1f, alpha);
-        menuPatch.draw(batch, x, y, width, height);
+        dialogPatch.draw(batch, x, y, width, height);
         batch.setColor(Color.WHITE);
     }
 
-    public void crystalCorners(float x, float y, float width, float height, float size, float alpha) {
+    /** Painel do HUD (moldura lilás). */
+    public void hudPanel(float x, float y, float width, float height) {
+        hudPatch.draw(batch, x, y, width, height);
+    }
+
+    /** Painel de inimigo/perigo (moldura vermelha). */
+    public void dangerPanel(float x, float y, float width, float height) {
+        dangerPatch.draw(batch, x, y, width, height);
+    }
+
+    public void crystalCorners(float x, float y, float width, float height, float requested, float alpha) {
+        // Escala inteira do marcador nativo mais próxima do tamanho pedido.
+        float size = assets.weakPoint.getWidth() * Math.max(1, Math.round(requested / assets.weakPoint.getWidth()));
         batch.setColor(1f, 1f, 1f, alpha);
         batch.draw(assets.weakPoint, x - size * 0.5f, y + height - size * 0.5f, size, size);
         batch.draw(assets.weakPoint, x + width - size * 0.5f, y + height - size * 0.5f, size, size);
@@ -56,21 +73,19 @@ public final class UiRenderer {
         float alpha = enabled ? 1f : 0.45f;
         float inset = pressed ? 6f : 0f;
         batch.setColor(1f, 1f, 1f, alpha);
-        buttonPatch.draw(batch, bounds.x + inset, bounds.y - inset,
+        (selected && enabled ? dialogPatch : hudPatch).draw(batch, bounds.x + inset, bounds.y - inset,
             bounds.width - inset * 2f, bounds.height - inset * 2f);
-        batch.setColor(0.027f, 0.027f, 0.075f, 0.96f * alpha);
-        batch.draw(assets.pixel, bounds.x + 76f + inset, bounds.y + 18f - inset,
-            bounds.width - 152f - inset * 2f, bounds.height - 36f);
         batch.setColor(Color.WHITE);
         if (selected && enabled && !pressed) {
-            batch.draw(assets.lifeOrb, bounds.x + 24f, bounds.y + bounds.height / 2f - 14f, 28f, 28f);
-            batch.draw(assets.lifeOrb, bounds.x + bounds.width - 52f,
-                bounds.y + bounds.height / 2f - 14f, 28f, 28f);
+            float orb = assets.lifeOrbSmall.getWidth() * 2f;
+            float oy = bounds.y + bounds.height / 2f - orb / 2f;
+            batch.draw(assets.lifeOrbSmall, bounds.x + 58f, oy, orb, orb);
+            batch.draw(assets.lifeOrbSmall, bounds.x + bounds.width - 58f - orb, oy, orb, orb);
         }
         float fontScale = (pressed ? 1.47f : 1.55f) * 1.8f;
         font.getData().setScale(fontScale);
         layout.setText(font, text);
-        float available = bounds.width - 125f;
+        float available = bounds.width - 190f;
         if (layout.width > available) {
             font.getData().setScale(fontScale * available / layout.width);
             layout.setText(font, text);

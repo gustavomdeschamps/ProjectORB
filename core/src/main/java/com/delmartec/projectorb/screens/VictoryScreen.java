@@ -68,14 +68,16 @@ public final class VictoryScreen extends ScreenAdapter {
         game.batch.setProjectionMatrix(camera.combined);
         game.batch.begin();
         game.batch.setColor(1f, 1f, 1f, 1f);
-        game.batch.draw(game.assets.backgroundRuins, -40f, -25f, 2000f, 1125f);
+        game.batch.draw(game.assets.menuBackground, 0f, 0f, Constants.VIEW_WIDTH, Constants.VIEW_HEIGHT); // 480x270 a 4x
         game.batch.setColor(0.015f, 0.018f, 0.055f, 0.34f);
         game.batch.draw(game.assets.pixel, 0f, 0f, Constants.VIEW_WIDTH, Constants.VIEW_HEIGHT);
         game.batch.setColor(Color.WHITE);
 
         float orbBob = game.settings.isReducedMotion() ? 0f : MathUtils.sin(stateTime * 3.2f) * 10f;
-        game.batch.draw(game.assets.orbIdle.getKeyFrame(stateTime), 115f, 210f + orbBob, 300f, 300f);
-        game.batch.draw(game.assets.portal, 1435f, 250f, 310f, 280f);
+        game.batch.draw(game.assets.orbIdle.getKeyFrame(stateTime), 115f, 210f + orbBob,
+            Constants.PLAYER_CANVAS * 6f, Constants.PLAYER_CANVAS * 6f); // 6x
+        game.batch.draw(game.assets.portal, 1435f, 250f,
+            game.assets.portal.getWidth() * 2f, game.assets.portal.getHeight() * 2f); // 2x
 
         game.ui.panel(390f, 300f, 1140f, 620f, UiRenderer.SUCCESS, 1f);
         game.ui.crystalCorners(390f, 300f, 1140f, 620f, 70f, 1f);
