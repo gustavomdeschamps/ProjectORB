@@ -32,6 +32,8 @@ public class Player {
     private float hurtVisual = 0f;
     private float deathVisual = 0f;
     private boolean jumpedThisFrame;
+    /** Diálogo não interativo na tela: o ORB fica parado (a física continua). */
+    private boolean controlsLocked;
     private boolean dashedThisFrame;
 
     // Reutilizadas: getBounds() era chamada várias vezes por frame dentro dos
@@ -48,6 +50,8 @@ public class Player {
         this.x = x;
         this.y = y;
     }
+
+    public void setControlsLocked(boolean locked) { this.controlsLocked = locked; }
 
     public void setDeathDuration(float deathDuration) {
         this.deathDuration = deathDuration;
@@ -73,12 +77,15 @@ public class Player {
             return;
         }
 
+        if (controlsLocked) acceptActions = false;
         if (!acceptActions) jumpBuffer = 0f;
         else if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) jumpBuffer = Constants.JUMP_BUFFER;
 
         float move = 0f;
-        if (Gdx.input.isKeyPressed(Input.Keys.A) || Gdx.input.isKeyPressed(Input.Keys.LEFT)) move -= 1f;
-        if (Gdx.input.isKeyPressed(Input.Keys.D) || Gdx.input.isKeyPressed(Input.Keys.RIGHT)) move += 1f;
+        if (!controlsLocked) {
+            if (Gdx.input.isKeyPressed(Input.Keys.A) || Gdx.input.isKeyPressed(Input.Keys.LEFT)) move -= 1f;
+            if (Gdx.input.isKeyPressed(Input.Keys.D) || Gdx.input.isKeyPressed(Input.Keys.RIGHT)) move += 1f;
+        }
         if (move != 0f) facingRight = move > 0f;
 
         if (dashTimer > 0f) {

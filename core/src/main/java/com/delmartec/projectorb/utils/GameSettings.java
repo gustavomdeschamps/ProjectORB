@@ -10,22 +10,32 @@ public final class GameSettings {
     private static final String MASTER_VOLUME = "masterVolume";
     private static final String SCREEN_SHAKE = "screenShake";
     private static final String REDUCED_MOTION = "reducedMotion";
+    private static final String DIALOGUE_SOUND = "dialogueSound";
 
     private final Preferences preferences;
     private float masterVolume;
     private boolean screenShake;
     private boolean reducedMotion;
+    private boolean dialogueSound;
 
     public GameSettings() {
         preferences = Gdx.app.getPreferences(PREFS_NAME);
         masterVolume = MathUtils.clamp(preferences.getFloat(MASTER_VOLUME, 0.80f), 0f, 1f);
         screenShake = preferences.getBoolean(SCREEN_SHAKE, true);
         reducedMotion = preferences.getBoolean(REDUCED_MOTION, false);
+        dialogueSound = preferences.getBoolean(DIALOGUE_SOUND, true);
     }
 
     public float getMasterVolume() { return masterVolume; }
     public boolean isScreenShakeEnabled() { return screenShake && !reducedMotion; }
     public boolean isReducedMotion() { return reducedMotion; }
+    /** Som curto por letra nas falas dos NPCs (desligável nas opções). */
+    public boolean isDialogueSoundEnabled() { return dialogueSound; }
+
+    public void toggleDialogueSound() {
+        dialogueSound = !dialogueSound;
+        save();
+    }
 
     public void adjustMasterVolume(float delta) {
         masterVolume = MathUtils.clamp(Math.round((masterVolume + delta) * 10f) / 10f, 0f, 1f);
@@ -46,6 +56,7 @@ public final class GameSettings {
         preferences.putFloat(MASTER_VOLUME, masterVolume);
         preferences.putBoolean(SCREEN_SHAKE, screenShake);
         preferences.putBoolean(REDUCED_MOTION, reducedMotion);
+        preferences.putBoolean(DIALOGUE_SOUND, dialogueSound);
         preferences.flush();
     }
 }

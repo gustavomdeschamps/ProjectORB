@@ -14,6 +14,9 @@ public class AudioManager {
     private final Sound weakPoint;
     private final Sound hurt;
     private final Sound victory;
+    private final Sound blip;
+    private final Sound stingRift;
+    private final Sound stingTitle;
     private final Music ambient;
 
     public AudioManager(GameSettings settings) {
@@ -26,6 +29,10 @@ public class AudioManager {
         weakPoint = Gdx.audio.newSound(Gdx.files.internal("audio/weakpoint.wav"));
         hurt = Gdx.audio.newSound(Gdx.files.internal("audio/hurt.wav"));
         victory = Gdx.audio.newSound(Gdx.files.internal("audio/victory.wav"));
+        // Sintetizados por tools/build_orb_audio.py
+        blip = Gdx.audio.newSound(Gdx.files.internal("audio/blip.wav"));
+        stingRift = Gdx.audio.newSound(Gdx.files.internal("audio/sting_rift.wav"));
+        stingTitle = Gdx.audio.newSound(Gdx.files.internal("audio/sting_title.wav"));
         ambient = Gdx.audio.newMusic(Gdx.files.internal("audio/ambient.wav"));
         ambient.setLooping(true);
         refreshVolume();
@@ -43,10 +50,15 @@ public class AudioManager {
     public void weakPoint() { weakPoint.play(volume(0.44f)); }
     public void hurt() { hurt.play(volume(0.45f)); }
     public void victory() { victory.play(volume(0.50f)); }
+    /** Letra do diálogo: suave e com leve variação de altura para não cansar. */
+    public void blip(float pitch) { if (settings.isDialogueSoundEnabled()) blip.play(volume(0.22f), pitch, 0f); }
+    public void stingRift() { stingRift.play(volume(0.55f)); }
+    public void stingTitle() { stingTitle.play(volume(0.45f)); }
 
     public void dispose() {
         shoot.dispose(); hit.dispose(); jump.dispose(); dash.dispose();
         enemyAttack.dispose(); weakPoint.dispose(); hurt.dispose(); victory.dispose();
+        blip.dispose(); stingRift.dispose(); stingTitle.dispose();
         ambient.dispose();
     }
 }

@@ -23,10 +23,11 @@ public final class OptionsScreen extends ScreenAdapter {
     private final Viewport viewport = new FitViewport(Constants.VIEW_WIDTH, Constants.VIEW_HEIGHT, camera);
     private final Vector2 mouse = new Vector2();
     private final Rectangle[] rows = {
-        new Rectangle(635f, 575f, 650f, 82f),
-        new Rectangle(635f, 465f, 650f, 82f),
-        new Rectangle(635f, 355f, 650f, 82f),
-        new Rectangle(750f, 215f, 420f, 82f)
+        new Rectangle(635f, 600f, 650f, 80f),
+        new Rectangle(635f, 504f, 650f, 80f),
+        new Rectangle(635f, 408f, 650f, 80f),
+        new Rectangle(635f, 312f, 650f, 80f),
+        new Rectangle(750f, 185f, 420f, 80f)
     };
     private int selected;
     private float stateTime;
@@ -62,7 +63,9 @@ public final class OptionsScreen extends ScreenAdapter {
             game.settings.toggleScreenShake();
         } else if (selected == 2 && activate) {
             game.settings.toggleReducedMotion();
-        } else if ((selected == 3 && activate) || Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
+        } else if (selected == 3 && activate) {
+            game.settings.toggleDialogueSound();
+        } else if ((selected == 4 && activate) || Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
             game.setScreen(returnScreen);
             return;
         }
@@ -88,7 +91,9 @@ public final class OptionsScreen extends ScreenAdapter {
             selected == 1, true, UiRenderer.MAGENTA);
         game.ui.button(rows[2], "MOVIMENTO REDUZIDO   " + onOff(game.settings.isReducedMotion()),
             selected == 2, true, UiRenderer.MAGENTA);
-        game.ui.button(rows[3], "VOLTAR", selected == 3, true, UiRenderer.CYAN);
+        game.ui.button(rows[3], "SOM DAS FALAS   " + onOff(game.settings.isDialogueSoundEnabled()),
+            selected == 3, true, UiRenderer.MAGENTA);
+        game.ui.button(rows[4], "VOLTAR", selected == 4, true, UiRenderer.CYAN);
 
         game.batch.end();
     }

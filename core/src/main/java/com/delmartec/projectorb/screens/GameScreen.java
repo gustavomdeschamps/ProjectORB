@@ -15,6 +15,9 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.delmartec.projectorb.ProjectOrbGame;
+import com.delmartec.projectorb.dialogue.DialogueBox;
+import com.delmartec.projectorb.dialogue.DialogueRunner;
+import com.delmartec.projectorb.dialogue.DialogueScript;
 import com.delmartec.projectorb.entities.EffectBurst;
 import com.delmartec.projectorb.entities.EnemyType;
 import com.delmartec.projectorb.entities.GeoEnemy;
@@ -121,6 +124,10 @@ public class GameScreen extends ScreenAdapter {
     private boolean learnedDash;
     private boolean learnedShoot;
     private float resumeGuard = 0f;
+    /** Diálogo em andamento (Pi, Octógono). Ver startDialogue(). */
+    private final DialogueRunner dialogue = new DialogueRunner();
+    private DialogueBox dialogueBox;
+    private TextureRegion dialoguePortrait;
     /** O botão do mouse precisa ser solto antes do próximo tiro. */
     private boolean waitShootRelease = false;
 
@@ -181,6 +188,23 @@ public class GameScreen extends ScreenAdapter {
         if (paused) renderPause();
     }
 
+    /**
+     * Começa um roteiro de falas. Durante o diálogo o jogador não leva dano e
+     * os controles do jogo só valem nos passos interativos (waitFor).
+     */
+    public void startDialogue(DialogueScript script, int fromIndex, TextureRegion portrait,
+                              DialogueRunner.Listener listener) {
+        if (dialogueBox == null) dialogueBox = new DialogueBox(game);
+        dialoguePortrait = portrait;
+        dialogue.setListener(listener);
+        dialogue.start(script, fromIndex);
+    }
+
+    /** Evento do jogo para o passo interativo atual (move, jump, dash, shoot...). */
+    private void dialogueSignal(String event) {
+        if (dialogue.isActive()) dialogue.signal(event);
+    }
+
     private void guardResumeInput() {
         resumeGuard = RESUME_INPUT_GUARD;
         waitShootRelease = true;
@@ -190,6 +214,22 @@ public class GameScreen extends ScreenAdapter {
         gameTime += delta;
         resumeGuard = Math.max(0f, resumeGuard - delta);
         boolean acceptActions = resumeGuard <= 0f;
+        if (dialogue.isActive()) {
+            dialogue.update(delta);
+            dialogueBox.update(delta, dialogue);
+            if (!dialogue.isInteractive()) {
+                // Fala comum: ESPAÇO/clique avançam a fala e não chegam ao jogo.
+                if (acceptActions && (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)
+                    || Gdx.input.isKeyJustPressed(Input.Keys.ENTER)
+                    || Gdx.input.isButtonJustPressed(Input.Buttons.LEFT))) {
+                    dialogue.advance();
+                    waitShootRelease = true;
+                }
+                acceptActions = false;
+            }
+        }
+        // Os controles do jogo só valem fora do diálogo ou nos passos interativos.
+        player.setControlsLocked(dialogue.isActive() && !dialogue.isInteractive());
         shotCooldown = Math.max(0f, shotCooldown - delta);
         feedbackTimer = Math.max(0f, feedbackTimer - delta);
         shakeTimer = Math.max(0f, shakeTimer - delta);
@@ -225,7 +265,11 @@ public class GameScreen extends ScreenAdapter {
         updateProjectiles(delta);
         updateEffects(delta);
 
-        if (player.getY() < -120f && player.getHealth() > 0) player.forceDeath();
+        if (player.getY() < -120f && player.getHealth() > 0) {
+            // Durante um diálogo o ORB não morre: cair só o traz de volta.
+            if (dialogue.isActive()) player.respawn(level.getSection(currentSection).respawnX, 230f);
+            else player.forceDeath();
+        }
         if (player.isDeathAnimationFinished()) handleLifeLost();
 
         if (acceptActions && portalActive && playerAtPortal() && Gdx.input.isKeyJustPressed(Input.Keys.E)) {
@@ -369,7 +413,7 @@ public class GameScreen extends ScreenAdapter {
                     enemy.getType().isBoss() ? 12f : 7f);
             }
             if (!enemy.isDefeated() && player.getBounds().overlaps(enemy.getBodyRect())) {
-                if (player.damage(enemy.getContactDamage(), enemy.getX())) {
+                if (!dialogue.isActive() && player.damage(enemy.getContactDamage(), enemy.getX())) {
                     game.audio.hurt();
                     effects.add(new EffectBurst(player.getX(), player.getY(), EffectBurst.Kind.VOID, 110f, 0.22f));
                     shake(0.14f, 10f);
@@ -427,7 +471,7 @@ public class GameScreen extends ScreenAdapter {
             if (p.dead()) continue;
             if (p.bounds().overlaps(playerBounds)) {
                 p.life = 0f;
-                if (player.damage(p.damage, p.x)) {
+                if (!dialogue.isActive() && player.damage(p.damage, p.x)) {
                     game.audio.hurt();
                     effects.add(new EffectBurst(player.getX(), player.getY(), EffectBurst.Kind.VOID, 115f, 0.24f));
                     shake(0.18f, 12f);
@@ -861,6 +905,7 @@ public class GameScreen extends ScreenAdapter {
         drawTargetHud();
         drawCrystalHud();
         drawBannerAndHints();
+        if (dialogue.isActive()) dialogueBox.draw(game.batch, dialogue, dialoguePortrait);
 
         game.batch.setColor(Color.WHITE);
         game.batch.end();
