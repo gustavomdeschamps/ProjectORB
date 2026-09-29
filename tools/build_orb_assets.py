@@ -877,6 +877,175 @@ def build_world():
     save(cr, "world/crystal.png", "art-source/projetofinal-29/cristal.png")
 
 
+# ================================================================ NPC Pi (C1)
+
+# Paleta própria (dourado + ciano) para se destacar do roxo do ORB.
+PI_LINE = (26, 22, 44)
+PI_GOLD_D = (168, 104, 30)
+PI_GOLD = (230, 170, 52)
+PI_GOLD_L = (255, 220, 118)
+PI_CYAN = (60, 200, 220)
+PI_CYAN_L = (170, 246, 255)
+PI_EYE = (250, 248, 236)
+PI_PUPIL = (26, 22, 44)
+PI_MOUTH = (110, 36, 52)
+PI_PALETTE = {PI_LINE, PI_GOLD_D, PI_GOLD, PI_GOLD_L, PI_CYAN, PI_CYAN_L, PI_EYE, PI_PUPIL, PI_MOUTH}
+
+
+def pi_frame(dy=0, bar_squash=0, legs=(0, 0), leg_dx=(0, 0), arm_l=(-100, 8), arm_r=(-80, 8),
+             eyes="open", look=0, mouth="closed", finger=False):
+    """Um frame do Pi, desenhado por partes direto no canvas 48 (a grade de
+    32 do corpo fica deslocada de OX, OY: braços e dedo podem sair dela).
+    Ângulos dos braços em graus (0 = direita, -90 = baixo, 90 = cima)."""
+    C = PLAYER_C
+    OX, OY = 8, (C - 5) - 29          # linha 29 da grade = linha dos pés
+    a = canvas(C)
+    top = 8 + dy + bar_squash
+    bottom = 15 + dy                  # no squash a barra encolhe por cima
+
+    def rect(x0, y0, x1, y1, fill):
+        a[max(0, y0 + OY):y1 + OY + 1, max(0, x0 + OX):x1 + OX + 1] = (*fill, 255)
+
+    def px(x, y, fill):
+        if 0 <= y + OY < C and 0 <= x + OX < C:
+            a[y + OY, x + OX] = (*fill, 255)
+
+    # ---- pernas (atrás da barra): esquerda reta, direita com o gancho do π
+    for k, (x0, x1) in enumerate(((9, 12), (19, 22))):
+        lift, dx = legs[k], leg_dx[k]
+        y0, y1 = bottom + 1, 28 - lift
+        rect(x0 + dx, y0, x1 + dx, y1, PI_LINE)
+        rect(x0 + 1 + dx, y0, x1 - 1 + dx, y1 - 1, PI_GOLD_D if k == 0 else PI_GOLD)
+        rect(x0 + 1 + dx, y0, x0 + 1 + dx, y1 - 1, PI_GOLD_L if k == 1 else PI_GOLD)
+        if k == 1:                    # gancho para a direita
+            rect(x1 + dx, y1 - 2, x1 + 3 + dx, y1, PI_LINE)
+            rect(x1 + dx, y1 - 1, x1 + 2 + dx, y1 - 1, PI_GOLD)
+        rect(x0 - 1 + dx, y1, x1 + dx, y1 + 1, PI_LINE)          # sola
+        rect(x0 + dx, y1, x1 - 1 + dx, y1, PI_CYAN)
+
+    # ---- braços (atrás da barra), 3 px: contorno + núcleo de 1 px + mão
+    for (sx, sy), (ang, ln), is_right in (((1, top + 3), arm_l, False), ((30, top + 3), arm_r, True)):
+        ex_ = sx + round(ln * math.cos(math.radians(ang)))
+        ey_ = sy - round(ln * math.sin(math.radians(ang)))
+        core = m_line(C, C, sx + OX + 0.5, sy + OY + 0.5, ex_ + OX + 0.5, ey_ + OY + 0.5)
+        grow = core.copy()
+        for dy_, dx_ in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+            grow |= np.roll(np.roll(core, dy_, 0), dx_, 1)
+        paint(a, grow, PI_LINE)
+        paint(a, core, PI_GOLD_D)
+        hx, hy = ex_ + OX + 0.5, ey_ + OY + 0.5
+        paint(a, m_disc(C, C, hx, hy, 2.3), PI_LINE)
+        paint(a, m_disc(C, C, hx, hy, 1.5), PI_CYAN_L)
+        if finger and is_right:       # dedo apontando para a direita
+            rect(ex_ + 2, ey_, ex_ + 4, ey_, PI_CYAN_L)
+            px(ex_ + 5, ey_, PI_LINE)
+            px(ex_ + 3, ey_ - 1, PI_LINE)
+            px(ex_ + 3, ey_ + 1, PI_LINE)
+
+    # ---- barra (corpo/cabeça) com as pontas passando das pernas
+    rect(2, top, 29, bottom, PI_LINE)
+    rect(3, top + 1, 28, bottom - 1, PI_GOLD)
+    rect(3, top + 1, 28, top + 1, PI_GOLD_L)                   # brilho em cima
+    rect(3, bottom - 1, 28, bottom - 1, PI_GOLD_D)             # sombra embaixo
+    rect(4, top - 1, 27, top - 1, PI_CYAN)                     # filete ciano ("serifa")
+    px(3, top - 1, PI_LINE)
+    px(28, top - 1, PI_LINE)
+
+    # ---- rosto
+    ey = top + 2
+    for ex in (11, 18):
+        if eyes == "open":
+            rect(ex, ey, ex + 2, ey + 2, PI_EYE)
+            rect(ex + 1 + look, ey + 1, ex + 1 + look, ey + 2, PI_PUPIL)
+        elif eyes == "happy":         # ^ ^
+            px(ex, ey + 2, PI_LINE)
+            px(ex + 1, ey + 1, PI_LINE)
+            px(ex + 2, ey + 2, PI_LINE)
+        elif eyes == "closed":
+            rect(ex, ey + 2, ex + 2, ey + 2, PI_LINE)
+    my = ey + 4
+    if mouth == "closed":
+        rect(14, my, 17, my, PI_LINE)
+    elif mouth == "small":
+        rect(14, my, 17, my + 1, PI_LINE)
+        rect(15, my, 16, my, PI_MOUTH)
+    elif mouth == "open":
+        rect(13, my - 1, 18, my + 1, PI_LINE)
+        rect(14, my - 1, 17, my, PI_MOUTH)
+    elif mouth == "smile":
+        px(13, my - 1, PI_LINE)
+        px(18, my - 1, PI_LINE)
+        rect(14, my, 17, my, PI_LINE)
+    return a
+
+
+def build_pi():
+    C = PLAYER_C
+    FEET = C - 5
+
+    def place(f):
+        return f                                  # pi_frame já desenha no canvas 48
+
+    def sparkle(frame, pts, col):
+        out = frame.copy()
+        for x, y in pts:
+            if 0 <= x < C and 0 <= y < C:
+                out[y, x] = (*col, 255)
+        return out
+
+    anims = {
+        "idle": [place(pi_frame(arm_l=(-100, 8), arm_r=(-80, 8))),
+                 place(pi_frame(arm_l=(-104, 8), arm_r=(-76, 8))),
+                 place(pi_frame(dy=1, arm_l=(-104, 8), arm_r=(-76, 8))),
+                 place(pi_frame(arm_l=(-100, 8), arm_r=(-80, 8), eyes="closed"))],
+        "walk": [place(pi_frame(dy=1, arm_l=(-120, 8), arm_r=(-60, 8))),
+                 place(pi_frame(legs=(2, 0), leg_dx=(1, 0), arm_l=(-110, 8), arm_r=(-70, 8))),
+                 place(pi_frame(dy=-1, legs=(1, 0), arm_l=(-95, 8), arm_r=(-85, 8))),
+                 place(pi_frame(dy=1, arm_l=(-60, 8), arm_r=(-120, 8))),
+                 place(pi_frame(legs=(0, 2), leg_dx=(0, 1), arm_l=(-70, 8), arm_r=(-110, 8))),
+                 place(pi_frame(dy=-1, legs=(0, 1), arm_l=(-85, 8), arm_r=(-95, 8)))],
+        "talk": [place(pi_frame(mouth="closed")),
+                 place(pi_frame(mouth="small", arm_r=(-60, 8))),
+                 place(pi_frame(mouth="open", bar_squash=1, arm_r=(-40, 8))),
+                 place(pi_frame(mouth="small", arm_r=(-60, 8)))],
+        "wave": [place(pi_frame(arm_r=(ang, 8), mouth="smile")) for ang in (-30, 30, 70, 50, 80, 50)],
+        "point": [place(pi_frame(arm_r=(-20, 5), look=1)),
+                  place(pi_frame(arm_r=(0, 4), look=1, finger=True)),
+                  place(pi_frame(arm_r=(0, 5), look=1, finger=True, mouth="small")),
+                  place(pi_frame(arm_r=(0, 4), look=1, finger=True))],
+        "cheer": [place(pi_frame(arm_l=(150, 8), arm_r=(30, 8), eyes="happy", mouth="open")),
+                  place(pi_frame(dy=-2, legs=(1, 1), arm_l=(120, 8), arm_r=(60, 8), eyes="happy", mouth="open")),
+                  place(pi_frame(dy=-3, legs=(2, 2), arm_l=(110, 8), arm_r=(70, 8), eyes="happy", mouth="open")),
+                  place(pi_frame(dy=-2, legs=(1, 1), arm_l=(120, 8), arm_r=(60, 8), eyes="happy", mouth="open")),
+                  place(pi_frame(arm_l=(150, 8), arm_r=(30, 8), eyes="happy", mouth="smile")),
+                  place(pi_frame(dy=1, arm_l=(160, 8), arm_r=(20, 8), eyes="happy", mouth="smile"))],
+    }
+    # appear: faíscas convergem e o Pi se materializa (dithering 1 -> 0)
+    base = anims["idle"][0]
+    rng = np.random.default_rng(314)
+    sparks = [(int(x), int(y)) for x, y in rng.integers(4, C - 4, size=(10, 2))]
+    cx, cy = C // 2, FEET - 14
+    appear = []
+    for i in range(8):
+        t = i / 7
+        pts = [(round(x + (cx - x) * t), round(y + (cy - y) * t)) for x, y in sparks]
+        f = dither(base, 1.0 - t) if t > 0.3 else canvas(C)
+        appear.append(sparkle(f, pts, PI_CYAN_L if i % 2 == 0 else PI_GOLD_L))
+    anims["appear"] = appear
+    for name, frames in anims.items():
+        for f in frames:
+            extra = palette_of(f) - PI_PALETTE
+            if extra:
+                raise SystemExit(f"Pi/{name}: cor fora da paleta do Pi: {sorted(extra)[:4]}")
+    counts = write_anims("npc/pi", anims)
+    # retrato: barra + rosto do idle (recorte, sem reamostrar)
+    idle = anims["idle"][0]
+    bb = bbox(idle)
+    save(idle[bb[1] - 1:bb[1] + 14, 8:40].copy(), "npc/pi/portrait.png")
+    return {"canvas": C, "frames": counts, "baseline_px": C - 1 - bbox(idle)[3],
+            "palette": sorted(list(c) for c in PI_PALETTE)}
+
+
 # ================================================================ HUD (A3)
 
 def build_hud():
@@ -1043,6 +1212,7 @@ def main():
     manifest["fx"] = build_fx_ui()
     build_world()
     build_hud()
+    manifest["npc_pi"] = build_pi()
     manifest["sources"] = dict(sorted(sources.items()))
     manifest["files"] = sorted(written)
     (OUT / "manifest.json").write_text(json.dumps(manifest, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
