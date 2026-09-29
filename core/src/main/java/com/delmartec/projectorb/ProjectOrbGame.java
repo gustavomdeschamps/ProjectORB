@@ -47,7 +47,7 @@ public class ProjectOrbGame extends Game {
         settings = new GameSettings();
         audio = new AudioManager(settings);
         ui = new UiRenderer(batch, font, titleFont, assets);
-        setScreen(new MenuScreen(this));
+        setScreen(settings.isIntroEnabled() ? new com.delmartec.projectorb.screens.IntroScreen(this) : new MenuScreen(this));
     }
 
     public void startGame() {

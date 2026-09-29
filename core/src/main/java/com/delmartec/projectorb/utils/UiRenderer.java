@@ -97,6 +97,8 @@ public final class UiRenderer {
     /** Títulos: 2 e 3 pixels de arte por pixel da fonte (ainda escala inteira). */
     public static final int TITLE = Constants.PIXEL_SCALE * 2;
     public static final int TITLE_BIG = Constants.PIXEL_SCALE * 3;
+    /** Título da abertura. */
+    public static final int TITLE_HUGE = Constants.PIXEL_SCALE * 4;
 
     /**
      * Converte a escala antiga (relativa à Inconsolata 18 px) para a escala

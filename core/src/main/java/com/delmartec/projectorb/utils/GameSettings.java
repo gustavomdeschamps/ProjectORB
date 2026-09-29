@@ -11,12 +11,14 @@ public final class GameSettings {
     private static final String SCREEN_SHAKE = "screenShake";
     private static final String REDUCED_MOTION = "reducedMotion";
     private static final String DIALOGUE_SOUND = "dialogueSound";
+    private static final String INTRO = "intro";
 
     private final Preferences preferences;
     private float masterVolume;
     private boolean screenShake;
     private boolean reducedMotion;
     private boolean dialogueSound;
+    private boolean intro;
 
     public GameSettings() {
         preferences = Gdx.app.getPreferences(PREFS_NAME);
@@ -24,6 +26,7 @@ public final class GameSettings {
         screenShake = preferences.getBoolean(SCREEN_SHAKE, true);
         reducedMotion = preferences.getBoolean(REDUCED_MOTION, false);
         dialogueSound = preferences.getBoolean(DIALOGUE_SOUND, true);
+        intro = preferences.getBoolean(INTRO, true);
     }
 
     public float getMasterVolume() { return masterVolume; }
@@ -31,6 +34,14 @@ public final class GameSettings {
     public boolean isReducedMotion() { return reducedMotion; }
     /** Som curto por letra nas falas dos NPCs (desligável nas opções). */
     public boolean isDialogueSoundEnabled() { return dialogueSound; }
+
+    /** Abertura animada antes do menu (desligável nas opções). */
+    public boolean isIntroEnabled() { return intro; }
+
+    public void toggleIntro() {
+        intro = !intro;
+        save();
+    }
 
     public void toggleDialogueSound() {
         dialogueSound = !dialogueSound;
@@ -57,6 +68,7 @@ public final class GameSettings {
         preferences.putBoolean(SCREEN_SHAKE, screenShake);
         preferences.putBoolean(REDUCED_MOTION, reducedMotion);
         preferences.putBoolean(DIALOGUE_SOUND, dialogueSound);
+        preferences.putBoolean(INTRO, intro);
         preferences.flush();
     }
 }

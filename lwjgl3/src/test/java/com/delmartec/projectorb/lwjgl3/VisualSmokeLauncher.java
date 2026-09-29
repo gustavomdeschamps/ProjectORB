@@ -47,6 +47,12 @@ public final class VisualSmokeLauncher {
         private SmokeGame(String output) { this.output = output; }
 
         @Override
+        public void create() {
+            super.create();
+            showMenu(); // a abertura tem captura própria (IntroCapture)
+        }
+
+        @Override
         public void render() {
             super.render();
             elapsed += Gdx.graphics.getDeltaTime();
