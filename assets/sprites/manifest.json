@@ -592,6 +592,53 @@
   "void_burst_big": 6,
   "dash_trail": 4
  },
+ "background_layers": [
+  {
+   "layer": "ceu",
+   "period_px": 451,
+   "seam_mean_diff": 4.71
+  },
+  {
+   "layer": "nuvem1",
+   "period_px": 402,
+   "seam_mean_diff": 8.05
+  },
+  {
+   "layer": "nuvem2",
+   "period_px": 401,
+   "seam_mean_diff": 9.05
+  },
+  {
+   "layer": "nuvem3",
+   "period_px": 393,
+   "seam_mean_diff": 17.76
+  },
+  {
+   "layer": "nuvem4",
+   "period_px": 397,
+   "seam_mean_diff": 16.54
+  },
+  {
+   "layer": "montanhas",
+   "period_px": 405,
+   "seam_mean_diff": 0.0
+  },
+  {
+   "layer": "estruturas",
+   "period_px": 760,
+   "seam_mean_diff": 0.0
+  },
+  {
+   "layer": "lago",
+   "period_px": 380,
+   "seam_mean_diff": 28.7
+  },
+  {
+   "layer": "chao",
+   "period_px": 421,
+   "seam_mean_diff": 32.16
+  }
+ ],
  "sources": {
   "background/00_ceu.png": "art-source/ProjetoFinal_TCC/fundo/ceu.png",
   "background/01_nuvem1.png": "art-source/ProjetoFinal_TCC/fundo/nuvem1.png",

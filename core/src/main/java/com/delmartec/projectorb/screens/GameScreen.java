@@ -82,12 +82,15 @@ public class GameScreen extends ScreenAdapter {
     private final Rectangle gateRect = new Rectangle();
     private boolean gateActive;
 
-    // Fundo em camadas de parallax. Cada camada alterna cópias normais e
-    // espelhadas: repetição infinita sem emenda visível, sem arte tileável.
-    private final TextureRegion[] backgroundLayers;
-    private final TextureRegion[] backgroundLayersMirrored;
-    /** Fator de parallax de cada camada (céu parado ... chão mais rápido). */
-    private static final float[] PARALLAX = { 0f, 0.03f, 0.06f, 0.09f, 0.12f, 0.16f, 0.22f, 0.30f, 0.38f };
+    // Fundo em camadas de parallax, repetidas em wrap simples (sem espelhar:
+    // o espelhamento punha a mesma estrutura refletida ao lado dela mesma).
+    // Cada camada tem período próprio (a largura da textura, escolhida pelo
+    // gerador para não ser múltipla de nenhuma outra), então duas camadas
+    // nunca alinham a mesma estrutura.
+    /** Fator de parallax por camada: céu quase parado ... chão do fundo. */
+    private static final float[] PARALLAX = { 0.02f, 0.05f, 0.07f, 0.09f, 0.11f, 0.16f, 0.26f, 0.34f, 0.42f };
+    /** Deriva própria das nuvens (px de mundo/s); desligada em movimento reduzido. */
+    private static final float[] DRIFT = { 0f, 3f, 5f, 7f, 9f, 0f, 0f, 0f, 0f };
     /** Ponta direita das plataformas = ponta esquerda espelhada. */
     private final TextureRegion platformCapRight;
     private final TextureRegion platformAltCapRight;
@@ -123,14 +126,6 @@ public class GameScreen extends ScreenAdapter {
 
     public GameScreen(ProjectOrbGame game) {
         this.game = game;
-        int layers = game.assets.backgroundLayers.length;
-        backgroundLayers = new TextureRegion[layers];
-        backgroundLayersMirrored = new TextureRegion[layers];
-        for (int i = 0; i < layers; i++) {
-            backgroundLayers[i] = new TextureRegion(game.assets.backgroundLayers[i]);
-            backgroundLayersMirrored[i] = new TextureRegion(game.assets.backgroundLayers[i]);
-            backgroundLayersMirrored[i].flip(true, false);
-        }
         platformCapRight = new TextureRegion(game.assets.platform.cap);
         platformCapRight.flip(true, false);
         platformAltCapRight = new TextureRegion(game.assets.platformAlt.cap);
@@ -545,21 +540,22 @@ public class GameScreen extends ScreenAdapter {
         game.batch.setProjectionMatrix(hudCamera.combined);
         game.batch.begin();
 
-        // Parallax real em 9 camadas, todas a 4x (480x270 -> 1920x1080). O
-        // deslocamento é arredondado para múltiplos de 4 px para os pixels da
-        // arte ficarem na grade. Levemente rebaixado em brilho para o cenário
-        // nunca competir com personagem, pontos fracos e projéteis.
-        float span = Constants.VIEW_WIDTH;
+        // Parallax em 9 camadas na escala única (480x270 -> 1920x1080). O
+        // deslocamento é arredondado para múltiplos de PIXEL_SCALE para os
+        // pixels da arte ficarem na grade. Levemente rebaixado em brilho para o
+        // cenário nunca competir com personagem, pontos fracos e projéteis.
         int step = Constants.PIXEL_SCALE;
+        boolean drift = !game.settings.isReducedMotion();
         game.batch.setColor(0.74f, 0.76f, 0.88f, 1f);
-        for (int layer = 0; layer < backgroundLayers.length; layer++) {
-            float scroll = Math.round(worldCamera.position.x * PARALLAX[layer] / step) * step;
-            int first = MathUtils.floor(scroll / span);
-            int last = MathUtils.floor((scroll + Constants.VIEW_WIDTH) / span);
-            for (int n = first; n <= last; n++) {
-                boolean mirrored = Math.floorMod(n, 2) == 1;
-                game.batch.draw(mirrored ? backgroundLayersMirrored[layer] : backgroundLayers[layer],
-                    n * span - scroll, 0f, span, Constants.VIEW_HEIGHT);
+        for (int layer = 0; layer < game.assets.backgroundLayers.length; layer++) {
+            Texture texture = game.assets.backgroundLayers[layer];
+            float period = texture.getWidth() * step;
+            float height = texture.getHeight() * step;
+            float offset = worldCamera.position.x * PARALLAX[layer] + (drift ? gameTime * DRIFT[layer] : 0f);
+            float scroll = Math.round(offset / step) * step;
+            float first = (float)Math.floor(scroll / period) * period - scroll;
+            for (float x = first; x < Constants.VIEW_WIDTH; x += period) {
+                game.batch.draw(texture, x, 0f, period, height);
             }
         }
 

@@ -701,13 +701,51 @@ def build_fx_ui():
 
 def build_world():
     # ---- fundo (já está na escala 4: 480x270 -> 1920x1080)
+    # O jogo repete cada camada em wrap simples (sem espelhar). Para isso cada
+    # camada precisa ser tileável e ter um período próprio: recortamos na
+    # largura em que a coluna seguinte do original mais se parece com a
+    # primeira (a emenda some), escolhendo larguras distintas entre 380 e 478
+    # — nenhuma é múltipla de outra, então duas camadas nunca "alinham".
+    # A camada de estruturas ganha um vão: com período maior que a tela mais
+    # uma estrutura, cada estrutura aparece no máximo uma vez por tela.
     layers = ["ceu", "nuvem1", "nuvem2", "nuvem3", "nuvem4", "montanhas", "estruturas-fundo", "lago", "chao"]
     comp = Image.new("RGBA", (480, 270))
+    used = set()
+    info = []
     for i, name in enumerate(layers):
         im = Image.open(SRC_TCC / f"fundo/{name}.png").convert("RGBA")
-        clean = name.replace("estruturas-fundo", "estruturas")
-        save(im, f"background/{i:02d}_{clean}.png", f"art-source/ProjetoFinal_TCC/fundo/{name}.png")
         comp.alpha_composite(im)
+        a = np.array(im).astype(np.int32)
+        if name == "estruturas-fundo":
+            period = 760
+            out = canvas(period, 270)
+            out[:, :480] = a
+            seam = 0.0
+        else:
+            # janela de 12 colunas: pega também texturas em blocos (lago) e
+            # montes que cruzariam a emenda (chão)
+            def cost(w):
+                return float(sum(np.abs(a[:, w + k] - a[:, k]).sum() for k in range(12)))
+            L = 24
+            cands = [w for w in range(380, 480 - L) if w not in used]
+            period = min(cands, key=lambda w: (cost(w), -w))
+            seam = cost(period) / (12 * 270)
+            out = a[:, :period].copy()
+            # Transição em dithering ordenado nas L primeiras colunas: começa
+            # na continuação natural da última coluna (a[period + x]) e chega
+            # ao conteúdo original (a[x]). Some a emenda sem espelhar e sem
+            # meio-tom (pixel art pura).
+            for x in range(L):
+                t = (x + 0.5) / L
+                take_orig = BAYER4[np.arange(270) % 4, x % 4] < t
+                out[take_orig, x] = a[take_orig, x]
+                out[~take_orig, x] = a[~take_orig, period + x]
+            out = out.astype(np.uint8)
+        used.add(period)
+        clean = name.replace("estruturas-fundo", "estruturas")
+        save(out, f"background/{i:02d}_{clean}.png", f"art-source/ProjetoFinal_TCC/fundo/{name}.png")
+        info.append({"layer": clean, "period_px": period, "seam_mean_diff": round(seam, 2)})
+    manifest["background_layers"] = info
     save(comp, "background/menu.png", "composição de art-source/ProjetoFinal_TCC/fundo/*")
 
     # ---- plataformas (16 px = 64 de mundo), redesenho de word/platform*.png
