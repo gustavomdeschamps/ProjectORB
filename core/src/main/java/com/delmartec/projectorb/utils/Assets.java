@@ -264,6 +264,23 @@ public class Assets {
         return propIcons.get(key);
     }
 
+    /**
+     * Animações de um NPC em sprites/npc/&lt;nome&gt;/&lt;anim&gt;_NN.png. 'loops' tocam
+     * em loop; 'once' tocam uma vez (o Npc volta ao repouso depois).
+     */
+    public Map<String, Animation<TextureRegion>> npcAnimations(String name, float frameDuration,
+                                                               String[] loops, String[] once) {
+        Map<String, Animation<TextureRegion>> map = new HashMap<>();
+        for (String anim : loops) map.put(anim, animation(frameDuration, "npc/" + name + "/" + anim + "_", Animation.PlayMode.LOOP));
+        for (String anim : once) map.put(anim, animation(frameDuration, "npc/" + name + "/" + anim + "_", Animation.PlayMode.NORMAL));
+        return map;
+    }
+
+    /** Retrato do NPC para a caixa de fala (sprites/npc/&lt;nome&gt;/portrait.png). */
+    public TextureRegion npcPortrait(String name) {
+        return new TextureRegion(load("npc/" + name + "/portrait.png"));
+    }
+
     public Animation<TextureRegion> enemyIdle(EnemyType type) { return enemyAnims.get(type)[0]; }
     public Animation<TextureRegion> enemyMove(EnemyType type) { return enemyAnims.get(type)[1]; }
     public Animation<TextureRegion> enemyAttack(EnemyType type) { return enemyAnims.get(type)[2]; }
