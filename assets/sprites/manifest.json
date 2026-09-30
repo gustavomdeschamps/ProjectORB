@@ -1220,7 +1220,13 @@
   "world/platform_cap.png": "redesenho de art-source/ProjetoFinal_TCC/word/platform.png",
   "world/platform_fill.png": "redesenho de art-source/ProjetoFinal_TCC/word/platform.png",
   "world/platform_module.png": "redesenho de art-source/ProjetoFinal_TCC/word/platform.png",
-  "world/portal.png": "redesenho de art-source/ProjetoFinal_TCC/word/portal.png"
+  "world/portal.png": "redesenho de art-source/ProjetoFinal_TCC/word/portal.png",
+  "world/stair/block.png": "gerado",
+  "world/stair/block_closed.png": "gerado",
+  "world/stair/block_top.png": "gerado",
+  "world/stair/chip.png": "gerado",
+  "world/stair/crack_cyan.png": "gerado",
+  "world/stair/crack_magenta.png": "gerado"
  },
  "files": [
   "background/00_ceu.png",
@@ -1689,6 +1695,12 @@
   "world/platform_cap.png",
   "world/platform_fill.png",
   "world/platform_module.png",
-  "world/portal.png"
+  "world/portal.png",
+  "world/stair/block.png",
+  "world/stair/block_closed.png",
+  "world/stair/block_top.png",
+  "world/stair/chip.png",
+  "world/stair/crack_cyan.png",
+  "world/stair/crack_magenta.png"
  ]
 }

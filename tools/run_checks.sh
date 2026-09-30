@@ -7,7 +7,7 @@ cd "$(dirname "$0")/.."
 ./gradlew :core:compileJava :lwjgl3:compileTestJava --console=plain -q || exit 1
 fail=0
 for c in DialogueRunnerCheck NpcCheck PlayerMovementCheck ProjectileSweepCheck QuizCheck \
-         ResumeInputCheck SectionRespawnCheck TutorialCheck WeakPointAlignmentCheck ${EXTRA_CHECKS:-}; do
+         ResumeInputCheck SectionRespawnCheck TutorialCheck WeakPointAlignmentCheck StairGateCheck StairRespawnCheck ${EXTRA_CHECKS:-}; do
   out=$(./gradlew :lwjgl3:runCheck -Pcheck=$c --console=plain -q 2>&1)
   if echo "$out" | grep -q "PASS"; then echo "PASS  $c"; else echo "FAIL  $c"; echo "$out" | tail -15; fail=1; fi
 done

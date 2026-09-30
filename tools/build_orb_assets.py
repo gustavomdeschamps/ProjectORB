@@ -1483,6 +1483,52 @@ def build_hearts():
     return {"canvas": [W, H], "frames": counts, "palette": sorted(list(c) for c in HEART_PALETTE)}
 
 
+# ================================================================ escadinha (etapa B)
+
+# Blocos de cristal roxo-escuro de 6x10 pixels de arte (24x40 de mundo): a
+# massa fechada entre as seções e, depois de vencida, a escada. Sem anéis,
+# sem barra, sem régua, sem amarelo.
+STAIR_KEY = {
+    "K": (18, 10, 32),     # contorno firme (escada aberta)
+    "D": (40, 22, 70),     # sombra / contorno apagado (massa fechada)
+    "B": (58, 34, 96),     # corpo
+    "L": (86, 56, 138),    # face clara
+    "H": (128, 98, 186),   # topo iluminado
+    "C": (60, 220, 230),   # fresta de energia ciano
+    "M": (220, 60, 210),   # fresta de energia magenta
+}
+STAIR_BLOCK_CLOSED = [   # massa: contornos apagados, degraus só insinuados
+    "DDDDDD", "DLLBBD", "DLBBBD", "DBBBBD", "DBBBDD",
+    "DBBBBD", "DBBBBD", "DBBBDD", "DBBDDD", "DDDDDD",
+]
+STAIR_BLOCK = [          # escada: contorno firme
+    "KKKKKK", "KLLBBK", "KLBBBK", "KBBBBK", "KBBBDK",
+    "KBBBBK", "KBBBBK", "KBBBDK", "KBBDDK", "KKKKKK",
+]
+STAIR_BLOCK_TOP = [      # bloco de cima de cada coluna: topo mais claro
+    "KKKKKK", "KHHHHK", "KHLLLK", "KLLBBK", "KLBBBK",
+    "KBBBDK", "KBBBBK", "KBBBDK", "KBBDDK", "KKKKKK",
+]
+STAIR_CRACK_C = [        # fresta ciano (desenhada por cima de alguns blocos)
+    "......", "...C..", "...C..", "..C...", "..C...",
+    "..CC..", "...C..", "......", "......", "......",
+]
+STAIR_CRACK_M = [
+    "......", "......", "..M...", "..M...", "...M..",
+    "...M..", "..MM..", "..M...", "......", "......",
+]
+STAIR_CHIP = [".K", "KL"]       # lasca que salta no rearranjo
+
+
+def build_stairs():
+    for name, rows in (("block_closed", STAIR_BLOCK_CLOSED), ("block", STAIR_BLOCK),
+                       ("block_top", STAIR_BLOCK_TOP), ("crack_cyan", STAIR_CRACK_C),
+                       ("crack_magenta", STAIR_CRACK_M), ("chip", STAIR_CHIP)):
+        a = grid(rows, STAIR_KEY)
+        check_palette({name: [a]}, set(STAIR_KEY.values()), "escada")
+        save(a, f"world/stair/{name}.png")
+
+
 # ================================================================ botões (F2, item 6)
 
 # Botão retangular em NinePatch (cortes de 3 px). Três estados; o selecionado
@@ -1560,6 +1606,7 @@ def main():
     build_hud()
     manifest["hearts"] = build_hearts()
     build_buttons()
+    build_stairs()
     manifest["npc_pi"] = build_pi()
     manifest["npc_octo"] = build_octo()
     manifest["sources"] = dict(sorted(sources.items()))

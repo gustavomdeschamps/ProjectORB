@@ -55,6 +55,12 @@ public class AudioManager {
     public void stingRift() { stingRift.play(volume(0.55f)); }
     public void stingTitle() { stingTitle.play(volume(0.45f)); }
 
+    // Ganchos da escadinha (etapa B). O áudio entra na etapa de som; por
+    // enquanto não tocam nada, mas o jogo já chama nos momentos certos.
+    public void stairRumble() { }
+
+    public void stairOpened() { }
+
     public void dispose() {
         shoot.dispose(); hit.dispose(); jump.dispose(); dash.dispose();
         enemyAttack.dispose(); weakPoint.dispose(); hurt.dispose(); victory.dispose();

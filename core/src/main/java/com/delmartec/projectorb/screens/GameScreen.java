@@ -29,6 +29,7 @@ import com.delmartec.projectorb.entities.WeakPoint;
 import com.delmartec.projectorb.level.LevelDemo;
 import com.delmartec.projectorb.level.Platform;
 import com.delmartec.projectorb.level.Section;
+import com.delmartec.projectorb.level.StairGate;
 import com.delmartec.projectorb.utils.Assets;
 import com.delmartec.projectorb.utils.ButtonPress;
 import com.delmartec.projectorb.utils.Constants;
@@ -91,6 +92,10 @@ public class GameScreen extends ScreenAdapter {
     // jogador, no teste de cada projétil e no render.
     private final Rectangle gateRect = new Rectangle();
     private boolean gateActive;
+    /** Escadinhas entre as seções 0-1, 1-2, 2-3, 3-4 e 4-5 (etapa B). */
+    private final StairGate[] stairs = new StairGate[5];
+    /** Sólidos do frame: plataformas do nível + massas/escadas (reaproveitada). */
+    private final List<Platform> collision = new ArrayList<>();
 
     // Fundo em camadas de parallax, repetidas em wrap simples (sem espelhar:
     // o espelhamento punha a mesma estrutura refletida ao lado dela mesma).
@@ -195,6 +200,7 @@ public class GameScreen extends ScreenAdapter {
         piPortrait = game.assets.npcPortrait("pi");
         pi.play("appear");
         heartMeter = new HeartMeter(game.assets, game.settings);
+        for (int i = 0; i < stairs.length; i++) stairs[i] = StairGate.forSection(level.getSection(i), level.getPlatforms());
         spawnSection(0, false);
         updateGate();
     }
@@ -286,9 +292,13 @@ public class GameScreen extends ScreenAdapter {
 
         updateSectionProgress();
         updateGate();
+        updateStairs(delta);
         heartMeter.update(delta, player.getLives());
 
-        player.update(delta, level.getPlatforms(), gateActive ? gateRect : null, acceptActions);
+        collision.clear();
+        collision.addAll(level.getPlatforms());
+        for (StairGate stair : stairs) stair.addCollision(collision);
+        player.update(delta, collision, null, acceptActions);
 
         if (Math.abs(player.getX() - 210f) > 75f) learnedMove = true;
         // "andar" = movimento de verdade (não só estar longe do nascimento)
@@ -321,7 +331,8 @@ public class GameScreen extends ScreenAdapter {
 
         if (player.getY() < -120f && player.getHealth() > 0) {
             // Durante um diálogo o ORB não morre: cair só o traz de volta.
-            if (dialogue.isActive()) player.respawn(level.getSection(currentSection).respawnX, 230f);
+            if (dialogue.isActive()) player.respawn(level.getSection(currentSection).respawnX,
+                spawnY(level.getSection(currentSection).respawnX));
             else player.forceDeath();
         }
         if (player.isDeathAnimationFinished()) handleLifeLost();
@@ -411,10 +422,39 @@ public class GameScreen extends ScreenAdapter {
 
     private void updateGate() {
         gateActive = currentSection < 5 && !sectionCleared[currentSection];
-        if (gateActive) {
-            Section section = level.getSection(currentSection);
-            gateRect.set(section.endX - 88f, Constants.FLOOR_Y, 88f, 820f);
+        if (gateActive) gateRect.set(stairs[currentSection].getMass());
+        for (int i = 0; i < stairs.length; i++) {
+            if (sectionCleared[i]) stairs[i].open();
         }
+    }
+
+    /** Avança as escadas: tremor e som ao começar, flash curto ao terminar. */
+    private void updateStairs(float delta) {
+        boolean still = game.settings.isReducedMotion();
+        for (StairGate stair : stairs) {
+            stair.update(delta);
+            if (stair.consumeStarted()) {
+                shake(StairGate.OPEN_TIME, 5f);          // shake() já respeita as opções
+                game.audio.stairRumble();
+            }
+            if (stair.consumeFinished()) {
+                shake(0.12f, 10f);
+                if (!still) stair.requestFlash();
+                game.audio.stairOpened();
+            }
+            stair.tickFlash(delta);
+        }
+    }
+
+    /**
+     * Altura de renascimento: o X não muda; se ali houver escada aberta, o ORB
+     * renasce em pé em cima dela (antes nascia a y=230 no piso).
+     */
+    private float spawnY(float x) {
+        float half = Constants.PLAYER_HIT_W / 2f;
+        float top = Constants.FLOOR_Y;
+        for (StairGate stair : stairs) top = Math.max(top, stair.topAt(x - half, x + half));
+        return Math.max(230f, top + Constants.PLAYER_HIT_H / 2f + 1f);
     }
 
     private void updateMouseWorld() {
@@ -555,7 +595,8 @@ public class GameScreen extends ScreenAdapter {
         for (Platform platform : level.getPlatforms()) {
             if (bounds.overlaps(platform.bounds)) return true;
         }
-        return gateActive && bounds.overlaps(gateRect);
+        for (StairGate stair : stairs) if (stair.blocks(bounds)) return true;
+        return false;
     }
 
     private void updateEffects(float delta) {
@@ -617,7 +658,7 @@ public class GameScreen extends ScreenAdapter {
 
     private void handleLifeLost() {
         Section section = level.getSection(currentSection);
-        if (!player.loseLifeAndRespawn(section.respawnX, 230f)) {
+        if (!player.loseLifeAndRespawn(section.respawnX, spawnY(section.respawnX))) {
             game.setScreen(new GameOverScreen(game, gameTime, currentSection,
                 totalCorrectHits, totalWrongHits, score));
             return;
@@ -734,16 +775,14 @@ public class GameScreen extends ScreenAdapter {
 
         for (Platform platform : level.getPlatforms()) drawPlatform(platform);
 
-        if (gateActive) {
-            // Colisão continua alta para bloquear a seção, mas visualmente existe
-            // apenas uma porta + feixe de energia, evitando um sprite esticado.
-            game.batch.setColor(0.35f, 0.75f, 1f, 0.20f);
-            game.batch.draw(game.assets.pixel, gateRect.x + 34f, Constants.FLOOR_Y, 20f, 760f);
-            game.batch.setColor(Color.WHITE);
-            // gate.png x PIXEL_SCALE tem exatamente a largura da colisão (88 px).
-            game.batch.draw(game.assets.gate, gateRect.x, Constants.FLOOR_Y,
-                game.assets.gate.getWidth() * Constants.PIXEL_SCALE,
-                game.assets.gate.getHeight() * Constants.PIXEL_SCALE);
+        // Escadinhas (etapa B): massa fechada ou escada, no lugar da antiga barra.
+        boolean still = game.settings.isReducedMotion();
+        float camL = worldCamera.position.x - CULL_MARGIN, camR = worldCamera.position.x + CULL_MARGIN;
+        for (StairGate stair : stairs) {
+            if (stair.getStairRight() < camL || stair.getStairLeft() > camR) continue;
+            stair.draw(game.batch, game.assets.stairClosed, game.assets.stairBlock, game.assets.stairTop,
+                game.assets.stairCrackCyan, game.assets.stairCrackMagenta, game.assets.stairChip,
+                game.assets.pixel, gameTime, still);
         }
 
         if (portalActive) {

@@ -84,6 +84,13 @@ public class Assets {
     public final PlatformSkin platform;
     public final PlatformSkin platformAlt;
     public final Texture gate;
+    // Escadinha entre as seções (etapa B): blocos de cristal
+    public final Texture stairClosed;
+    public final Texture stairBlock;
+    public final Texture stairTop;
+    public final Texture stairCrackCyan;
+    public final Texture stairCrackMagenta;
+    public final Texture stairChip;
     public final Texture portal;
 
     // FUNDO: camadas de parallax (de trás para frente) e a composição dos menus
@@ -183,6 +190,12 @@ public class Assets {
         platformAlt = new PlatformSkin(load("world/platform_alt_cap.png"),
             load("world/platform_alt_module.png"), load("world/platform_alt_fill.png"));
         gate = load("world/gate.png");
+        stairClosed = load("world/stair/block_closed.png");
+        stairBlock = load("world/stair/block.png");
+        stairTop = load("world/stair/block_top.png");
+        stairCrackCyan = load("world/stair/crack_cyan.png");
+        stairCrackMagenta = load("world/stair/crack_magenta.png");
+        stairChip = load("world/stair/chip.png");
         portal = load("world/portal.png");
 
         backgroundLayers = new Texture[] {
