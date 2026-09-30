@@ -55,13 +55,13 @@ public final class HeartHudCapture {
                         ScreenCapture.capture(getScreen(), out + "/04-pausa.png", 0f);
                         setScreen(new VictoryScreen(this, 172f, 2, 34, 5, 8420, 29));
                     } else if (frame == 50) {
-                        ScreenCapture.capture(getScreen(), out + "/05-vitoria.png", 0f);
+                        freezeTime(getScreen()); ScreenCapture.capture(getScreen(), out + "/05-vitoria.png", 0f);
                         setScreen(new GameOverScreen(this, 64f, 3, 18, 4, 2480));
                     } else if (frame == 56) {
-                        ScreenCapture.capture(getScreen(), out + "/06-derrota.png", 0f);
+                        freezeTime(getScreen()); ScreenCapture.capture(getScreen(), out + "/06-derrota.png", 0f);
                         showMenu();
                     } else if (frame == 62) {
-                        ScreenCapture.capture(getScreen(), out + "/07-menu.png", 0f);
+                        freezeTime(getScreen()); ScreenCapture.capture(getScreen(), out + "/07-menu.png", 0f);
                         com.badlogic.gdx.Gdx.app.exit();
                         return;
                     }
@@ -77,5 +77,16 @@ public final class HeartHudCapture {
                 return (Player) f.get(getScreen());
             }
         }, config);
+    }
+
+    /** Zera o relógio das telas de fim (ORB balançando, chefe animado): captura determinística. */
+    static void freezeTime(com.badlogic.gdx.Screen screen) {
+        try {
+            java.lang.reflect.Field f = screen.getClass().getDeclaredField("stateTime");
+            f.setAccessible(true);
+            f.setFloat(screen, 0f);
+        } catch (ReflectiveOperationException ignored) {
+            // tela sem relógio próprio
+        }
     }
 }

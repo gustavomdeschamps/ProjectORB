@@ -634,7 +634,7 @@
   {
    "layer": "lago",
    "period_px": 380,
-   "seam_mean_diff": 28.7
+   "seam_mean_diff": 0.0
   },
   {
    "layer": "chao",

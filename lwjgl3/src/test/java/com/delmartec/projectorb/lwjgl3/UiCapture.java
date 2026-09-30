@@ -117,7 +117,7 @@ public final class UiCapture {
                 Gdx.input = real;
             }
 
-            private void shot(String path) { ScreenCapture.capture(getScreen(), path, 0f); }
+            private void shot(String path) { freezeTime(getScreen()); ScreenCapture.capture(getScreen(), path, 0f); }
         }, config);
     }
 
@@ -131,5 +131,16 @@ public final class UiCapture {
         Field f = c.getDeclaredField(name);
         f.setAccessible(true);
         return f.get(o);
+    }
+
+    /** Zera o relógio das telas de fim (ORB balançando, chefe animado): captura determinística. */
+    static void freezeTime(com.badlogic.gdx.Screen screen) {
+        try {
+            java.lang.reflect.Field f = screen.getClass().getDeclaredField("stateTime");
+            f.setAccessible(true);
+            f.setFloat(screen, 0f);
+        } catch (ReflectiveOperationException ignored) {
+            // tela sem relógio próprio
+        }
     }
 }

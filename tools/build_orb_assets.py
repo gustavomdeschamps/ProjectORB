@@ -777,6 +777,38 @@ def build_fx_ui():
     return info
 
 
+# Lago (camada 07): 6 tons tirados do lago original do TCC (os mais frequentes).
+LAKE = [(1, 7, 86), (2, 8, 107), (5, 10, 132), (7, 15, 155), (36, 14, 208), (64, 42, 251)]
+# Faixas do original, de cima para baixo: (primeira linha, tom da base, tom dos reflexos)
+LAKE_BANDS = [(189, 0, 1), (200, 2, 3), (233, 4, 5), (244, 2, 3), (256, 3, 4), (264, 5, 4)]
+# Reflexos horizontais de 1 px: (linha, x inicial, comprimento), escritos à mão.
+# Repetem em x com o período (a emenda é invisível por construção).
+LAKE_STREAKS = [
+    (192, 20, 18), (192, 210, 30), (195, 120, 12), (195, 300, 22), (197, 60, 26), (197, 350, 16),
+    (203, 5, 34), (203, 190, 20), (206, 90, 16), (206, 270, 40), (209, 150, 24), (209, 330, 30),
+    (212, 40, 14), (212, 230, 28), (215, 110, 36), (215, 300, 12), (218, 10, 22), (218, 180, 18),
+    (221, 250, 34), (221, 70, 10), (224, 130, 28), (224, 350, 20), (227, 30, 16), (227, 210, 24),
+    (230, 100, 20), (230, 290, 30),
+    (235, 40, 60), (235, 220, 44), (237, 140, 36), (237, 320, 50), (239, 10, 24), (239, 250, 30),
+    (241, 90, 70), (242, 300, 26),
+    (246, 60, 22), (246, 240, 18), (249, 150, 34), (249, 340, 16), (252, 20, 28), (252, 200, 20),
+    (258, 80, 40), (258, 260, 24), (261, 170, 30), (261, 350, 22),
+    (265, 30, 50), (267, 200, 60),
+]
+
+
+def lake_redraw(period):
+    out = canvas(period, 270)
+    bounds = [b[0] for b in LAKE_BANDS] + [270]
+    for (y0, base, _), y1 in zip(LAKE_BANDS, bounds[1:]):
+        out[y0:y1] = (*LAKE[base], 255)
+    for (y, x0, length) in LAKE_STREAKS:
+        tone = next(t for (b0, _, t), b1 in zip(LAKE_BANDS, bounds[1:]) if b0 <= y < b1)
+        for x in range(x0, x0 + length):
+            out[y, x % period] = (*LAKE[tone], 255)
+    return out
+
+
 def build_world():
     # ---- fundo (já está na escala 4: 480x270 -> 1920x1080)
     # O jogo repete cada camada em wrap simples (sem espelhar). Para isso cada
@@ -798,6 +830,15 @@ def build_world():
             period = 760
             out = canvas(period, 270)
             out[:, :480] = a
+            seam = 0.0
+        elif name == "lago":
+            # Rodada de correções, etapa A: SÓ esta camada é redesenhada. O
+            # lago do TCC era uma textura em blocos de 9x5 px com ~700 cores
+            # quase iguais (a 4x virava mosaico sujo) e a emenda levava a
+            # mistura pontilhada de 24 colunas. Mesmo período (380), mesmas
+            # linhas (189-269), mesma estrutura de faixas e cores do original.
+            period = 380
+            out = lake_redraw(period)
             seam = 0.0
         else:
             # janela de 12 colunas: pega também texturas em blocos (lago) e
