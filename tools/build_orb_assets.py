@@ -254,13 +254,14 @@ SHAPES = {
     #            lados início  raio-externo marcadores (raio, ângulos)                      fonte
     # hostil (F2 v2): maior, desenhado em tools/orb_hostiles.py
     "triangle": (3, 90.0, 33.0, (29, [90, 210, 330]), "tools/sprite_grids/triangle.txt"),
-    "diamond": (4, 0.0, 30.0, (26, [0, 90, 180, 270]), "ProjetoFinal_TCC/enemies/square.png"),
+    # hostis (etapa C): maiores, desenhados em tools/orb_hostiles_more.py
+    "diamond": (4, 0.0, 33.0, (29, [0, 90, 180, 270]), "tools/sprite_grids/diamond.txt"),
     "pentagon": (5, 90.0, 30.0, (26, [90 + 72 * i for i in range(5)]), "ProjetoFinal_TCC/enemies/pentagonon.png"),
     "circle": (0, 90.0, 30.0, (26, [22.5 * i for i in range(16)]), "ProjetoFinal_TCC/enemies/cricle.png"),
-    "hexagon": (6, 90.0, 30.0, (26, [90 + 60 * i for i in range(6)]), "gerado"),
+    "hexagon": (6, 90.0, 32.0, (28, [90 + 60 * i for i in range(6)]), "tools/sprite_grids/hexagon.txt"),
     # quadrado alinhado aos eixos, marcadores no MEIO dos lados (onde ficam os
     # pontos fracos do QUADRADO): apótema 25 -> raio externo 25/cos45.
-    "square": (4, 45.0, 25 / math.cos(math.pi / 4), (24, [0, 90, 180, 270]), "gerado"),
+    "square": (4, 45.0, 28 / math.cos(math.pi / 4), (26, [0, 90, 180, 270]), "tools/sprite_grids/square.txt"),
 }
 
 

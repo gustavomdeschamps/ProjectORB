@@ -417,3 +417,11 @@ def build(name):
     """{animação: [RGBA]} já na paleta; o chamador valida e grava."""
     pal = palette(name)
     return {k: [to_rgba(g, pal) for g in frames] for k, frames in BUILDERS[name]().items()}
+
+
+# Quadrado, Losango e Hexágono (etapa C): mesmo estilo, gerador em
+# orb_hostiles_more.py (o Triângulo continua aqui, intacto).
+import orb_hostiles_more  # noqa: E402
+
+PALETTES.update(orb_hostiles_more.PALETTES)
+BUILDERS.update(orb_hostiles_more.BUILDERS)

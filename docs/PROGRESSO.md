@@ -7,9 +7,9 @@ Retomar daqui se a sessão cair. Um commit por etapa. Provas em `docs/qa/<etapa>
 | A — fundo original + 07_lago | feita e aprovada | `a90752d`, `716eb88` | `docs/qa/fundo/` |
 | A+ — 08_chao (emenda), menu original, barras cor do céu, mouse fixo no teste | feita | (ver git log) | `docs/qa/fundo/chao/`, `docs/qa/fundo/menu/`, `docs/qa/fundo/barras/` |
 | B — escadinha no lugar da barra | feita | (ver git log) | `docs/qa/escada/` |
-| C — Quadrado, Losango, Hexágono hostis | a fazer | | `docs/qa/fase2/` |
-| D — Pi decalcado da referência | a fazer | | `docs/qa/pi/` |
-| E — chefe (pentágono, escudo, estrela) + Octógono | a fazer | | `docs/qa/chefe/`, `docs/qa/octogono/` |
+| C — Quadrado, Losango, Hexágono hostis | EM ANDAMENTO (não commitada) | — | `docs/qa/fase2/inimigos_4_folha_fundo_*.png`, `docs/qa/fase2/*_jogo/` |
+| D — Pi decalcado da referência | arte pronta em tools/ (não integrada) | — | `docs/qa/pi/sobreposicao.png` |
+| E — chefe (pentágono, escudo, estrela) + Octógono | arte em rascunho em tools/ (não integrada) | — | — |
 | F — Octógono no fim da fase + portal animado | a fazer | | `docs/qa/portal/`, `docs/qa/quiz/` |
 | G — verificação final | a fazer | | `docs/qa/final/` |
 
@@ -25,3 +25,14 @@ Retomar daqui se a sessão cair. Um commit por etapa. Provas em `docs/qa/<etapa>
 
 ## Dúvidas registradas
 (preenchido ao longo da rodada)
+
+## Onde parei (para retomar)
+- Etapa C: sprites dos 3 inimigos gerados e integrados (EnemyType atualizado, WeakPointAlignmentCheck PASS nos 4).
+  A bateria completa foi INTERROMPIDA pelo sistema por falta de memória (11 checagens já tinham passado; faltavam as 4 capturas).
+- PENDENTE na C: o Losango virou losango de verdade (meia-largura 26, meia-altura 33) porque o de antes era um
+  quadrado girado 45° e o teste de silhuetas únicas (tools/audit_shapes.py) reprovaria. Já feito: grade
+  tools/sprite_grids/diamond.txt e espinhos (tools/orb_hostiles_more.py). FALTA: rodar o gerador, atualizar
+  EnemyType/GeoEnemy (alvos em elipse) e o WeakPointAlignmentCheck para o losango, rodar a bateria, commitar a C.
+- D: tools/orb_pi.py + tools/sprite_grids/pi.txt + tools/audit_pi.py (IoU 0,975). FALTA integrar (Assets/GameScreen/diálogo).
+- E: tools/orb_octo.py e tools/orb_boss.py (+ grades boss_*.txt, octagon.txt) em rascunho. FALTA integração Java.
+- F e G: não começadas.

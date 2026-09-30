@@ -25,10 +25,12 @@ OUT = Path(__file__).resolve().parent / "sprite_grids"
 #          canvas lados início raio-ext contorno
 SHAPES = {
     "triangle": (73, 3, 90.0, 33.0, 2),   # hostil: maior (F2 v2)
-    "square": (73, 4, 45.0, 25 / math.cos(math.pi / 4), 2),
-    "diamond": (73, 4, 0.0, 30.0, 2),
-    "hexagon": (73, 6, 90.0, 30.0, 2),
+    "square": (73, 4, 45.0, 28 / math.cos(math.pi / 4), 2),   # hostil (etapa C): maior
+    "diamond": (73, 4, 0.0, 33.0, 2),                          # hostil (etapa C): maior; aspecto 26/33
+    "hexagon": (73, 6, 90.0, 32.0, 2),                         # hostil (etapa C): maior
 }
+# Losango de verdade (diagonais diferentes): meia-largura 26, meia-altura 33.
+DIAMOND_ASPECT = 26 / 33
 BOSS = (113, 6, 90.0, 52.5, 3)
 
 
@@ -43,9 +45,10 @@ def erode(m, n):
     return out
 
 
-def seed(name, S, n, start, ro, thick):
+def seed(name, S, n, start, ro, thick, aspect=1.0):
+    """aspect < 1 estreita na horizontal (losango de verdade, não quadrado girado)."""
     c = S / 2
-    pts = poly(c, ro, n, start)
+    pts = [(c + (x - c) * aspect, y) for x, y in poly(c, ro, n, start)]
     body = m_poly(S, S, pts)
     inner = erode(body, thick)
     g = np.full((S, S), ".", dtype="<U1")

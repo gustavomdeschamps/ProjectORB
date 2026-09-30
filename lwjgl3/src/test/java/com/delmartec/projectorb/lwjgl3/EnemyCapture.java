@@ -30,6 +30,7 @@ public final class EnemyCapture {
         config.setTitle("Project ORB — Enemy Capture");
         config.setWindowedMode(1280, 720);
         config.useVsync(false);
+        config.setForegroundFPS(60);
         new Lwjgl3Application(new ProjectOrbGame() {
             int frame;
 

@@ -26,9 +26,9 @@ import com.delmartec.projectorb.utils.Constants;
 public enum EnemyType {
     //        canvas baseline sides startDeg markerR outerR
     TRIANGLE(73, 12, 3, 90f, 29f, 33f, "TRIÂNGULO"),   // hostil (F2 v2): maior
-    SQUARE  (73, 9, 4, 45f, 24f, 35.355f, "QUADRADO"),
-    DIAMOND (73, 6, 4, 0f, 26f, 30f, "LOSANGO"),
-    HEXAGON (73, 6, 6, 90f, 26f, 30f, "HEXÁGONO"),
+    SQUARE  (73, 0, 4, 45f, 26f, 39.598f, "QUADRADO"),   // hostil (etapa C): maior
+    DIAMOND (73, 0, 4, 0f, 29f, 33f, "LOSANGO"),         // hostil (etapa C): maior
+    HEXAGON (73, 0, 6, 90f, 28f, 32f, "HEXÁGONO"),       // hostil (etapa C): maior
     BOSS    (113, 4, 6, 90f, 45.5f, 52.5f, "NÚCLEO GEOMÉTRICO");
 
     private final int canvas;
