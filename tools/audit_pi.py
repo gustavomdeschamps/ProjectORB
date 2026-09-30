@@ -44,11 +44,27 @@ def main():
     out[ref & ~sprite] = (230, 40, 40)
     out[sprite & ~ref] = (40, 90, 240)
     out[sprite & ref] = (150, 70, 200)
-    dest = ROOT / "docs" / "qa" / "pi"
+    dest = ROOT / "docs" / "qa" / "rodada3" / "etapa5"
     dest.mkdir(parents=True, exist_ok=True)
     Image.fromarray(out).resize((w * 8, h * 8), Image.NEAREST).save(dest / "sobreposicao.png")
     ok = iou >= MIN_IOU
     print(f"Pi x referência: IoU = {iou:.3f} (mínimo {MIN_IOU}) em {w}x{h} -> {'PASS' if ok else 'FAIL'}")
+    # 2) o sprite exportado de verdade (idle_01.png): tira os braços (tudo que
+    # fica fora da silhueta do π dilatada 1 px) e compara de novo
+    spr = np.array(Image.open(ROOT / "assets/sprites/npc/pi/idle_01.png").convert("RGBA"))[:, :, 3] > 0
+    sil = np.zeros_like(spr)
+    g = orb_pi.silhouette()
+    sil[orb_pi.OY:orb_pi.OY + g.shape[0], orb_pi.OX:orb_pi.OX + g.shape[1]] = g
+    pad = np.pad(sil, 1)
+    dil = sil | pad[:-2, 1:-1] | pad[2:, 1:-1] | pad[1:-1, :-2] | pad[1:-1, 2:]
+    body = spr & dil
+    ys, xs = np.nonzero(body)
+    body = body[ys.min():ys.max() + 1, xs.min():xs.max() + 1]
+    ref2 = reference_mask(body.shape[1], body.shape[0])
+    iou2 = (body & ref2).sum() / (body | ref2).sum()
+    ok2 = iou2 >= MIN_IOU
+    print(f"idle_01.png (sem braços) x referência: IoU = {iou2:.3f} -> {'PASS' if ok2 else 'FAIL'}")
+    ok = ok and ok2
     sys.exit(0 if ok else 1)
 
 

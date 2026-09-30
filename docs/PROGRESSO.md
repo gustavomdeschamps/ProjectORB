@@ -10,8 +10,8 @@ winget (Gyan.FFmpeg 9.0.2).
 | 1 — fundo: parte de baixo da paisagem | feita | `docs/qa/rodada3/etapa1/` |
 | 2 — limpeza de restos (barra antiga, escada longe das plataformas) | feita | `docs/qa/rodada3/etapa2/` |
 | 3 — "cara de IA": auditoria e troca | feita | `docs/qa/rodada3/anti_ia/` |
-| 4 — abertura nova + key art + vídeo | a fazer | `docs/qa/rodada3/etapa4/` |
-| 5 — Pi decalcado da referência | a fazer | `docs/qa/rodada3/etapa5/` |
+| 4 — abertura nova + key art + vídeo | feita | `docs/qa/rodada3/etapa4/` |
+| 5 — Pi decalcado da referência | feita | `docs/qa/rodada3/etapa5/` |
 | 6 — chefe no estilo dos inimigos | a fazer | `docs/qa/rodada3/etapa6/` |
 | 7 — Octógono + quiz no fim da fase | a fazer | `docs/qa/rodada3/etapa7/` |
 | 8 — portal do fim | a fazer | `docs/qa/rodada3/etapa8/` |
@@ -68,6 +68,21 @@ winget (Gyan.FFmpeg 9.0.2).
 - Provas: `anti_ia/antes/`, `anti_ia/depois/`, `anti_ia/feedback/` (FeedbackCapture:
   acerto, erro, cartão de seção, chamada), `anti_ia/arte/`.
 
+## Etapa 4 — feito
+- Abertura antiga descartada (`art-source/descartado_rodada3/abertura_antiga/`). Nova
+  `IntroScreen`: 6 planos em 40 s sincronizados com `assets/audio/intro_music.wav`
+  (`tools/musica_abertura.py`, impactos nos cortes); wipe em losango, glitch,
+  tremor/flash respeitando as opções, letterbox nos planos 1-4, pular segurando ESC.
+- Arte em `tools/abertura_rodada3.py`; imagem-chave em `docs/key_art.png` e
+  `docs/key_art_4x.png`, fundo do menu (`sprites/ui/key_art.png`).
+- Vídeo `docs/abertura.mp4` (H.264 1920x1080 60 fps, 40 s, AAC), gravado por `IntroRecorder`.
+- Decisão: o jogo usa a cutscene em código (não o MP4), sem dependência de vídeo.
+
+## Etapa 5 — feito
+- Pi decalcado exportado (`tools/pi_rodada3.py`); teste `tools/audit_pi.py` no run_checks
+  (IoU 0,975 da grade e 0,971 do sprite exportado). Relatório com a grade e o motivo das
+  falhas anteriores: `docs/qa/rodada3/etapa5/relatorio.md`.
+
 ## Decisões que tomei sozinho
 - E1: a janela em "O" da torre (um anel de luz) virou uma fresta de cristal em
   losango: a regra "sem círculo/anel" vale para tudo e era o único outro anel
@@ -93,4 +108,4 @@ winget (Gyan.FFmpeg 9.0.2).
   contador de alvos, que eram amarelos, viraram lilás/branco.
 
 ## Onde parei (para retomar)
-- Etapas 1, 2 e 3 commitadas. Próxima: Etapa 4 (abertura nova, key art, vídeo).
+- Etapas 1-5 commitadas. Próxima: Etapa 6 (chefe).

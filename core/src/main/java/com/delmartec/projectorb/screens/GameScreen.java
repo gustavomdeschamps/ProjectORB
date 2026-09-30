@@ -189,7 +189,7 @@ public class GameScreen extends ScreenAdapter {
         hudCamera.update();
         pi = new Npc("pi", game.assets.npcAnimations("pi", 0.12f,
             new String[] { "idle", "walk", "talk", "point" }, new String[] { "wave", "cheer", "appear" }),
-            Constants.PLAYER_CANVAS, 4, "idle", PI_X, Constants.FLOOR_Y);
+            56, 5, "idle", PI_X, Constants.FLOOR_Y);   // π decalcado: canvas 56 (tools/pi_rodada3.py)
         piScript = DialogueScript.load(Gdx.files.internal("dialogue/pi_tutorial.json"));
         piPortrait = game.assets.npcPortrait("pi");
         pi.play("appear");

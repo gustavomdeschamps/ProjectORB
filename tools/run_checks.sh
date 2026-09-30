@@ -12,6 +12,8 @@ for c in DialogueRunnerCheck NpcCheck PlayerMovementCheck ProjectileSweepCheck Q
   out=$(./gradlew :lwjgl3:runCheck -Pcheck=$c --console=plain -q 2>&1)
   if echo "$out" | grep -q "PASS"; then echo "PASS  $c"; else echo "FAIL  $c"; echo "$out" | tail -15; fail=1; fi
 done
+# checagens em Python (arte)
+for s in audit_pi.py; do if python tools/$s; then echo "PASS  $s"; else echo "FAIL  $s"; fail=1; fi; done
 # capturas: só precisam terminar sem exceção
 for c in IntroCapture HowToPlayLitCapture BackgroundTour VisualSmokeLauncher; do
   if ./gradlew :lwjgl3:runCheck -Pcheck=$c --console=plain -q >/dev/null 2>&1; then echo "OK    $c"; else echo "FAIL  $c"; fail=1; fi
