@@ -27,7 +27,7 @@ public final class VisualSmokeLauncher {
     private VisualSmokeLauncher() { }
 
     public static void main(String[] args) throws Exception {
-        String output = new File("../tmp/visual-smoke").getCanonicalPath();
+        String output = new File(System.getProperty("smoke.out", "../tmp/visual-smoke")).getCanonicalPath();
         new File(output).mkdirs();
 
         Lwjgl3ApplicationConfiguration config = new Lwjgl3ApplicationConfiguration();

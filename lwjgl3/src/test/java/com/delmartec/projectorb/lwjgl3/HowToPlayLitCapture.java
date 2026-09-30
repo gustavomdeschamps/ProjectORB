@@ -31,6 +31,7 @@ public final class HowToPlayLitCapture {
 
             @Override public void create() {
                 super.create();
+                showMenu(); // com a abertura ligada a primeira tela é a IntroScreen
                 setScreen(new HowToPlayScreen(this, (MenuScreen) getScreen()));
             }
 
