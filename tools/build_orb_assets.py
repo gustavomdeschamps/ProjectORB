@@ -32,6 +32,8 @@ from pathlib import Path
 import numpy as np
 from PIL import Image, ImageDraw
 
+import orb_hostiles  # noqa: E402  (tools/ está no sys.path quando o script roda)
+
 ROOT = Path(__file__).resolve().parents[1]
 SRC_29 = ROOT / "art-source" / "projetofinal-29"
 SRC_TCC = ROOT / "art-source" / "ProjetoFinal_TCC"
@@ -250,7 +252,8 @@ T = {"arc_r": 19.5, "band_out": 0.765, "band_in": 0.53, "core_ring": 7.5, "core_
 
 SHAPES = {
     #            lados início  raio-externo marcadores (raio, ângulos)                      fonte
-    "triangle": (3, 90.0, 30.0, (26, [90, 210, 330]), "ProjetoFinal_TCC/enemies/triangle.png"),
+    # hostil (F2 v2): maior, desenhado em tools/orb_hostiles.py
+    "triangle": (3, 90.0, 33.0, (29, [90, 210, 330]), "tools/sprite_grids/triangle.txt"),
     "diamond": (4, 0.0, 30.0, (26, [0, 90, 180, 270]), "ProjetoFinal_TCC/enemies/square.png"),
     "pentagon": (5, 90.0, 30.0, (26, [90 + 72 * i for i in range(5)]), "ProjetoFinal_TCC/enemies/pentagonon.png"),
     "circle": (0, 90.0, 30.0, (26, [22.5 * i for i in range(16)]), "ProjetoFinal_TCC/enemies/cricle.png"),
@@ -364,6 +367,19 @@ def enemy_frames(key):
 def build_enemies():
     out = {}
     for key in SHAPES:
+        if key in orb_hostiles.BUILDERS:
+            # direção v2 (hostis): grades + partes à mão, paleta validada
+            anims = orb_hostiles.build(key)
+            check_palette(anims, orb_hostiles.palette_colors(key), f"inimigo {key}")
+            n, start, ro, (mr, angles), src = SHAPES[key]
+            c = ENEMY_C // 2
+            markers = [snap(c, mr, ang) for ang in angles]
+            counts = write_anims(f"enemies/{key}", anims, src)
+            low = max(bbox(f)[3] for f in anims["idle"] + anims["move"])
+            out[key] = {"canvas": ENEMY_C, "frames": counts, "center_px": ENEMY_C / 2,
+                        "baseline_px": ENEMY_C - 1 - low, "sides": n, "start_deg": start,
+                        "marker_r_px": mr, "outer_r_px": round(ro, 3), "markers_px": markers, "source": src}
+            continue
         anims, markers, src = enemy_frames(key)
         source = f"redesenho de art-source/{src}" if src != "gerado" else "gerado"
         counts = write_anims(f"enemies/{key}", anims, source)

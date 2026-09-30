@@ -25,7 +25,7 @@ import com.delmartec.projectorb.utils.Constants;
  */
 public enum EnemyType {
     //        canvas baseline sides startDeg markerR outerR
-    TRIANGLE(73, 16, 3, 90f, 26f, 30f, "TRIÂNGULO"),
+    TRIANGLE(73, 12, 3, 90f, 29f, 33f, "TRIÂNGULO"),   // hostil (F2 v2): maior
     SQUARE  (73, 9, 4, 45f, 24f, 35.355f, "QUADRADO"),
     DIAMOND (73, 6, 4, 0f, 26f, 30f, "LOSANGO"),
     HEXAGON (73, 6, 6, 90f, 26f, 30f, "HEXÁGONO"),

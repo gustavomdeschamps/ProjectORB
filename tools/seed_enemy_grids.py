@@ -24,7 +24,7 @@ OUT = Path(__file__).resolve().parent / "sprite_grids"
 
 #          canvas lados início raio-ext contorno
 SHAPES = {
-    "triangle": (73, 3, 90.0, 30.0, 2),
+    "triangle": (73, 3, 90.0, 33.0, 2),   # hostil: maior (F2 v2)
     "square": (73, 4, 45.0, 25 / math.cos(math.pi / 4), 2),
     "diamond": (73, 4, 0.0, 30.0, 2),
     "hexagon": (73, 6, 90.0, 30.0, 2),

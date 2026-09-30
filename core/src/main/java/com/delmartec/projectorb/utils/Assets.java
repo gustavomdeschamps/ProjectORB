@@ -248,7 +248,11 @@ public class Assets {
             animation(0.09f, dir + "move_", Animation.PlayMode.LOOP),
             animation(0.08f, dir + "attack_", Animation.PlayMode.NORMAL),
             animation(0.10f, dir + "hurt_", Animation.PlayMode.NORMAL),
-            animation(0.10f, dir + "death_", Animation.PlayMode.NORMAL)));
+            animation(0.10f, dir + "death_", Animation.PlayMode.NORMAL),
+            // só a arte hostil (F2 v2) tem estas três; nas outras ficam nulas
+            optionalAnimation(0.07f, dir + "charge_", Animation.PlayMode.LOOP),
+            optionalAnimation(0.08f, dir + "appear_", Animation.PlayMode.NORMAL),
+            optionalAnimation(0.06f, dir + "glitch_", Animation.PlayMode.NORMAL)));
     }
 
     @SafeVarargs
@@ -301,6 +305,15 @@ public class Assets {
     public Animation<TextureRegion> enemyAttack(EnemyType type) { return enemyAnims.get(type)[2]; }
     public Animation<TextureRegion> enemyHurt(EnemyType type) { return enemyAnims.get(type)[3]; }
     public Animation<TextureRegion> enemyDeath(EnemyType type) { return enemyAnims.get(type)[4]; }
+    /** Telegrafia (carga do ataque); null se o tipo ainda usa a arte antiga. */
+    public Animation<TextureRegion> enemyCharge(EnemyType type) { return animOrNull(type, 5); }
+    public Animation<TextureRegion> enemyAppear(EnemyType type) { return animOrNull(type, 6); }
+    public Animation<TextureRegion> enemyGlitch(EnemyType type) { return animOrNull(type, 7); }
+
+    private Animation<TextureRegion> animOrNull(EnemyType type, int index) {
+        Animation<TextureRegion>[] list = enemyAnims.get(type);
+        return list.length > index ? list[index] : null;
+    }
 
     private Texture load(String relative) {
         String path = ROOT + relative;
@@ -314,6 +327,12 @@ public class Assets {
         textures.add(texture);
         byPath.put(path, texture);
         return texture;
+    }
+
+    /** Como animation(), mas devolve null se não houver nenhum frame. */
+    private Animation<TextureRegion> optionalAnimation(float frameDuration, String prefix, Animation.PlayMode mode) {
+        if (!Gdx.files.internal(ROOT + prefix + "01.png").exists()) return null;
+        return animation(frameDuration, prefix, mode);
     }
 
     /** Lê prefixo_01.png, prefixo_02.png, ... até o primeiro arquivo ausente. */

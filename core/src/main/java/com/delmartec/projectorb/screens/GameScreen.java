@@ -45,6 +45,9 @@ public class GameScreen extends ScreenAdapter {
     private static final Color AIM_LOCK = new Color(1f, 0.83f, 0.38f, 1f);
     /** Meia janela de cull em torno da câmera. */
     private static final float CULL_MARGIN = 1250f;
+    /** Fração da carga do ataque a partir da qual o inimigo telegrafa. */
+    private static final float CHARGE_TELL = 0.7f;
+    private static final float GLITCH_PERIOD = 3.7f;
     /**
      * Zona do portal final. Antes era um círculo de raio 175 centrado em
      * (11700, 250): como o jogador anda com o centro em y=165, sobrava só uma
@@ -860,7 +863,9 @@ public class GameScreen extends ScreenAdapter {
             EnemyType type = enemy.getType();
             float size = type.drawSize();
             float alpha = enemy.isDefeated() ? Math.max(0f, 1f - enemy.getDeathProgress()) : 1f;
-            if (enemy.getFlash() > 0f || enemy.isHurt()) game.batch.setColor(1f, 0.66f, 0.88f, alpha);
+            // A arte hostil já tem o próprio flash branco no dano; a antiga é tingida.
+            boolean ownFlash = game.assets.enemyCharge(type) != null;
+            if (!ownFlash && (enemy.getFlash() > 0f || enemy.isHurt())) game.batch.setColor(1f, 0.66f, 0.88f, alpha);
             else game.batch.setColor(1f, 1f, 1f, alpha);
 
             game.batch.draw(enemyFrame(enemy),
@@ -880,6 +885,21 @@ public class GameScreen extends ScreenAdapter {
         if (enemy.isDefeated()) return game.assets.enemyDeath(type).getKeyFrame(enemy.getDeathVisualTime());
         if (enemy.isHurt()) return game.assets.enemyHurt(type).getKeyFrame(enemy.getHurtVisualTime());
         if (enemy.isAttacking()) return game.assets.enemyAttack(type).getKeyFrame(enemy.getAttackVisualTime());
+        Animation<TextureRegion> appear = game.assets.enemyAppear(type);
+        if (appear != null && !appear.isAnimationFinished(enemy.getStateTime())) {
+            return appear.getKeyFrame(enemy.getStateTime());
+        }
+        // Telegrafia: a partir de 70% da carga os olhos acendem e o corpo treme.
+        Animation<TextureRegion> charge = game.assets.enemyCharge(type);
+        if (charge != null && enemy.getCharge() >= CHARGE_TELL) {
+            return charge.getKeyFrame(game.settings.isReducedMotion() ? 0f : enemy.getStateTime());
+        }
+        // Glitch ocasional (a cada GLITCH_PERIOD s, defasado por inimigo); não em movimento reduzido.
+        Animation<TextureRegion> glitch = game.assets.enemyGlitch(type);
+        if (glitch != null && !game.settings.isReducedMotion()) {
+            float t = (enemy.getStateTime() + enemy.getX() * 0.001f) % GLITCH_PERIOD;
+            if (t < glitch.getAnimationDuration()) return glitch.getKeyFrame(t);
+        }
         if (enemy.isMoving()) return game.assets.enemyMove(type).getKeyFrame(enemy.getStateTime());
         return game.assets.enemyIdle(type).getKeyFrame(enemy.getStateTime());
     }
