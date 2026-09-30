@@ -100,6 +100,9 @@ public final class OldGateCheck {
         @Override public void create() {
             super.create();
             recorder = new RecordingBatch();
+            recorder.setBlendFunctionSeparate(com.badlogic.gdx.graphics.GL20.GL_SRC_ALPHA,
+                com.badlogic.gdx.graphics.GL20.GL_ONE_MINUS_SRC_ALPHA, com.badlogic.gdx.graphics.GL20.GL_ONE,
+                com.badlogic.gdx.graphics.GL20.GL_ONE_MINUS_SRC_ALPHA);
             batch = recorder;
             ui = new UiRenderer(batch, font, titleFont, assets);
             startGame();

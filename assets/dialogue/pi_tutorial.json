@@ -3,17 +3,17 @@
   "speaker": "PI",
   "portrait": "pi",
   "lines": [
-    { "text": "Oi, ORB! Que bom que você chegou. Eu sou o Pi.", "anim": "wave" },
-    { "text": "Aqui, no mundo das formas, cada criatura é uma figura geométrica.", "anim": "talk" },
-    { "text": "Para passar por elas, você vai ler vértices, lados, ângulos e simetria.", "anim": "talk" },
-    { "text": "Primeiro, ande um pouco com A e D (ou com as setas).", "anim": "point", "waitFor": "move" },
-    { "text": "Isso! Agora pule com ESPAÇO.", "anim": "talk", "waitFor": "jump" },
-    { "text": "No ar, aperte ESPAÇO mais uma vez: é o salto duplo!", "anim": "talk", "waitFor": "doubleJump" },
-    { "text": "Ótimo! Com SHIFT você dá um dash rápido. Experimente.", "anim": "talk", "waitFor": "dash" },
-    { "text": "Agora a regra mais importante de todas.", "anim": "talk" },
-    { "text": "Toda forma tem pontos marcados, como aquele ali. Eles mostram o que a forma pede.", "anim": "point", "event": "spawnTarget" },
-    { "text": "Acertar o corpo não adianta: mire com o mouse no ponto iluminado e clique.", "anim": "point", "waitFor": "hitTarget" },
-    { "text": "Perfeito! É assim que se vence cada forma: no ponto certo.", "anim": "cheer" },
-    { "text": "Abri o portão. Siga para a direita e leia cada forma com calma. Boa sorte!", "anim": "wave", "event": "openGate" }
+    { "text": "Opa, acordou. Eu sou o Pi. Três vírgula um quatro um... deixa pra lá.", "anim": "wave" },
+    { "text": "Aqui tudo é forma. E as formas andam de mau humor.", "anim": "talk" },
+    { "text": "Cada uma tem um ponto fraco. Vértice, lado, ângulo. Depende de quem.", "anim": "talk" },
+    { "text": "Anda um pouco. A e D, ou as setas.", "anim": "point", "waitFor": "move" },
+    { "text": "Agora pula. ESPAÇO.", "anim": "talk", "waitFor": "jump" },
+    { "text": "No ar, ESPAÇO de novo. Pulo duplo.", "anim": "talk", "waitFor": "doubleJump" },
+    { "text": "SHIFT é o dash. Vai.", "anim": "talk", "waitFor": "dash" },
+    { "text": "Beleza. Agora presta atenção em mim.", "anim": "talk" },
+    { "text": "Tá vendo aquele cristal cor de mel? Aquilo é um ponto fraco.", "anim": "point", "event": "spawnTarget" },
+    { "text": "Bater no corpo não adianta. Mira no cristal e clica.", "anim": "point", "waitFor": "hitTarget" },
+    { "text": "Isso. Toda forma quebra assim, no ponto certo.", "anim": "cheer" },
+    { "text": "Abri o caminho. Vai lá, eu fico torcendo daqui.", "anim": "wave", "event": "openGate" }
   ]
 }

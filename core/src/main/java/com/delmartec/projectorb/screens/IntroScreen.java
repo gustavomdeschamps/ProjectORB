@@ -113,7 +113,8 @@ public final class IntroScreen extends ScreenAdapter {
     public void render(float delta) {
         delta = Math.min(delta, 1f / 30f);
         time += delta;
-        anyHeld = Gdx.input.isKeyPressed(com.badlogic.gdx.Input.Keys.ANY_KEY) || Gdx.input.isTouched();
+        // pular: segurar ESC (rodada 3: uma tecla só, dita na tela)
+        anyHeld = Gdx.input.isKeyPressed(com.badlogic.gdx.Input.Keys.ESCAPE);
         holdTime = anyHeld ? holdTime + delta : 0f;
         if (holdTime >= SKIP_HOLD || (time >= T_PROMPT && anyTapped) || time >= DURATION + 6f) {
             goToMenu();
@@ -352,20 +353,17 @@ public final class IntroScreen extends ScreenAdapter {
         float glowPulse = reduced ? 1f : 0.9f + 0.1f * MathUtils.sin(time * 3f);
         tmp.set(TITLE).a = alpha * glowPulse;
         game.ui.text(title, 960f, base, UiRenderer.TITLE_HUGE, tmp, true);
-        tmp.set(LINE).a = alpha;
-        game.ui.text("GEOMETRIA EM AÇÃO", 960f, base - 150f, UiRenderer.TITLE, tmp, true);
-
         if (time >= T_PROMPT) {
             boolean on = reduced || ((int)(time * 2f)) % 2 == 0;
             tmp.set(PROMPT).a = on ? fade(T_PROMPT, 0.6f) : 0.35f * fade(T_PROMPT, 0.6f);
-            game.ui.text("PRESSIONE QUALQUER TECLA", 960f, 160f, UiRenderer.TEXT, tmp, true);
+            game.ui.text("ENTER", 960f, 160f, UiRenderer.TEXT, tmp, true);
         }
     }
 
     private void drawSkipHint() {
         if (time >= T_PROMPT) return;
         tmp.set(PROMPT).a = 0.55f;
-        game.ui.text("SEGURE QUALQUER TECLA PARA PULAR", 1888f - game.ui.textWidth("SEGURE QUALQUER TECLA PARA PULAR", UiRenderer.TEXT),
+        game.ui.text("Segure ESC para pular", 1888f - game.ui.textWidth("Segure ESC para pular", UiRenderer.TEXT),
             48f, UiRenderer.TEXT, tmp, false);
         if (holdTime > 0f) {
             // barra de pixels do "segurar para pular"

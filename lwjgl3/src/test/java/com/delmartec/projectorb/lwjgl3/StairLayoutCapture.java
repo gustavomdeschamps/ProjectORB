@@ -56,7 +56,6 @@ public final class StairLayoutCapture {
                         set(s, "currentSection", g);
                         ((List<?>) get(s, "enemies")).clear();
                         set(s, "bannerTimer", 0f);
-                        set(s, "feedbackTimer", 0f);
                         StairGate st = stairs[g];
                         float cx = st.getMass().x + st.getMass().width / 2f;
                         set(s, "cameraBaseX", cx);

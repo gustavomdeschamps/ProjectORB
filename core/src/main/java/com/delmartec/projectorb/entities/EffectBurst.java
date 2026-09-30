@@ -1,7 +1,8 @@
 package com.delmartec.projectorb.entities;
 
 public class EffectBurst {
-    public enum Kind { HIT, VOID, DASH }
+    /** SHATTER: o alvo de ponto fraco estilhaçando; MISS: tiro no lugar errado. */
+    public enum Kind { HIT, VOID, DASH, SHATTER, MISS }
     public float x, y;
     public final Kind kind;
     public final float duration;

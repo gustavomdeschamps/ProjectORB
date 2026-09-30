@@ -26,6 +26,11 @@ public class ProjectOrbGame extends Game {
     @Override
     public void create() {
         batch = new SpriteBatch();
+        // Cor: mistura normal. Alfa do destino: sempre fica 1 (a + 1 - a). Na
+        // tela não muda nada; nas capturas em FrameBuffer (provas e vídeo) as
+        // faixas escuras translúcidas deixavam o PNG com alfa < 255.
+        batch.setBlendFunctionSeparate(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA,
+            GL20.GL_ONE, GL20.GL_ONE_MINUS_SRC_ALPHA);
         // Silkscreen (OFL, fonts/Silkscreen-OFL.txt): pixel font desenhada numa
         // grade de 8 px por em. Gerada a 8 px, sem antialiasing (mono) e com
         // filtro Nearest; o UiRenderer a desenha só em escalas inteiras, então

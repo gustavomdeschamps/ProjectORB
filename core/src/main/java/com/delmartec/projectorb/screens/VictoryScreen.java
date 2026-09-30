@@ -17,7 +17,16 @@ import com.delmartec.projectorb.utils.Constants;
 import com.delmartec.projectorb.utils.HeartMeter;
 import com.delmartec.projectorb.utils.UiRenderer;
 
+/**
+ * Vitória (rodada 3): título grande à esquerda, números em coluna com
+ * rótulo apagado e valor claro (hierarquia: pontos maior), corações que
+ * sobraram e os itens JOGAR DE NOVO / MENU só em texto. Sem frase de efeito.
+ * Destaque: verde-menta. O resultado do quiz entra na etapa 7.
+ */
 public final class VictoryScreen extends ScreenAdapter {
+    private static final float LEFT = 112f, VALUE_X = 520f;
+    private static final Color ACCENT = UiRenderer.MINT;
+
     private final ProjectOrbGame game;
     private final float time;
     private final int lives;
@@ -28,8 +37,8 @@ public final class VictoryScreen extends ScreenAdapter {
     private final OrthographicCamera camera = new OrthographicCamera();
     private final Viewport viewport = new PixelViewport(camera);
     private final Vector2 mouse = new Vector2();
-    private final Rectangle next = new Rectangle(450f, 175f, 500f, 92f);
-    private final Rectangle menu = new Rectangle(970f, 175f, 500f, 92f);
+    private final Rectangle next = new Rectangle();
+    private final Rectangle menu = new Rectangle();
     private int selected;
     private final ButtonPress press = new ButtonPress();
     private float stateTime;
@@ -57,13 +66,19 @@ public final class VictoryScreen extends ScreenAdapter {
         if (done == 0) { game.startGame(); return; }
         if (done == 1) { game.showMenu(); return; }
         if (!press.isBusy()) {
+            int before = selected;
             if (next.contains(mouse)) selected = 0;
             if (menu.contains(mouse)) selected = 1;
-            if (Gdx.input.isKeyJustPressed(Input.Keys.LEFT) || Gdx.input.isKeyJustPressed(Input.Keys.RIGHT)) selected = 1 - selected;
+            if (Gdx.input.isKeyJustPressed(Input.Keys.UP) || Gdx.input.isKeyJustPressed(Input.Keys.DOWN)
+                || Gdx.input.isKeyJustPressed(Input.Keys.LEFT) || Gdx.input.isKeyJustPressed(Input.Keys.RIGHT)) selected = 1 - selected;
+            if (selected != before) game.audio.uiMove();
             boolean activate = Gdx.input.isKeyJustPressed(Input.Keys.ENTER)
                 || (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)
                     && (next.contains(mouse) || menu.contains(mouse)));
-            if (activate) press.press(selected, game.settings);
+            if (activate) {
+                press.press(selected, game.settings);
+                game.audio.uiConfirm();
+            }
         }
         if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) { game.showMenu(); return; }
 
@@ -71,40 +86,34 @@ public final class VictoryScreen extends ScreenAdapter {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         game.batch.setProjectionMatrix(camera.combined);
         game.batch.begin();
-        game.batch.setColor(1f, 1f, 1f, 1f);
-        game.batch.draw(game.assets.menuBackground, 0f, 0f, Constants.VIEW_WIDTH, Constants.VIEW_HEIGHT); // 480x270 a 4x
-        game.batch.setColor(0.015f, 0.018f, 0.055f, 0.34f);
-        game.batch.draw(game.assets.pixel, 0f, 0f, Constants.VIEW_WIDTH, Constants.VIEW_HEIGHT);
         game.batch.setColor(Color.WHITE);
+        game.batch.draw(game.assets.menuBackground, 0f, 0f, Constants.VIEW_WIDTH, Constants.VIEW_HEIGHT); // 480x270 a 4x
+        game.ui.shade(760f, 0.66f);
 
-        float orbBob = game.settings.isReducedMotion() ? 0f : MathUtils.sin(stateTime * 3.2f) * 10f;
-        game.batch.draw(game.assets.orbIdle.getKeyFrame(stateTime), 115f, 210f + orbBob,
+        // o ORB na arte, à direita, quicando de leve (parado em movimento reduzido)
+        float bob = game.settings.isReducedMotion() ? 0f : Math.round(MathUtils.sin(stateTime * 3.2f) * 2f) * Constants.PIXEL_SCALE;
+        game.batch.draw(game.assets.orbIdle.getKeyFrame(stateTime), 1180f, 180f + bob,
             Constants.PLAYER_W, Constants.PLAYER_H); // escala única
-        game.batch.draw(game.assets.portal, 1435f, 250f,
-            game.assets.portal.getWidth() * Constants.PIXEL_SCALE,
-            game.assets.portal.getHeight() * Constants.PIXEL_SCALE); // escala única
 
-        game.ui.panel(390f, 300f, 1140f, 620f, UiRenderer.SUCCESS, 1f);
-        game.ui.textCentered("VITÓRIA", 960f, 770f, 3.5f, new Color(0.90f, 0.95f, 1f, 1f));
-        game.ui.textCentered("RIFT ESTABILIZADO", 960f, 665f, 1.25f, UiRenderer.SUCCESS);
-        game.ui.textCentered("Você leu as formas no meio da ação.",
-            960f, 615f, 0.92f, Color.WHITE);
+        game.ui.text("VITÓRIA", LEFT, 980f, UiRenderer.TITLE_BIG, ACCENT, false);
 
         int min = (int)(time / 60f), sec = (int)(time % 60f);
-        float accuracy = correct + wrong == 0 ? 100f : correct * 100f / (correct + wrong);
-        game.ui.textCentered(String.format("SCORE %06d   -   CRISTAIS %03d", score, crystals),
-            960f, 565f, 1.05f, new Color(0.92f, 0.86f, 1f, 1f));
-        game.ui.textCentered(String.format("TEMPO %02d:%02d   -   PRECISÃO %.0f%%", min, sec, accuracy),
-            960f, 510f, 0.90f, new Color(0.76f, 0.84f, 1f, 1f));
-        // Vidas que sobraram, em corações.
-        float hw = HeartMeter.rowWidth(game.assets, Constants.START_LIVES);
-        HeartMeter.drawStatic(game.batch, game.assets, 960f - hw / 2f, 420f, lives, Constants.START_LIVES);
-        game.ui.textCentered("Vértices - Lados - Ângulos - Simetria",
-            960f, 395f, 0.80f, UiRenderer.CYAN);
+        int accuracy = correct + wrong == 0 ? 100 : Math.round(correct * 100f / (correct + wrong));
+        game.ui.text("PONTOS", LEFT, 820f, UiRenderer.TEXT, UiRenderer.TEXT_DIM, false);
+        game.ui.text(String.format("%06d", score), LEFT, 780f, UiRenderer.TITLE, UiRenderer.TEXT_BRIGHT, false);
+        row("TEMPO", String.format("%02d:%02d", min, sec), 660f);
+        row("PRECISÃO", accuracy + "%", 610f);
+        row("CRISTAIS", Integer.toString(crystals), 560f);
+        HeartMeter.drawStatic(game.batch, game.assets, LEFT, 450f, lives, Constants.START_LIVES);
 
-        game.ui.button(next, "JOGAR NOVAMENTE", selected == 0, true, UiRenderer.SUCCESS, press.isPressed(0));
-        game.ui.button(menu, "MENU", selected == 1, true, UiRenderer.CYAN, press.isPressed(1));
+        game.ui.menuItem(next, "JOGAR DE NOVO", LEFT, 330f, UiRenderer.TITLE, selected == 0, press.isPressed(0), ACCENT);
+        game.ui.menuItem(menu, "MENU", LEFT, 210f, UiRenderer.TEXT, selected == 1, press.isPressed(1), ACCENT);
         game.batch.end();
+    }
+
+    private void row(String label, String value, float top) {
+        game.ui.text(label, LEFT, top, UiRenderer.TEXT, UiRenderer.TEXT_DIM, false);
+        game.ui.text(value, VALUE_X, top, UiRenderer.TEXT, UiRenderer.TEXT_BRIGHT, false);
     }
 
     @Override public void resize(int width, int height) { viewport.update(width, height, true); }

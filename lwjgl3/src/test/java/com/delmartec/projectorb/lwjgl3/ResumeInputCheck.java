@@ -90,9 +90,13 @@ public final class ResumeInputCheck {
             GameScreen screen = (GameScreen) getScreen();
             Player player = get(screen, "player");
             List<?> shots = get(screen, "playerProjectiles");
-            // Centro do botão "CONTINUAR" (HUD 1920x1080) em coordenadas de tela.
-            int buttonX = Math.round(960f / 1920f * Gdx.graphics.getWidth());
-            int buttonY = Math.round((1f - 546f / 1080f) * Gdx.graphics.getHeight());
+            // Centro do item "CONTINUAR" (HUD 1920x1080) em coordenadas de tela:
+            // lido da própria tela (a área é preenchida ao desenhar a pausa).
+            com.badlogic.gdx.math.Rectangle cont = ((com.badlogic.gdx.math.Rectangle[]) get(screen, "pauseButtons"))[0];
+            float cx = cont.width > 0f ? cont.x + cont.width / 2f : 300f;
+            float cy = cont.height > 0f ? cont.y + cont.height / 2f : 580f;
+            int buttonX = Math.round(cx / 1920f * Gdx.graphics.getWidth());
+            int buttonY = Math.round((1f - cy / 1080f) * Gdx.graphics.getHeight());
             // Mira em um ponto qualquer à direita do jogador.
             int aimX = Math.round(0.8f * Gdx.graphics.getWidth());
             int aimY = Math.round(0.5f * Gdx.graphics.getHeight());

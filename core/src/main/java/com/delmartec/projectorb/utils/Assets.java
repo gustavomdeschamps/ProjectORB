@@ -79,8 +79,13 @@ public class Assets {
     public final Animation<TextureRegion> voidBurstBig;
     public final Animation<TextureRegion> dashTrail;
 
+    // Rodada 3: alvo estilhaçando e tiro no lugar errado
+    public final Animation<TextureRegion> shatter;
+    public final Animation<TextureRegion> miss;
+
     // MUNDO
-    public final Texture ground;
+    /** Chão: variantes 32x32 que emendam em qualquer ordem (ver GameScreen.drawGround). */
+    public final Texture[] grounds;
     public final PlatformSkin platform;
     public final PlatformSkin platformAlt;
     // Escadinha entre as seções (etapa B): blocos de cristal
@@ -120,6 +125,10 @@ public class Assets {
     public final Texture panelRed;
     public final Texture pixel;
     public final Texture orbShadow;
+    /** Logo "PROJECT ORB" em lettering de pixel art (o "O" é o ORB). */
+    public final Texture logo;
+    /** Borda pontilhada (12x4) da faixa escura atrás dos menus: sem degradê. */
+    public final Texture shadeEdge;
 
     // HUD (A3): ícones em pixel art, desenhados a PIXEL_SCALE
     public final Texture hudOrb;
@@ -138,17 +147,33 @@ public class Assets {
     public final Texture mouse;
     public final Texture mouseLit;
 
-    /** Peças de plataforma em 1x: ponta, módulo repetível e coluna lisa. */
+    /**
+     * Peças da laje em 1x: pontas esquerda e direita (desenhadas separadas: a
+     * luz vem da esquerda), miolos de 16 e de 12 px em variantes e uma coluna
+     * lisa para sobras.
+     */
     public static final class PlatformSkin {
-        public final Texture cap;
-        public final Texture module;
+        public final Texture capLeft;
+        public final Texture capRight;
+        public final Texture[] wide;
+        public final Texture[] narrow;
         public final Texture fill;
 
-        PlatformSkin(Texture cap, Texture module, Texture fill) {
-            this.cap = cap;
-            this.module = module;
+        PlatformSkin(Texture capLeft, Texture capRight, Texture[] wide, Texture[] narrow, Texture fill) {
+            this.capLeft = capLeft;
+            this.capRight = capRight;
+            this.wide = wide;
+            this.narrow = narrow;
             this.fill = fill;
         }
+    }
+
+    private PlatformSkin skin(String prefix) {
+        return new PlatformSkin(load("world/" + prefix + "_capl.png"), load("world/" + prefix + "_capr.png"),
+            new Texture[] { load("world/" + prefix + "_mod_a.png"), load("world/" + prefix + "_mod_b.png"),
+                load("world/" + prefix + "_mod_c.png") },
+            new Texture[] { load("world/" + prefix + "_mod_d.png"), load("world/" + prefix + "_mod_e.png") },
+            load("world/" + prefix + "_fill.png"));
     }
 
     public Assets() {
@@ -191,11 +216,13 @@ public class Assets {
         voidBurstBig = animation(1f, "fx/void_burst_big_", Animation.PlayMode.NORMAL);
         dashTrail = animation(1f, "fx/dash_trail_", Animation.PlayMode.NORMAL);
 
-        ground = load("world/ground.png");
-        platform = new PlatformSkin(load("world/platform_cap.png"),
-            load("world/platform_module.png"), load("world/platform_fill.png"));
-        platformAlt = new PlatformSkin(load("world/platform_alt_cap.png"),
-            load("world/platform_alt_module.png"), load("world/platform_alt_fill.png"));
+        shatter = animation(1f, "fx/shatter_", Animation.PlayMode.NORMAL);
+        miss = animation(1f, "fx/miss_", Animation.PlayMode.NORMAL);
+
+        grounds = new Texture[] { load("world/ground_a.png"), load("world/ground_b.png"), load("world/ground_c.png"),
+            load("world/ground_d.png"), load("world/ground_e.png") };
+        platform = skin("platform");
+        platformAlt = skin("platform_alt");
         stairClosed = load("world/stair/block_closed.png");
         stairBlock = load("world/stair/block.png");
         stairTop = load("world/stair/block_top.png");
@@ -232,6 +259,8 @@ public class Assets {
         panelCyan = load("ui/panel_cyan.png");
         panelRed = load("ui/panel_red.png");
         pixel = load("ui/pixel.png");
+        logo = load("ui/logo.png");
+        shadeEdge = load("ui/shade_edge.png");
         key = load("ui/key.png");
         keyLit = load("ui/key_lit.png");
         arrowLeft = load("ui/arrow_left.png");

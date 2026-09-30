@@ -18,22 +18,23 @@ import com.delmartec.projectorb.utils.UiRenderer;
 
 /**
  * "Como jogar": só os controles, desenhados em pixel art, cada um com uma
- * palavra. Toda a explicação em texto fica com o NPC Pi dentro da fase. A
- * tecla acende enquanto o jogador a pressiona.
+ * palavra. Toda a explicação em texto fica com o Pi dentro da fase. A tecla
+ * acende enquanto o jogador a pressiona. Rodada 3: alinhado à esquerda sobre
+ * a arte, sem caixa; VOLTAR é um item de texto.
  */
 public final class HowToPlayScreen extends ScreenAdapter {
     private static final int PX = Constants.PIXEL_SCALE;
-    private static final float ROW = 104f;
-    private static final float KEYS_RIGHT = 900f;
-    private static final float LABEL_X = 948f;
-    private static final Color LABEL = new Color(0.95f, 0.94f, 1f, 1f);
+    private static final float ROW = 96f;
+    private static final float LEFT = 112f;
+    private static final float KEYS_RIGHT = 470f;
+    private static final float LABEL_X = 518f;
 
     private final ProjectOrbGame game;
     private final MenuScreen menu;
     private final OrthographicCamera camera = new OrthographicCamera();
     private final Viewport viewport = new PixelViewport(camera);
     private final Vector2 pointer = new Vector2();
-    private final Rectangle back = new Rectangle(760f, 64f, 400f, 82f);
+    private final Rectangle back = new Rectangle();
     private final ButtonPress press = new ButtonPress();
 
     public HowToPlayScreen(ProjectOrbGame game, MenuScreen menu) {
@@ -47,7 +48,7 @@ public final class HowToPlayScreen extends ScreenAdapter {
         viewport.apply();
         pointer.set(Gdx.input.getX(), Gdx.input.getY());
         viewport.unproject(pointer);
-        // VOLTAR é o único botão, então tem o foco do teclado (selecionado);
+        // VOLTAR é o único item, então tem o foco do teclado (selecionado);
         // ENTER/ESC/clique afundam e a tela volta quando ele sobe.
         if (press.update(delta) == 0) {
             game.setScreen(menu);
@@ -57,18 +58,20 @@ public final class HowToPlayScreen extends ScreenAdapter {
             || Gdx.input.isKeyJustPressed(Input.Keys.ENTER)
             || (back.contains(pointer) && Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)))) {
             press.press(0, game.settings);
+            game.audio.uiConfirm();
         }
 
         Gdx.gl.glClearColor(0.01f, 0.01f, 0.04f, 1f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         game.batch.setProjectionMatrix(camera.combined);
         game.batch.begin();
-        game.batch.setColor(0.52f, 0.56f, 0.78f, 1f);
+        game.batch.setColor(0.78f, 0.80f, 0.92f, 1f);
         game.batch.draw(game.assets.menuBackground, 0f, 0f, Constants.VIEW_WIDTH, Constants.VIEW_HEIGHT);
         game.batch.setColor(Color.WHITE);
-        game.ui.text("COMO JOGAR", 960f, 1000f, UiRenderer.TITLE, Color.WHITE, true);
+        game.ui.shade(900f, 0.72f);
+        game.ui.text("COMO JOGAR", LEFT, 980f, UiRenderer.TITLE, UiRenderer.TEXT_BRIGHT, false);
 
-        float y = 820f;
+        float y = 800f;
         // A D  /  ← →   MOVER
         float x = KEYS_RIGHT;
         x = keyArrow(game.assets.arrowRight, x, y, pressed(Input.Keys.RIGHT));
@@ -105,7 +108,7 @@ public final class HowToPlayScreen extends ScreenAdapter {
         key("ESC", 17, KEYS_RIGHT, y, pressed(Input.Keys.ESCAPE));
         label("PAUSA", y);
 
-        game.ui.button(back, "VOLTAR", true, true, UiRenderer.MAGENTA, press.isPressed(0));
+        game.ui.menuItem(back, "VOLTAR", LEFT, 120f, UiRenderer.TEXT, true, press.isPressed(0), UiRenderer.LILAC);
         game.batch.end();
     }
 
@@ -123,7 +126,7 @@ public final class HowToPlayScreen extends ScreenAdapter {
     }
 
     private void label(String text, float y) {
-        game.ui.text(text, LABEL_X, y + 40f, UiRenderer.TEXT, LABEL, false);
+        game.ui.text(text, LABEL_X, y + 40f, UiRenderer.TEXT, UiRenderer.TEXT_BRIGHT, false);
     }
 
     @Override public void resize(int width, int height) { viewport.update(width, height, true); }

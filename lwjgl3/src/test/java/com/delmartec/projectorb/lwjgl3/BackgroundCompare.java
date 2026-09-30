@@ -60,7 +60,6 @@ public final class BackgroundCompare {
                         ((List<?>) get(screen, "enemies")).clear();
                         set(screen, "bannerTimer", 0f);
                         set(screen, "gameTime", 0f);
-                        set(screen, "feedbackTimer", 0f);
                         set(screen, "cameraBaseX", Math.max(960f, Math.min(12000f - 960f, x)));
                         ScreenCapture.capture(screen, out + File.separator + String.format("x%05d.png", (int) x), 0f);
                     }

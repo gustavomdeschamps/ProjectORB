@@ -33,7 +33,9 @@ import com.delmartec.projectorb.level.StairGate;
 import com.delmartec.projectorb.utils.Assets;
 import com.delmartec.projectorb.utils.Backdrop;
 import com.delmartec.projectorb.utils.ButtonPress;
+import com.delmartec.projectorb.utils.Callout;
 import com.delmartec.projectorb.utils.Constants;
+import com.delmartec.projectorb.utils.FloatingText;
 import com.delmartec.projectorb.utils.HeartMeter;
 import com.delmartec.projectorb.utils.UiRenderer;
 
@@ -44,7 +46,8 @@ import java.util.List;
 public class GameScreen extends ScreenAdapter {
     private static final Color CHARGE_LOW = new Color(0.70f, 0.28f, 0.96f, 1f);
     private static final Color CHARGE_HIGH = new Color(1f, 0.16f, 0.36f, 1f);
-    private static final Color AIM_LOCK = new Color(1f, 0.83f, 0.38f, 1f);
+    /** Mira sobre um alvo: lilás claro (o âmbar fica só nos alvos). */
+    private static final Color AIM_LOCK = new Color(0.86f, 0.74f, 1f, 1f);
     /** Meia janela de cull em torno da câmera. */
     private static final float CULL_MARGIN = 1250f;
     /** Fração da carga do ataque a partir da qual o inimigo telegrafa. */
@@ -74,17 +77,22 @@ public class GameScreen extends ScreenAdapter {
     private final Viewport hudViewport = new PixelViewport(hudCamera);
     private final Vector2 mouseWorld = new Vector2();
     private final Vector2 mouseHud = new Vector2();
-    private final Rectangle[] pauseButtons = {
-        new Rectangle(710f, 510f, 500f, 72f),
-        new Rectangle(710f, 420f, 500f, 72f),
-        new Rectangle(710f, 330f, 500f, 72f),
-        new Rectangle(710f, 240f, 500f, 72f)
-    };
+    /** Áreas clicáveis dos itens da pausa (preenchidas ao desenhar). */
+    private final Rectangle[] pauseButtons = { new Rectangle(), new Rectangle(), new Rectangle(), new Rectangle() };
 
     private final List<GeoEnemy> enemies = new ArrayList<>();
     private final List<Projectile> playerProjectiles = new ArrayList<>();
     private final List<Projectile> enemyProjectiles = new ArrayList<>();
     private final List<EffectBurst> effects = new ArrayList<>();
+    /** Números que sobem do acerto/erro (rodada 3: no lugar dos textos na tela). */
+    private final List<FloatingText> floats = new ArrayList<>();
+    /** Texto no meio da tela: só momentos raros e importantes. */
+    private final Callout callout = new Callout();
+    /** O contador de alvos do HUD pula/acende por um instante quando muda. */
+    private float hudCountFlash;
+    private int lastRemaining = -1;
+    private static final Color FLOAT_GAIN = new Color(0.96f, 0.94f, 1f, 1f);
+    private static final Color FLOAT_LOSS = new Color(1f, 0.47f, 0.62f, 1f);
 
     private final boolean[] sectionSpawned = new boolean[6];
     private final boolean[] sectionCleared = new boolean[6];
@@ -98,18 +106,15 @@ public class GameScreen extends ScreenAdapter {
 
     /** Paisagem em camadas de parallax (céu ... lago com reflexo ... névoa). */
     private final Backdrop backdrop;
-    /** Ponta direita das plataformas = ponta esquerda espelhada. */
-    private final TextureRegion platformCapRight;
-    private final TextureRegion platformAltCapRight;
     /** A arte da seta aponta para cima; espelhada ela aponta PARA o alvo. */
     private final TextureRegion guideArrowDown;
 
     private int currentSection = 0;
     private float shotCooldown = 0f;
     private float gameTime = 0f;
-    private float bannerTimer = 3f;
-    private float feedbackTimer = 0f;
-    private String feedback = "";
+    /** Cartão com o nome da seção (entra, fica e sai animado). */
+    private float bannerTimer = BANNER_TIME;
+    private static final float BANNER_TIME = 2.6f;
     private float shakeTimer = 0f;
     private float shakeStrength = 0f;
     private float cameraBaseX = Constants.VIEW_WIDTH / 2f;
@@ -172,10 +177,6 @@ public class GameScreen extends ScreenAdapter {
     public GameScreen(ProjectOrbGame game) {
         this.game = game;
         backdrop = new Backdrop(game.assets);
-        platformCapRight = new TextureRegion(game.assets.platform.cap);
-        platformCapRight.flip(true, false);
-        platformAltCapRight = new TextureRegion(game.assets.platformAlt.cap);
-        platformAltCapRight.flip(true, false);
         guideArrowDown = new TextureRegion(game.assets.guideArrow);
         guideArrowDown.flip(false, true);
 
@@ -278,7 +279,6 @@ public class GameScreen extends ScreenAdapter {
         // Os controles do jogo só valem fora do diálogo ou nos passos interativos.
         player.setControlsLocked(dialogue.isActive() && !dialogue.isInteractive());
         shotCooldown = Math.max(0f, shotCooldown - delta);
-        feedbackTimer = Math.max(0f, feedbackTimer - delta);
         shakeTimer = Math.max(0f, shakeTimer - delta);
         dashFxTimer = Math.max(0f, dashFxTimer - delta);
         bannerTimer = Math.max(0f, bannerTimer - delta);
@@ -348,7 +348,7 @@ public class GameScreen extends ScreenAdapter {
             Section next = level.getSection(currentSection + 1);
             if (player.getX() > next.startX + 40f) {
                 currentSection++;
-                bannerTimer = 2.4f;
+                bannerTimer = BANNER_TIME;
                 enemyProjectiles.clear();
                 spawnSection(currentSection, false);
             }
@@ -360,12 +360,9 @@ public class GameScreen extends ScreenAdapter {
         if (currentSection > 0 && sectionSpawned[currentSection]
             && !sectionCleared[currentSection] && enemies.isEmpty()) {
             sectionCleared[currentSection] = true;
-            if (currentSection == 5) {
-                portalActive = true;
-                feedback("RIFT ESTABILIZADO - atravesse o portal", 4f);
-            } else {
-                feedback("CONCEITO DOMINADO - passagem liberada", 2.0f);
-            }
+            // Sem texto: a escada se rearranjando (som + tremor) já avisa que a
+            // passagem abriu; na arena, o portal acende.
+            if (currentSection == 5) portalActive = true;
         }
     }
 
@@ -527,32 +524,43 @@ public class GameScreen extends ScreenAdapter {
                 GeoEnemy.HitResult result = enemy.testPlayerProjectile(p);
                 if (result == GeoEnemy.HitResult.NONE) continue;
 
+                // Rodada 3: nada de frase na tela. Acerto = o alvo estilhaça,
+                // som que sobe de tom a cada alvo, número pequeno subindo e o
+                // contador do HUD pulando. Erro = faísca rosa, baque grave,
+                // "-25" e tremor curto.
                 if (result == GeoEnemy.HitResult.WRONG) {
                     totalWrongHits++;
                     score = Math.max(0, score - 25);
-                    effects.add(new EffectBurst(p.x, p.y, EffectBurst.Kind.VOID, 100f, 0.22f));
-                    feedback("ERROU O PONTO - desvie do ataque!", 1.25f);
+                    effects.add(new EffectBurst(p.x, p.y, EffectBurst.Kind.MISS, 52f, 0.30f));
+                    floats.add(new FloatingText(p.x, p.y + 30f, "-25", FLOAT_LOSS));
+                    game.audio.miss();
                     shake(0.10f, 8f);
                 } else {
                     totalCorrectHits++;
                     crystals++;
-                    score += result == GeoEnemy.HitResult.WEAK_POINT ? 100
+                    int gain = result == GeoEnemy.HitResult.WEAK_POINT ? 100
                         : result == GeoEnemy.HitResult.ROUND_COMPLETE ? 300
                         : enemy.getType().isBoss() ? 5000 : 900;
-                    game.audio.weakPoint();
-                    effects.add(new EffectBurst(p.x, p.y, EffectBurst.Kind.HIT, 105f, 0.20f));
+                    score += gain;
+                    int broken = enemy.getWeakPointCount() - enemy.getRemainingWeakPoints();
+                    game.audio.shatter(0.9f + 0.08f * Math.max(0, broken));
+                    effects.add(new EffectBurst(p.x, p.y, EffectBurst.Kind.SHATTER, 172f, 0.36f));
+                    floats.add(new FloatingText(p.x, p.y + 36f, "+" + gain, FLOAT_GAIN));
                     shake(0.06f, 5f);
 
-                    if (result == GeoEnemy.HitResult.WEAK_POINT) {
-                        feedback("ACERTOU! - continue nos pontos iluminados", 1.0f);
-                    } else if (result == GeoEnemy.HitResult.ROUND_COMPLETE) {
-                        feedback("PROPRIEDADE RESOLVIDA - novo padrão", 1.4f);
+                    if (result == GeoEnemy.HitResult.ROUND_COMPLETE) {
+                        game.audio.weakPoint();
                     } else if (result == GeoEnemy.HitResult.DEFEATED) {
                         boolean boss = enemy.getType().isBoss();
-                        feedback(boss ? "CHEFE DESESTABILIZADO" : "FORMA DESFEITA", 1.8f);
+                        game.audio.weakPoint();
                         effects.add(new EffectBurst(enemy.getX(), enemy.getY(),
                             EffectBurst.Kind.VOID, boss ? 320f : 180f, boss ? 0.65f : 0.4f));
                         shake(boss ? 0.5f : 0.2f, boss ? 20f : 11f);
+                        // o momento mais importante da fase: única frase no meio da tela
+                        if (boss) {
+                            callout.show("NÚCLEO PARTIDO", UiRenderer.LILAC);
+                            game.audio.callout();
+                        }
                     }
                 }
                 break;
@@ -598,6 +606,10 @@ public class GameScreen extends ScreenAdapter {
             effect.update(delta);
             if (effect.dead()) iterator.remove();
         }
+        for (FloatingText f : floats) f.update(delta);
+        floats.removeIf(FloatingText::dead);
+        callout.update(delta);
+        hudCountFlash = Math.max(0f, hudCountFlash - delta);
     }
 
     /**
@@ -661,14 +673,14 @@ public class GameScreen extends ScreenAdapter {
             // voltam, o portão continua aberto e o portal final continua ativo.
             enemyProjectiles.clear();
             playerProjectiles.clear();
-            feedback("VIDA PERDIDA - seção já resolvida", 2.2f);
         } else {
             spawnSection(currentSection, true);
             // O boss volta a existir, então o portal precisa voltar a ficar
             // inativo — senão dava para pular a luta e vencer direto.
             if (currentSection == 5) portalActive = false;
-            feedback("VIDA PERDIDA - tentativa reiniciada", 2.2f);
         }
+        // Sem texto: o coração do HUD quebra (animação própria) e o ORB
+        // renasce piscando.
         effects.clear();
         shake(0.28f, 16f);
     }
@@ -677,11 +689,6 @@ public class GameScreen extends ScreenAdapter {
         if (!game.settings.isScreenShakeEnabled()) return;
         shakeTimer = Math.max(shakeTimer, time);
         shakeStrength = Math.max(shakeStrength, strength);
-    }
-
-    private void feedback(String text, float duration) {
-        feedback = text;
-        feedbackTimer = duration;
     }
 
     private void updateCamera(float delta) {
@@ -825,47 +832,73 @@ public class GameScreen extends ScreenAdapter {
             return;
         }
 
-        // Plataformas elevadas montadas com peças de pixel art na escala única:
-        // ponta + módulos inteiros (caixa + vão) + colunas lisas que absorvem
-        // a sobra + ponta espelhada. Nada é esticado fora da escala inteira.
-        // A cor alterna por zona só para o mapa não ficar monótono.
+        // Laje de pedra (rodada 3) montada com peças na escala única: ponta
+        // esquerda + miolos de 16 e 12 px em variantes (escolhidas pela
+        // posição da plataforma, sem repetir a vizinha) + ponta direita. Se a
+        // largura não fechar com 16/12, colunas lisas absorvem a sobra.
+        // A pedra alterna de tom por zona só para o mapa não ficar monótono.
         boolean alt = MathUtils.clamp((int)(r.x / 1900f), 0, 5) % 2 == 1;
         Assets.PlatformSkin skin = alt ? game.assets.platformAlt : game.assets.platform;
-        TextureRegion capRight = alt ? platformAltCapRight : platformCapRight;
         int px = Constants.PIXEL_SCALE;
-        int cap = skin.cap.getWidth() * px;
-        int module = skin.module.getWidth() * px;
-        int h = skin.module.getHeight() * px;
-        int inner = Math.round(r.width / px) * px - cap * 2;
-        int modules = Math.max(0, inner / module);
-        int spare = inner - modules * module;
-        int fillLeft = spare / 2;
-        int fillRight = spare - fillLeft;
-        float top = r.y + r.height;
-        float y = top - h;
+        int h = skin.fill.getHeight() * px;
+        int inner = Math.round(r.width / px) - skin.capLeft.getWidth() - skin.capRight.getWidth();
+        int narrow = 0;
+        while (narrow * 12 <= inner && (inner - narrow * 12) % 16 != 0) narrow++;
+        if (narrow * 12 > inner) narrow = 0;
+        int wide = (inner - narrow * 12) / 16;
+        int spare = inner - wide * 16 - narrow * 12;
+        float y = r.y + r.height - h;
         float x = r.x;
-
-        game.batch.draw(skin.cap, x, y, cap, h);
-        x += cap;
-        if (fillLeft > 0) game.batch.draw(skin.fill, x, y, fillLeft, h);
-        x += fillLeft;
-        for (int i = 0; i < modules; i++) {
-            game.batch.draw(skin.module, x, y, module, h);
-            x += module;
+        game.batch.draw(skin.capLeft, x, y, skin.capLeft.getWidth() * px, h);
+        x += skin.capLeft.getWidth() * px;
+        int seed = hash((int)(r.x / px) * 7 + (int)r.y);
+        Texture last = null;
+        boolean[] isNarrow = pieceOrder(wide, narrow);
+        for (int i = 0; i < isNarrow.length; i++) {
+            Texture[] pool = isNarrow[i] ? skin.narrow : skin.wide;
+            Texture t = pool[Integer.remainderUnsigned(hash(seed + i), pool.length)];
+            if (t == last) t = pool[(java.util.Arrays.asList(pool).indexOf(t) + 1) % pool.length];
+            game.batch.draw(t, x, y, t.getWidth() * px, h);
+            x += t.getWidth() * px;
+            last = t;
         }
-        if (fillRight > 0) game.batch.draw(skin.fill, x, y, fillRight, h);
-        x += fillRight;
-        game.batch.draw(capRight, x, y, cap, h);
+        if (spare > 0) {
+            game.batch.draw(skin.fill, x, y, spare * px, h);
+            x += spare * px;
+        }
+        game.batch.draw(skin.capRight, x, y, skin.capRight.getWidth() * px, h);
+    }
+
+    /** Ordem dos miolos: os estreitos (12 px) espalhados entre os largos (16 px). */
+    static boolean[] pieceOrder(int wide, int narrow) {
+        int n = wide + narrow;
+        boolean[] out = new boolean[n];
+        for (int j = 0; j < narrow; j++) out[Math.min(n - 1, (int)((j + 0.5f) * n / narrow))] = true;
+        return out;
+    }
+
+    /** Hash inteiro simples (mesmo de tools/mundo_rodada3.py: ground_variant). */
+    static int hash(int i) {
+        int h = i * 0x9E3779B1;
+        return h ^ (h >>> 15);
+    }
+
+    /** Variante do ladrilho de chão de índice i (0..n-1). */
+    static int groundVariant(int i, int n) {
+        return Integer.remainderUnsigned(hash(i), n);
     }
 
     private void drawGround(Rectangle r) {
-        // Tile 16x32 de arte (64x128 de mundo); o topo coincide com FLOOR_Y.
-        Texture tile = game.assets.ground;
-        float tileW = tile.getWidth() * Constants.PIXEL_SCALE;
-        float tileH = tile.getHeight() * Constants.PIXEL_SCALE;
+        // Ladrilhos 32x32 de arte (128x128 de mundo) em 5 variantes que emendam
+        // em qualquer ordem; a variante sai do índice do ladrilho (sempre a
+        // mesma no mesmo lugar). O topo coincide com FLOOR_Y.
+        Texture[] tiles = game.assets.grounds;
+        float tileW = tiles[0].getWidth() * Constants.PIXEL_SCALE;
+        float tileH = tiles[0].getHeight() * Constants.PIXEL_SCALE;
         float start = Math.max(r.x, (float)Math.floor((worldCamera.position.x - 1100f) / tileW) * tileW);
         float end = Math.min(r.x + r.width, worldCamera.position.x + 1100f);
         for (float x = start; x < end; x += tileW) {
+            Texture tile = tiles[groundVariant(Math.round(x / tileW), tiles.length)];
             game.batch.draw(tile, x, Constants.FLOOR_Y - tileH, tileW, tileH);
         }
     }
@@ -1016,6 +1049,8 @@ public class GameScreen extends ScreenAdapter {
                 case VOID -> effect.size >= 250f ? game.assets.voidBurstBig
                     : effect.size >= 150f ? game.assets.voidBurstMid : game.assets.voidBurst;
                 case DASH -> game.assets.dashTrail;
+                case SHATTER -> game.assets.shatter;
+                case MISS -> game.assets.miss;
             };
             // O crescimento está desenhado nos frames; o tamanho pedido escolhe
             // a variante (normal/média/grande), sempre na escala única.
@@ -1026,6 +1061,12 @@ public class GameScreen extends ScreenAdapter {
             game.batch.draw(frame, effect.x - w / 2f, effect.y - h / 2f, w, h);
         }
         game.batch.setColor(Color.WHITE);
+        // números do acerto/erro, subindo do ponto (fonte de pixel, escala única)
+        boolean still = game.settings.isReducedMotion();
+        for (FloatingText f : floats) {
+            if (!f.visible()) continue;
+            game.ui.text(f.text, Math.round(f.x / PX) * PX, f.currentY(still), UiRenderer.TEXT, f.color, true);
+        }
     }
 
     private void drawPlayer() {
@@ -1062,6 +1103,7 @@ public class GameScreen extends ScreenAdapter {
         drawTargetHud();
         drawCrystalHud();
         drawBannerAndHints();
+        callout.draw(game.ui, game.settings.isReducedMotion());
         if (dialogue.isActive()) dialogueBox.draw(game.batch, dialogue, dialoguePortrait);
 
         game.batch.setColor(Color.WHITE);
@@ -1071,20 +1113,18 @@ public class GameScreen extends ScreenAdapter {
     // ---- HUD em pixels: tudo alinhado à grade de PIXEL_SCALE -------------
 
     private static final int PX = Constants.PIXEL_SCALE;
-    private static final Color CODEX_LOCKED_TITLE = new Color(0.42f, 0.44f, 0.55f, 1f);
-    private static final Color CODEX_LOCKED_TEXT = new Color(0.36f, 0.38f, 0.48f, 1f);
-    private static final Color HUD_ON = new Color(0.96f, 0.18f, 0.82f, 1f);
+    // Rodada 3: menos neon. Vida em rosa-lilás, dash em azul-petróleo claro,
+    // textos em lilás/branco; o âmbar fica só nos alvos de ponto fraco.
+    private static final Color HUD_ON = new Color(0.93f, 0.45f, 0.78f, 1f);
     private static final Color HUD_OFF = new Color(0.24f, 0.13f, 0.36f, 1f);
-    private static final Color HUD_DASH_ON = new Color(0.32f, 0.85f, 0.92f, 1f);
+    private static final Color HUD_DASH_ON = new Color(0.45f, 0.84f, 0.90f, 1f);
     private static final Color HUD_DASH_OFF = new Color(0.12f, 0.28f, 0.36f, 1f);
     private static final Color HUD_LABEL = new Color(0.82f, 0.70f, 1f, 1f);
     private static final Color HUD_TEXT = new Color(0.95f, 0.94f, 1f, 1f);
-    private static final Color HUD_COUNT = new Color(1f, 0.89f, 0.55f, 1f);
     private static final Color HINT = new Color(0.76f, 0.82f, 1f, 1f);
     private static final Color BANNER_TITLE = new Color(0.96f, 0.94f, 1f, 1f);
-    private static final Color BANNER_SUB = new Color(0.48f, 0.88f, 1f, 1f);
-    private static final Color FEEDBACK = new Color(1f, 0.72f, 0.94f, 1f);
-    private final Color fade = new Color();
+    private static final Color OVERLAY = new Color(0.01f, 0.008f, 0.04f, 1f);
+    private static final float MENU_LEFT = 112f;
 
     private void drawIcon(Texture texture, float x, float y) {
         game.batch.draw(texture, x, y, texture.getWidth() * PX, texture.getHeight() * PX);
@@ -1121,7 +1161,10 @@ public class GameScreen extends ScreenAdapter {
 
     private void drawTargetHud() {
         GeoEnemy active = firstActiveEnemy();
-        if (active == null) return;
+        if (active == null) {
+            lastRemaining = -1;
+            return;
+        }
         float right = 1888f;
         GeoEnemy.TargetProperty property = active.getTargetProperty();
 
@@ -1148,12 +1191,20 @@ public class GameScreen extends ScreenAdapter {
         drawIcon(icon, right - isz, 1048f - isz);
         float textRight = right - isz - 16f;
         String name = active.getType().displayName();
-        String count = active.getRemainingWeakPoints() + "/" + active.getWeakPointCount();
+        int remaining = active.getRemainingWeakPoints();
+        // contador: quando um alvo quebra, pula 1 pixel e acende (o feedback
+        // do acerto fica aqui, não numa frase)
+        if (lastRemaining >= 0 && remaining != lastRemaining) hudCountFlash = 0.35f;
+        lastRemaining = remaining;
+        String count = remaining + "/" + active.getWeakPointCount();
         game.ui.text(name, textRight - game.ui.textWidth(name, UiRenderer.TEXT), 1036f, UiRenderer.TEXT, HUD_LABEL, false);
         String line = property.label + "  " + count;
         float lw = game.ui.textWidth(line, UiRenderer.TEXT);
         game.ui.text(property.label, textRight - lw, 1000f, UiRenderer.TEXT, HUD_TEXT, false);
-        game.ui.text(count, textRight - game.ui.textWidth(count, UiRenderer.TEXT), 1000f, UiRenderer.TEXT, HUD_COUNT, false);
+        boolean bump = hudCountFlash > 0f;
+        float bumpY = bump && !game.settings.isReducedMotion() ? PX : 0f;
+        game.ui.text(count, textRight - game.ui.textWidth(count, UiRenderer.TEXT), 1000f + bumpY, UiRenderer.TEXT,
+            bump ? UiRenderer.LILAC : HUD_TEXT, false);
 
         // Carga do ataque inimigo em 8 pips (telegrafia), não em barra.
         float charge = active.isAttacking() ? 1f : Math.min(1f, active.getCharge());
@@ -1163,12 +1214,6 @@ public class GameScreen extends ScreenAdapter {
             game.batch.draw(game.assets.pixel, textRight - (8 - k) * 3 * PX + PX, 956f, 2 * PX, 2 * PX);
         }
         game.batch.setColor(Color.WHITE);
-
-        if (feedbackTimer > 0f) {
-            fade.set(FEEDBACK).a = Math.min(1f, feedbackTimer);
-            game.ui.text(feedback, 1888f - game.ui.textWidth(feedback, UiRenderer.TEXT), 912f,
-                UiRenderer.TEXT, fade, false);
-        }
     }
 
     private void drawCrystalHud() {
@@ -1180,36 +1225,45 @@ public class GameScreen extends ScreenAdapter {
         game.ui.text(n, x - 12f - game.ui.textWidth(n, UiRenderer.TEXT), 64f, UiRenderer.TEXT, HUD_TEXT, false);
     }
 
-    private String objectiveText() {
-        if (portalActive) return "ATRAVESSE O RIFT";
-        if (currentSection == 0) return "ALCANCE A CÂMARA";
-        GeoEnemy active = firstActiveEnemy();
-        return active == null ? "SIGA PARA A DIREITA" : "RESOLVA A FORMA " + active.getType().displayName();
-    }
-
     private void drawBannerAndHints() {
-        // Dica de controle: só a tecla e uma palavra, sobre o piso escuro.
+        // Dica de controle: só a tecla e uma palavra, e só em cima do portal.
         if (portalActive && playerAtPortal()) {
             float left = game.ui.keyCap("E", 11, 32f + 11 * PX, 24f, Gdx.input.isKeyPressed(Input.Keys.E));
             game.ui.text("PORTAL", left + 11 * PX + 16f, 64f, UiRenderer.TEXT, HINT, false);
-        } else if (portalActive) {
-            game.ui.text("SIGA PARA O PORTAL", 32f, 52f, UiRenderer.TEXT, HINT, false);
         }
+        if (bannerTimer > 0f && !dialogue.isActive()) drawSectionCard(level.getSection(currentSection).title);
+    }
 
-        if (bannerTimer > 0f && !dialogue.isActive()) {
-            float alpha = Math.min(1f, bannerTimer);
-            Section section = level.getSection(currentSection);
-            fade.set(BANNER_TITLE).a = alpha;
-            game.ui.text(section.title, 32f, 300f, UiRenderer.TITLE, fade, false);
-            fade.set(BANNER_SUB).a = alpha;
-            game.ui.text(section.subtitle, 32f, 248f, UiRenderer.TEXT, fade, false);
+    /**
+     * Cartão da seção: só o nome. Entrada: as letras chegam uma a uma
+     * deslizando 3 pixels de arte da esquerda e um traço cresce embaixo.
+     * Saída: as letras somem da esquerda para a direita e o traço encolhe.
+     * Movimento reduzido: aparece e some inteiro.
+     */
+    private void drawSectionCard(String title) {
+        float t = BANNER_TIME - bannerTimer;
+        float in = 0.40f, out = 0.35f;
+        int n = title.length();
+        boolean still = game.settings.isReducedMotion();
+        float x = 32f, top = 300f;
+        float full = game.ui.textWidth(title, UiRenderer.TITLE);
+        float reveal = still ? 1f : MathUtils.clamp(t / in, 0f, 1f);
+        float hide = still ? 0f : MathUtils.clamp((t - (BANNER_TIME - out)) / out, 0f, 1f);
+        for (int i = 0; i < n; i++) {
+            float start = i / (float)n;
+            float k = MathUtils.clamp((reveal - start) * n / 2f, 0f, 1f);
+            boolean gone = hide * n > i;
+            String before = title.substring(0, i);
+            float cx = x + game.ui.textWidth(before, UiRenderer.TITLE);
+            if (k <= 0f || gone) continue;
+            float slide = Math.round((1f - k) * 3f) * -PX;
+            game.ui.text(title.substring(i, i + 1), cx + slide, top, UiRenderer.TITLE, BANNER_TITLE, false);
         }
-        // Sem inimigo ativo (seção resolvida, tutorial), o recado vai para
-        // o canto das mensagens de progresso, acima do banner.
-        if (feedbackTimer > 0f && firstActiveEnemy() == null) {
-            fade.set(FEEDBACK).a = Math.min(1f, feedbackTimer);
-            game.ui.text(feedback, 32f, 360f, UiRenderer.TEXT, fade, false);
-        }
+        float line = full * reveal * (1f - hide);
+        game.batch.setColor(UiRenderer.LILAC);
+        game.batch.draw(game.assets.pixel, x, top - game.ui.capHeight(UiRenderer.TITLE) - 5 * PX,
+            Math.round(line / PX) * PX, PX);
+        game.batch.setColor(Color.WHITE);
     }
 
     private GeoEnemy firstActiveEnemy() {
@@ -1236,6 +1290,7 @@ public class GameScreen extends ScreenAdapter {
             default -> { }
         }
         if (pausePress.isBusy()) return false;
+        int before = pauseSelected;
         for (int i = 0; i < pauseButtons.length; i++) {
             if (pauseButtons[i].contains(mouseHud)) pauseSelected = i;
         }
@@ -1245,53 +1300,54 @@ public class GameScreen extends ScreenAdapter {
         if (Gdx.input.isKeyJustPressed(Input.Keys.DOWN)) {
             pauseSelected = (pauseSelected + 1) % pauseButtons.length;
         }
+        if (pauseSelected != before) game.audio.uiMove();
         boolean activate = Gdx.input.isKeyJustPressed(Input.Keys.ENTER)
             || Gdx.input.isKeyJustPressed(Input.Keys.SPACE)
             || (pauseButtons[pauseSelected].contains(mouseHud)
                 && Gdx.input.isButtonJustPressed(Input.Buttons.LEFT));
-        if (activate) pausePress.press(pauseSelected, game.settings);
+        if (activate) {
+            pausePress.press(pauseSelected, game.settings);
+            game.audio.uiConfirm();
+        }
         return false;
     }
+
+    /** Fatos do códex, sem frase de efeito: nome e o que a forma tem. */
+    private static final String[][] CODEX = {
+        { "LOSANGO", "4 lados iguais; as diagonais se cruzam a 90°" },
+        { "TRIÂNGULO", "3 lados e 3 vértices; os ângulos somam 180°" },
+        { "QUADRADO", "4 lados iguais e 4 ângulos retos" },
+        { "HEXÁGONO", "6 lados; os ângulos internos somam 720°" },
+        { "NÚCLEO", "muda de forma a cada fase; cada uma tem sua simetria" },
+    };
 
     private void renderCodex() {
         hudViewport.apply();
         game.batch.setProjectionMatrix(hudCamera.combined);
         game.batch.begin();
-        game.batch.setColor(0.004f, 0.004f, 0.025f, 0.90f);
+        game.batch.setColor(OVERLAY.r, OVERLAY.g, OVERLAY.b, 0.80f);
         game.batch.draw(game.assets.pixel, 0f, 0f, Constants.VIEW_WIDTH, Constants.VIEW_HEIGHT);
         game.batch.setColor(Color.WHITE);
+        game.ui.shade(1180f, 0.55f);
 
-        game.ui.panel(310f, 120f, 1300f, 840f, UiRenderer.CYAN, 1f);
-        game.ui.textCentered("CÓDEX DAS FORMAS", 960f, 885f, 2.4f, Color.WHITE);
-        game.ui.textCentered("Descobertas registradas durante esta expedição", 960f, 833f,
-            0.88f, UiRenderer.CYAN);
-
-        float y = 750f;
-        for (int sectionIndex = 1; sectionIndex <= 5; sectionIndex++) {
+        game.ui.text("CÓDEX", MENU_LEFT, 880f, UiRenderer.TITLE, UiRenderer.TEXT_BRIGHT, false);
+        float top = 760f;
+        for (int i = 0; i < CODEX.length; i++) {
+            int sectionIndex = i + 1;
             boolean unlocked = sectionSpawned[sectionIndex] || sectionCleared[sectionIndex];
-            String title;
-            String fact;
-            switch (sectionIndex) {
-                case 1 -> { title = "LOSANGO"; fact = "4 vértices opostos - simetria em dois eixos"; }
-                case 2 -> { title = "TRIÂNGULO"; fact = "3 lados - 3 vértices - estrutura mínima rígida"; }
-                case 3 -> { title = "QUADRADO"; fact = "4 lados iguais - 4 ângulos retos"; }
-                case 4 -> { title = "HEXÁGONO"; fact = "6 lados - 6 vértices - padrão de encaixe"; }
-                default -> { title = "NÚCLEO GEOMÉTRICO"; fact = "rotação, reflexão e simetria combinadas"; }
-            }
-            game.batch.setColor(unlocked ? 0.055f : 0.025f, 0.04f, unlocked ? 0.11f : 0.055f, 0.95f);
-            game.batch.draw(game.assets.pixel, 430f, y - 54f, 1060f, 72f);
-            game.batch.setColor(Color.WHITE);
-            game.ui.text(unlocked ? title : "???", 470f, y - 5f, UiRenderer.TEXT,
-                unlocked ? UiRenderer.MAGENTA : CODEX_LOCKED_TITLE, false);
-            game.ui.text(unlocked ? fact : "Encontre esta forma para registrar.", 470f, y - 41f,
-                UiRenderer.TEXT, unlocked ? Color.WHITE : CODEX_LOCKED_TEXT, false);
-            y -= 105f;
+            game.ui.text(unlocked ? CODEX[i][0] : "???", MENU_LEFT, top, UiRenderer.TEXT,
+                unlocked ? UiRenderer.TEAL : UiRenderer.TEXT_DIM, false);
+            game.ui.text(unlocked ? CODEX[i][1] : "ainda não vista", MENU_LEFT, top - 44f, UiRenderer.TEXT,
+                unlocked ? UiRenderer.TEXT_BRIGHT : UiRenderer.TEXT_DIM, false);
+            top -= 120f;
         }
-        // Só as teclas e uma palavra.
-        float kx = game.ui.keyCap("ESC", 17, 1040f, 140f, Gdx.input.isKeyPressed(Input.Keys.ESCAPE)) - 12f;
-        kx = game.ui.keyCap("TAB", 17, kx, 140f, Gdx.input.isKeyPressed(Input.Keys.TAB)) - 12f;
-        game.ui.keyCap("C", 11, kx, 140f, Gdx.input.isKeyPressed(Input.Keys.C));
-        game.ui.text("VOLTAR", 1064f, 180f, UiRenderer.TEXT, UiRenderer.SOFT_TEXT, false);
+        // Só as teclas e uma palavra (da direita para a esquerda: a largura
+        // de cada tecla depende do rótulo).
+        float keysRight = MENU_LEFT + 300f;
+        float kx = game.ui.keyCap("ESC", 17, keysRight, 72f, Gdx.input.isKeyPressed(Input.Keys.ESCAPE)) - 12f;
+        kx = game.ui.keyCap("TAB", 17, kx, 72f, Gdx.input.isKeyPressed(Input.Keys.TAB)) - 12f;
+        game.ui.keyCap("C", 11, kx, 72f, Gdx.input.isKeyPressed(Input.Keys.C));
+        game.ui.text("VOLTAR", keysRight + 24f, 112f, UiRenderer.TEXT, UiRenderer.TEXT_DIM, false);
         game.batch.end();
     }
 
@@ -1300,21 +1356,21 @@ public class GameScreen extends ScreenAdapter {
         game.batch.setProjectionMatrix(hudCamera.combined);
         game.batch.begin();
 
-        game.batch.setColor(0.01f, 0.008f, 0.04f, 0.86f);
+        game.batch.setColor(OVERLAY.r, OVERLAY.g, OVERLAY.b, 0.55f);
         game.batch.draw(game.assets.pixel, 0, 0, Constants.VIEW_WIDTH, Constants.VIEW_HEIGHT);
         game.batch.setColor(Color.WHITE);
+        game.ui.shade(704f, 0.70f);
 
-        game.ui.panel(610f, 170f, 700f, 740f, UiRenderer.MAGENTA, 1f);
-        game.ui.textCentered("PAUSADO", 960f, 860f, 2.8f, Color.WHITE);
-        game.ui.textCentered(level.getSection(currentSection).title + "  -  " + objectiveText(),
-            960f, 735f, 0.82f, UiRenderer.CYAN);
-        float hw = HeartMeter.rowWidth(game.assets, Constants.START_LIVES);
-        HeartMeter.drawStatic(game.batch, game.assets, 960f - hw / 2f, 620f, player.getLives(), Constants.START_LIVES);
-        game.ui.button(pauseButtons[0], "CONTINUAR", pauseSelected == 0, true, UiRenderer.MAGENTA, pausePress.isPressed(0));
-        game.ui.button(pauseButtons[1], "REINICIAR", pauseSelected == 1, true, UiRenderer.CYAN, pausePress.isPressed(1));
-        game.ui.button(pauseButtons[2], "OPÇÕES", pauseSelected == 2, true, UiRenderer.CYAN, pausePress.isPressed(2));
-        game.ui.button(pauseButtons[3], "SAIR PARA O MENU", pauseSelected == 3, true, UiRenderer.CYAN, pausePress.isPressed(3));
-
+        game.ui.text("PAUSA", MENU_LEFT, 880f, UiRenderer.TITLE_BIG, UiRenderer.TEXT_BRIGHT, false);
+        game.ui.text(level.getSection(currentSection).title, MENU_LEFT, 770f, UiRenderer.TEXT, UiRenderer.TEXT_DIM, false);
+        HeartMeter.drawStatic(game.batch, game.assets, MENU_LEFT, 680f, player.getLives(), Constants.START_LIVES);
+        String[] labels = { "CONTINUAR", "REINICIAR", "OPÇÕES", "SAIR PARA O MENU" };
+        float top = 560f;
+        for (int i = 0; i < labels.length; i++) {
+            game.ui.menuItem(pauseButtons[i], labels[i], MENU_LEFT, top, i == 0 ? UiRenderer.TITLE : UiRenderer.TEXT,
+                pauseSelected == i, pausePress.isPressed(i), UiRenderer.LILAC);
+            top -= i == 0 ? 120f : 76f;
+        }
         game.batch.end();
     }
 

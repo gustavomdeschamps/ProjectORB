@@ -117,7 +117,7 @@ public final class QuizOverlay {
 
         if (feedback) {
             boolean ok = session.wasLastCorrect();
-            String head = ok ? "CERTO!" : "QUASE! A CERTA É A " + (right + 1) + ".";
+            String head = ok ? "CERTO" : "ERA A " + (right + 1);
             game.ui.text(head, 260f, 286f, UiRenderer.TEXT, ok ? RIGHT : WRONG, false);
             game.ui.text(game.ui.wrap(q.explanation, 1400f, UiRenderer.TEXT), 260f, 244f, UiRenderer.TEXT, TEXT, false);
             String next = "ENTER / CLIQUE   CONTINUAR";

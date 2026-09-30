@@ -19,9 +19,11 @@ public final class DialogueBox {
     private static final float X = 240f, Y = 676f, W = 1440f, H = 232f;
     private static final float TEXT_X = X + 196f;
     private static final float TEXT_W = W - 196f - 64f;
-    private static final Color NAME = new Color(0.96f, 0.18f, 0.82f, 1f);
+    /** Cor do nome por personagem (Pi: azul-petróleo claro; Octógono: azul-royal claro). */
+    private static final Color NAME_PI = new Color(0.55f, 0.86f, 0.88f, 1f);
+    private static final Color NAME_OCTO = new Color(0.60f, 0.70f, 1f, 1f);
+    private static final Color NAME_OTHER = new Color(0.82f, 0.70f, 1f, 1f);
     private static final Color TEXT = new Color(0.95f, 0.94f, 1f, 1f);
-    private static final Color HINT = new Color(0.32f, 0.85f, 0.92f, 1f);
 
     private final ProjectOrbGame game;
     private final StringBuilder wrapped = new StringBuilder();
@@ -52,7 +54,9 @@ public final class DialogueBox {
             float pw = portrait.getRegionWidth() * PX, ph = portrait.getRegionHeight() * PX;
             batch.draw(portrait, X + 36f, Y + (H - ph) / 2f, pw, ph);
         }
-        game.ui.text(runner.getScript().speaker, TEXT_X, Y + H - 28f, UiRenderer.TEXT, NAME, false);
+        String speaker = runner.getScript().speaker;
+        Color name = "PI".equals(speaker) ? NAME_PI : speaker != null && speaker.startsWith("OCT") ? NAME_OCTO : NAME_OTHER;
+        game.ui.text(speaker, TEXT_X, Y + H - 28f, UiRenderer.TEXT, name, false);
 
         String full = runner.line().text;
         String body = wrap(full);
@@ -66,8 +70,28 @@ public final class DialogueBox {
             float aw = arrow.getWidth() * PX, ah = arrow.getHeight() * PX;
             batch.draw(arrow, X + W - 64f - aw, Y + 28f + ah, aw, -ah);
         } else if (runner.isInteractive() && runner.isLineComplete()) {
-            game.ui.text("FAÇA!", X + W - 64f - game.ui.textWidth("FAÇA!", UiRenderer.TEXT), Y + 56f,
-                UiRenderer.TEXT, HINT, false);
+            // No passo interativo: a tecla (desenhada) que o passo pede, no
+            // canto, piscando devagar. Sem palavra de ordem.
+            drawKeyHint(runner.line().waitFor, blink);
+        }
+    }
+
+    private void drawKeyHint(String waitFor, boolean on) {
+        float right = X + W - 48f, y = Y + 24f;
+        boolean lit = !on;
+        switch (waitFor == null ? "" : waitFor) {
+            case "move" -> {
+                float l = game.ui.keyCap("D", 11, right, y, lit) - 12f;
+                game.ui.keyCap("A", 11, l, y, lit);
+            }
+            case "jump", "doubleJump" -> game.ui.keyCap("ESPAÇO", 34, right, y, lit);
+            case "dash" -> game.ui.keyCap("SHIFT", 24, right, y, lit);
+            case "hitTarget", "shoot" -> {
+                Texture m = lit ? game.assets.mouseLit : game.assets.mouse;
+                float mw = m.getWidth() * PX, mh = m.getHeight() * PX;
+                game.batch.draw(m, right - mw, y - 8f, mw, mh);
+            }
+            default -> { }
         }
     }
 

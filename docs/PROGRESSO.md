@@ -9,7 +9,7 @@ winget (Gyan.FFmpeg 9.0.2).
 |---|---|---|
 | 1 — fundo: parte de baixo da paisagem | feita | `docs/qa/rodada3/etapa1/` |
 | 2 — limpeza de restos (barra antiga, escada longe das plataformas) | feita | `docs/qa/rodada3/etapa2/` |
-| 3 — "cara de IA": auditoria e troca | a fazer | `docs/qa/rodada3/anti_ia/` |
+| 3 — "cara de IA": auditoria e troca | feita | `docs/qa/rodada3/anti_ia/` |
 | 4 — abertura nova + key art + vídeo | a fazer | `docs/qa/rodada3/etapa4/` |
 | 5 — Pi decalcado da referência | a fazer | `docs/qa/rodada3/etapa5/` |
 | 6 — chefe no estilo dos inimigos | a fazer | `docs/qa/rodada3/etapa6/` |
@@ -54,6 +54,20 @@ winget (Gyan.FFmpeg 9.0.2).
 - Provas: `etapa2/escadas/escada{0-4}_{fechada,aberta}[_medidas].png`,
   `todas_as_escadas.png`, `escadas.txt`, `oldgate_*.txt`, `smoke/`.
 
+## Etapa 3 — feito
+- Relatório item a item: `docs/qa/rodada3/anti_ia/relatorio.md` (30 itens).
+- Arte: `tools/ui_rodada3.py` (logo à mão, alvo âmbar sem anel, estilhaço, erro,
+  borda pontilhada da faixa dos menus), `tools/mundo_rodada3.py` (lajes de pedra
+  em 5 miolos + pontas, chão em 5 variantes). Sons novos em `build_orb_audio.py`.
+- Código: `UiRenderer.shade/menuItem`, `FloatingText`, `Callout`; menu, opções,
+  como jogar, pausa, códex, vitória e derrota refeitos no mesmo estilo; textos
+  flutuantes trocados por feedback (estilhaço, som, número subindo, contador do HUD).
+- Falas do Pi reescritas; "FAÇA!" virou a tecla desenhada.
+- Captura: `ProjectOrbGame` usa mistura de alfa separada (alfa do destino fica 1);
+  antes as capturas em FrameBuffer saíam com alfa < 255 onde havia faixa escura.
+- Provas: `anti_ia/antes/`, `anti_ia/depois/`, `anti_ia/feedback/` (FeedbackCapture:
+  acerto, erro, cartão de seção, chamada), `anti_ia/arte/`.
+
 ## Decisões que tomei sozinho
 - E1: a janela em "O" da torre (um anel de luz) virou uma fresta de cristal em
   losango: a regra "sem círculo/anel" vale para tudo e era o único outro anel
@@ -69,5 +83,14 @@ winget (Gyan.FFmpeg 9.0.2).
   ou largura. A da câmara ficou simétrica em torno do centro (2700).
 - E2: "largura do ORB" = caixa de colisão (58 px) e "altura do ORB" = 78 px.
 
+- E3: o logo foi feito já na etapa 3 (o menu precisava dele); a etapa 4 o reaproveita.
+- E3: a única frase no meio da tela na fase é "NÚCLEO PARTIDO" (chefe vencido);
+  as etapas 7/8 podem usar a mesma chamada para o quiz aprovado e o portal aberto.
+- E3: a caixa de diálogo continua sendo uma caixa (área de leitura), sem neon.
+- E3: o número subindo pisca antes de sumir (em vez de esmaecer) e sobe em passos de
+  1 pixel de arte; em movimento reduzido fica parado.
+- E3: o alvo âmbar (losango) é a única coisa âmbar do jogo; a mira sobre o alvo e o
+  contador de alvos, que eram amarelos, viraram lilás/branco.
+
 ## Onde parei (para retomar)
-- Etapas 1 e 2 commitadas. Próxima: Etapa 3.
+- Etapas 1, 2 e 3 commitadas. Próxima: Etapa 4 (abertura nova, key art, vídeo).

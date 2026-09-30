@@ -20,12 +20,12 @@ public class LevelDemo {
     }
 
     private void buildSections() {
-        sections.add(new Section(0, "CORREDOR", "Movimento - Salto - Dash - Mira", 0, 1800, 180));
-        sections.add(new Section(1, "CÂMARA", "Losango - Vértices", 1800, 3600, 1940));
-        sections.add(new Section(2, "PONTE", "Triângulos - Vértices", 3600, 5700, 3740));
-        sections.add(new Section(3, "SALA", "Quadrado - Lados", 5700, 7500, 5840));
-        sections.add(new Section(4, "PASSAGEM", "Hexágono - Ângulos", 7500, 9300, 7640));
-        sections.add(new Section(5, "ARENA", "Núcleo Geométrico - Simetria e rotação", 9300, 12000, 9480));
+        sections.add(new Section(0, "CORREDOR", 0, 1800, 180));
+        sections.add(new Section(1, "CÂMARA", 1800, 3600, 1940));
+        sections.add(new Section(2, "PONTE", 3600, 5700, 3740));
+        sections.add(new Section(3, "SALA", 5700, 7500, 5840));
+        sections.add(new Section(4, "PASSAGEM", 7500, 9300, 7640));
+        sections.add(new Section(5, "ARENA", 9300, 12000, 9480));
     }
 
     private void buildGeometry() {

@@ -208,6 +208,59 @@ public final class UiRenderer {
         text(text, b.x + 56f, b.y + b.height / 2f + 12f, TEXT, c, false);
     }
 
+    // ------------------------------------------------------------------
+    // Rodada 3: menus sem caixa, alinhados à esquerda, uma cor de destaque
+    // por tela. O texto fica sobre a arte com uma faixa escura atrás (borda em
+    // pontilhado, sem degradê).
+    // ------------------------------------------------------------------
+    public static final Color TEXT_BRIGHT = new Color(0.96f, 0.94f, 1f, 1f);
+    public static final Color TEXT_DIM = new Color(0.62f, 0.58f, 0.82f, 1f);
+    public static final Color LILAC = new Color(0.78f, 0.64f, 1f, 1f);
+    public static final Color MINT = new Color(0.47f, 0.92f, 0.76f, 1f);
+    public static final Color ROSE = new Color(1f, 0.47f, 0.62f, 1f);
+    public static final Color TEAL = new Color(0.45f, 0.84f, 0.90f, 1f);
+    private static final Color SHADE = new Color(0.02f, 0.014f, 0.06f, 1f);
+
+    /** Faixa escura da esquerda até 'right' (tela inteira na altura), borda pontilhada. */
+    public void shade(float right, float alpha) {
+        batch.setColor(SHADE.r, SHADE.g, SHADE.b, alpha);
+        batch.draw(assets.pixel, 0f, 0f, right, Constants.VIEW_HEIGHT);
+        float w = assets.shadeEdge.getWidth() * Constants.PIXEL_SCALE;
+        float h = assets.shadeEdge.getHeight() * Constants.PIXEL_SCALE;
+        for (float y = 0f; y < Constants.VIEW_HEIGHT; y += h) batch.draw(assets.shadeEdge, right, y, w, h);
+        batch.setColor(Color.WHITE);
+    }
+
+    /** Altura das maiúsculas na escala dada (o y de text() é o topo das letras). */
+    public float capHeight(int pixelScale) {
+        BitmapFont face = pixelScale > TEXT ? titleFont : font;
+        face.getData().setScale(pixelScale);
+        return face.getCapHeight();
+    }
+
+    /**
+     * Item de menu só com texto: sem caixa e sem ícone. Normal: texto apagado.
+     * Selecionado: texto claro, 2 pixels de arte para a direita e um traço da
+     * cor de destaque embaixo. Pressionado: afunda 1 pixel e o texto fica na
+     * cor de destaque. 'hit' recebe a área clicável.
+     */
+    public void menuItem(Rectangle hit, String label, float x, float top, int scale,
+                         boolean selected, boolean pressed, Color accent) {
+        int px = Constants.PIXEL_SCALE;
+        float shift = (selected || pressed) ? 2 * px : 0f;
+        float drop = pressed ? px : 0f;
+        Color c = pressed ? accent : selected ? TEXT_BRIGHT : TEXT_DIM;
+        float w = text(label, x + shift, top - drop, scale, c, false);
+        float cap = capHeight(scale);
+        if (selected || pressed) {
+            batch.setColor(accent);
+            float thick = scale > TEXT ? 2 * px : px;
+            batch.draw(assets.pixel, x + shift, top - drop - cap - 3 * px - thick, w, thick);
+            batch.setColor(Color.WHITE);
+        }
+        if (hit != null) hit.set(x - 4 * px, top - cap - 6 * px, w + 10 * px, cap + 9 * px);
+    }
+
     /** Largura do texto na escala dada (para alinhar à direita). */
     public float textWidth(String text, int pixelScale) {
         BitmapFont face = pixelScale > TEXT ? titleFont : font;
