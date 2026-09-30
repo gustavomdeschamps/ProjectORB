@@ -93,8 +93,16 @@ public class Assets {
     public final Texture stairChip;
     public final Texture portal;
 
-    // FUNDO: camadas de parallax (de trás para frente) e a composição dos menus
+    // FUNDO: camadas de parallax 00-06 (de trás para frente), o lago (água,
+    // reflexos, margem), o chão do fundo, a névoa e a composição dos menus.
+    // Desenhado por Backdrop; gerado por tools/fundo_rodada3.py.
     public final Texture[] backgroundLayers;
+    public final Texture lakeWater;
+    public final Texture reflectionMountains;
+    public final Texture reflectionStructures;
+    public final Texture lakeBank;
+    public final Texture groundLayer;
+    public final Texture mistLayer;
     public final Texture menuBackground;
 
     // UI
@@ -206,9 +214,13 @@ public class Assets {
             load("background/04_nuvem4.png"),
             load("background/05_montanhas.png"),
             load("background/06_estruturas.png"),
-            load("background/07_lago.png"),
-            load("background/08_chao.png"),
         };
+        lakeWater = load("background/07_lago.png");
+        reflectionMountains = load("background/05_reflexo.png");
+        reflectionStructures = load("background/06_reflexo.png");
+        lakeBank = load("background/07_margem.png");
+        groundLayer = load("background/08_chao.png");
+        mistLayer = load("background/09_nevoa.png");
         menuBackground = load("background/menu.png");
 
         heartFull = animation(0.25f, "ui/heart/full_", Animation.PlayMode.LOOP);

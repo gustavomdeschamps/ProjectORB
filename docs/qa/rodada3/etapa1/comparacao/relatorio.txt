@@ -1,0 +1,50 @@
+menu.png: 26.76% dos pixels mudaram
+  linhas alteradas: 300..1079 (de 1080)
+  faixa y    0- 134:   0.00%
+  faixa y  135- 269:   0.00%
+  faixa y  270- 404:  12.29%
+  faixa y  405- 539:  29.37%
+  faixa y  540- 674:  29.17%
+  faixa y  675- 809:  40.82%
+  faixa y  810- 944:  54.97%
+  faixa y  945-1079:  47.47%
+x01000.png: 25.65% dos pixels mudaram
+  linhas alteradas: 300..953 (de 1080)
+  faixa y    0- 134:   0.00%
+  faixa y  135- 269:   0.00%
+  faixa y  270- 404:  12.84%
+  faixa y  405- 539:  33.27%
+  faixa y  540- 674:  32.92%
+  faixa y  675- 809:  43.63%
+  faixa y  810- 944:  77.66%
+  faixa y  945-1079:   4.89%
+x04000.png: 24.02% dos pixels mudaram
+  linhas alteradas: 300..953 (de 1080)
+  faixa y    0- 134:   0.00%
+  faixa y  135- 269:   0.00%
+  faixa y  270- 404:   9.13%
+  faixa y  405- 539:  26.55%
+  faixa y  540- 674:  27.94%
+  faixa y  675- 809:  43.34%
+  faixa y  810- 944:  80.74%
+  faixa y  945-1079:   4.47%
+x07000.png: 15.60% dos pixels mudaram
+  linhas alteradas: 380..953 (de 1080)
+  faixa y    0- 134:   0.00%
+  faixa y  135- 269:   0.00%
+  faixa y  270- 404:   0.17%
+  faixa y  405- 539:   5.41%
+  faixa y  540- 674:   5.21%
+  faixa y  675- 809:  29.40%
+  faixa y  810- 944:  79.45%
+  faixa y  945-1079:   5.12%
+x11000.png: 25.62% dos pixels mudaram
+  linhas alteradas: 300..953 (de 1080)
+  faixa y    0- 134:   0.00%
+  faixa y  135- 269:   0.00%
+  faixa y  270- 404:  11.33%
+  faixa y  405- 539:  25.42%
+  faixa y  540- 674:  23.54%
+  faixa y  675- 809:  49.22%
+  faixa y  810- 944:  90.26%
+  faixa y  945-1079:   5.21%

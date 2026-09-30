@@ -1783,5 +1783,25 @@
   "world/stair/chip.png",
   "world/stair/crack_cyan.png",
   "world/stair/crack_magenta.png"
- ]
+ ],
+ "background_rodada3": {
+  "axis_row": 226,
+  "water_top_row": 225,
+  "layers": [
+   "07_lago (água)",
+   "05_reflexo",
+   "06_reflexo",
+   "07_margem",
+   "08_chao",
+   "09_nevoa"
+  ],
+  "periods_px": {
+   "07_lago": 380,
+   "07_margem": 380,
+   "05_reflexo": 405,
+   "06_reflexo": 760,
+   "09_nevoa": 443
+  },
+  "gerador": "tools/fundo_rodada3.py (depois de tools/build_orb_assets.py)"
+ }
 }

@@ -31,6 +31,7 @@ import com.delmartec.projectorb.level.Platform;
 import com.delmartec.projectorb.level.Section;
 import com.delmartec.projectorb.level.StairGate;
 import com.delmartec.projectorb.utils.Assets;
+import com.delmartec.projectorb.utils.Backdrop;
 import com.delmartec.projectorb.utils.ButtonPress;
 import com.delmartec.projectorb.utils.Constants;
 import com.delmartec.projectorb.utils.HeartMeter;
@@ -97,15 +98,8 @@ public class GameScreen extends ScreenAdapter {
     /** Sólidos do frame: plataformas do nível + massas/escadas (reaproveitada). */
     private final List<Platform> collision = new ArrayList<>();
 
-    // Fundo em camadas de parallax, repetidas em wrap simples (sem espelhar:
-    // o espelhamento punha a mesma estrutura refletida ao lado dela mesma).
-    // Cada camada tem período próprio (a largura da textura, escolhida pelo
-    // gerador para não ser múltipla de nenhuma outra), então duas camadas
-    // nunca alinham a mesma estrutura.
-    /** Fator de parallax por camada: céu quase parado ... chão do fundo. */
-    private static final float[] PARALLAX = { 0.02f, 0.05f, 0.07f, 0.09f, 0.11f, 0.16f, 0.26f, 0.34f, 0.42f };
-    /** Deriva própria das nuvens (px de mundo/s); desligada em movimento reduzido. */
-    private static final float[] DRIFT = { 0f, 3f, 5f, 7f, 9f, 0f, 0f, 0f, 0f };
+    /** Paisagem em camadas de parallax (céu ... lago com reflexo ... névoa). */
+    private final Backdrop backdrop;
     /** Ponta direita das plataformas = ponta esquerda espelhada. */
     private final TextureRegion platformCapRight;
     private final TextureRegion platformAltCapRight;
@@ -179,6 +173,7 @@ public class GameScreen extends ScreenAdapter {
 
     public GameScreen(ProjectOrbGame game) {
         this.game = game;
+        backdrop = new Backdrop(game.assets);
         platformCapRight = new TextureRegion(game.assets.platform.cap);
         platformCapRight.flip(true, false);
         platformAltCapRight = new TextureRegion(game.assets.platformAlt.cap);
@@ -734,24 +729,11 @@ public class GameScreen extends ScreenAdapter {
         game.batch.setProjectionMatrix(hudCamera.combined);
         game.batch.begin();
 
-        // Parallax em 9 camadas na escala única (480x270 -> 1920x1080). O
-        // deslocamento é arredondado para múltiplos de PIXEL_SCALE para os
-        // pixels da arte ficarem na grade. Levemente rebaixado em brilho para o
-        // cenário nunca competir com personagem, pontos fracos e projéteis.
-        int step = Constants.PIXEL_SCALE;
-        boolean drift = !game.settings.isReducedMotion();
-        game.batch.setColor(0.74f, 0.76f, 0.88f, 1f);
-        for (int layer = 0; layer < game.assets.backgroundLayers.length; layer++) {
-            Texture texture = game.assets.backgroundLayers[layer];
-            float period = texture.getWidth() * step;
-            float height = texture.getHeight() * step;
-            float offset = worldCamera.position.x * PARALLAX[layer] + (drift ? gameTime * DRIFT[layer] : 0f);
-            float scroll = Math.round(offset / step) * step;
-            float first = (float)Math.floor(scroll / period) * period - scroll;
-            for (float x = first; x < Constants.VIEW_WIDTH; x += period) {
-                game.batch.draw(texture, x, 0f, period, height);
-            }
-        }
+        // Paisagem na escala única (480x270 -> 1920x1080), levemente rebaixada
+        // em brilho para o cenário nunca competir com personagem, pontos fracos
+        // e projéteis.
+        backdrop.draw(game.batch, worldCamera.position.x, gameTime, game.settings.isReducedMotion(),
+            Backdrop.GAME_TINT);
 
         // Escurece a faixa de gameplay, onde tudo que importa acontece.
         // Em degradê: a faixa única de alfa fixo deixava uma linha horizontal

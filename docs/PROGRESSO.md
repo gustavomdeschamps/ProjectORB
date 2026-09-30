@@ -1,38 +1,47 @@
-# Progresso da rodada de correções
+# Progresso — Rodada 3
 
-Retomar daqui se a sessão cair. Um commit por etapa. Provas em `docs/qa/<etapa>/`.
+Retomar daqui se a sessão cair. Um commit por etapa (git criado nesta rodada:
+commit base `ad2aedd` "base rodada 3"). Provas em `docs/qa/rodada3/<etapa>/`.
+Testes: `bash tools/run_checks.sh` (+ VisualSmokeLauncher). ffmpeg instalado via
+winget (Gyan.FFmpeg 9.0.2).
 
-| Etapa | Estado | Commit | Provas |
-|---|---|---|---|
-| A — fundo original + 07_lago | feita e aprovada | `a90752d`, `716eb88` | `docs/qa/fundo/` |
-| A+ — 08_chao (emenda), menu original, barras cor do céu, mouse fixo no teste | feita | (ver git log) | `docs/qa/fundo/chao/`, `docs/qa/fundo/menu/`, `docs/qa/fundo/barras/` |
-| B — escadinha no lugar da barra | feita | (ver git log) | `docs/qa/escada/` |
-| C — Quadrado, Losango, Hexágono hostis | EM ANDAMENTO (não commitada) | — | `docs/qa/fase2/inimigos_4_folha_fundo_*.png`, `docs/qa/fase2/*_jogo/` |
-| D — Pi decalcado da referência | arte pronta em tools/ (não integrada) | — | `docs/qa/pi/sobreposicao.png` |
-| E — chefe (pentágono, escudo, estrela) + Octógono | arte em rascunho em tools/ (não integrada) | — | — |
-| F — Octógono no fim da fase + portal animado | a fazer | | `docs/qa/portal/`, `docs/qa/quiz/` |
-| G — verificação final | a fazer | | `docs/qa/final/` |
+| Etapa | Estado | Provas |
+|---|---|---|
+| 1 — fundo: parte de baixo da paisagem | feita | `docs/qa/rodada3/etapa1/` |
+| 2 — limpeza de restos (barra antiga, escada longe das plataformas) | a fazer | `docs/qa/rodada3/etapa2/` |
+| 3 — "cara de IA": auditoria e troca | a fazer | `docs/qa/rodada3/anti_ia/` |
+| 4 — abertura nova + key art + vídeo | a fazer | `docs/qa/rodada3/etapa4/` |
+| 5 — Pi decalcado da referência | a fazer | `docs/qa/rodada3/etapa5/` |
+| 6 — chefe no estilo dos inimigos | a fazer | `docs/qa/rodada3/etapa6/` |
+| 7 — Octógono + quiz no fim da fase | a fazer | `docs/qa/rodada3/etapa7/` |
+| 8 — portal do fim | a fazer | `docs/qa/rodada3/etapa8/` |
+| 9 — qualidade geral de sprites/animações/texturas | a fazer | `docs/qa/rodada3/qualidade/` |
+| 10 — verificação final + vídeo de gameplay | a fazer | `docs/qa/rodada3/final/` |
+
+## Etapa 1 — feito
+- `tools/fundo_rodada3.py` (roda depois de `tools/build_orb_assets.py`); biblioteca `tools/pxlib.py`.
+- Camadas de cima (céu, nuvens, montanhas) intactas. 06_estruturas: a estrutura
+  circular virou ruína de arco de cristal quebrado na mesma caixa (x 309-479,
+  y 75-216), mesmas cores; torre e ruína ganharam base (degraus, pé, escombros).
+- Lago novo: `07_lago` (água em faixas + ondulações quebradas), `07_margem`
+  (margem irregular de pedra com linha molhada), `05_reflexo`/`06_reflexo`
+  (reflexo espelhado em 2 tons, linhas quebradas, ondulando por linha em código),
+  brilhos da água em código, `09_nevoa` (faixas sem degradê), `08_chao` com borda
+  de pedras molhadas. Tudo desenhado por `utils/Backdrop.java`.
+- `menu.png` recomposto (tela de início, opções, vitória, derrota, como jogar).
+- Provas: `antes/` e `depois/` (4 câmeras + menu, captura determinística
+  `BackgroundCompare`), `comparacao/*_heatmap.png` + `relatorio.txt`,
+  `agua_animada.gif`, folhas de contato `folha_*`, `smoke/`.
 
 ## Decisões que tomei sozinho
-- A+: o fundo original do menu (menu.png) também é o fundo de Opções, Vitória, Derrota e "Como jogar" (mesmo arquivo); voltou em todas. Só o fundo mudou nessas telas.
-- A+: 08_chao — a pedra que o TCC deixou cortada na coluna 0 ganhou borda esquerda (o degrau da borda direita espelhado); sem isso, a emenda sem pontilhado deixava uma borda reta ou riscos. Tudo dentro das 24 colunas da emenda.
-- A+: tools/orb_background.py (só gerava o menu novo) foi para art-source/fundo_reconstruido_descartado/tools/.
-- B: a escada NÃO cobre o X exato do portão antigo em todos os portões. A massa fechada fica exatamente no X do portão (endX-88..endX), mas a escada aberta começa uma largura de ORB depois da plataforma anterior (senão o ORB bate a cabeça nela ao pular no 1º degrau) e só passa sob plataformas com espaço para o ORB. Posições: escada 0 x=1764..2028, 1 x=3540..3804, 2 x=5604..5868, 3 x=7392..7656, 4 x=9200..9464.
-- B: degrau de 40 px (22% do pulo simples de 180 px) em vez de algo maior: com 48 px o último degrau não passava sob a plataforma seguinte do portão 0.
-- B: o ponto de renascimento (X) de cada seção não mudou; se cair em cima da escada aberta, o ORB renasce em pé nela (antes renascia a y=230).
-- B: durante o rearranjo (1,25 s) a massa continua sólida; a escada só vira chão quando termina. Projéteis: a massa bloqueia como o portão; a escada aberta se comporta como plataforma.
-- B: ganchos de som (AudioManager.stairRumble/stairOpened) sem som ainda (áudio fica para a etapa de som).
-
-## Dúvidas registradas
-(preenchido ao longo da rodada)
+- E1: a janela em "O" da torre (um anel de luz) virou uma fresta de cristal em
+  losango: a regra "sem círculo/anel" vale para tudo e era o único outro anel
+  do fundo. Mudança de ~20x16 px de arte; o resto da torre não mudou.
+- E1: a água começa na linha 225 (antes 189) e a margem cobre a borda de cima
+  dela em todas as colunas; o reflexo é desenhado no parallax da camada
+  refletida (montanhas 0,16; estruturas 0,26) para ficar sempre embaixo do
+  objeto refletido.
+- E1: as camadas antigas foram guardadas em `art-source/descartado_rodada3/fundo/`.
 
 ## Onde parei (para retomar)
-- Etapa C: sprites dos 3 inimigos gerados e integrados (EnemyType atualizado, WeakPointAlignmentCheck PASS nos 4).
-  A bateria completa foi INTERROMPIDA pelo sistema por falta de memória (11 checagens já tinham passado; faltavam as 4 capturas).
-- PENDENTE na C: o Losango virou losango de verdade (meia-largura 26, meia-altura 33) porque o de antes era um
-  quadrado girado 45° e o teste de silhuetas únicas (tools/audit_shapes.py) reprovaria. Já feito: grade
-  tools/sprite_grids/diamond.txt e espinhos (tools/orb_hostiles_more.py). FALTA: rodar o gerador, atualizar
-  EnemyType/GeoEnemy (alvos em elipse) e o WeakPointAlignmentCheck para o losango, rodar a bateria, commitar a C.
-- D: tools/orb_pi.py + tools/sprite_grids/pi.txt + tools/audit_pi.py (IoU 0,975). FALTA integrar (Assets/GameScreen/diálogo).
-- E: tools/orb_octo.py e tools/orb_boss.py (+ grades boss_*.txt, octagon.txt) em rascunho. FALTA integração Java.
-- F e G: não começadas.
+- Etapa 1 commitada. Próxima: Etapa 2.
