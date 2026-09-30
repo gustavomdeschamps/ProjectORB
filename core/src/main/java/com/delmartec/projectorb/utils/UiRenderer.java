@@ -83,10 +83,14 @@ public final class UiRenderer {
             bounds.width - inset * 2f, bounds.height - inset * 2f);
         batch.setColor(Color.WHITE);
         if (selected && enabled && !pressed) {
-            float orb = assets.lifeOrb.getWidth() * Constants.PIXEL_SCALE;
-            float oy = bounds.y + bounds.height / 2f - orb / 2f;
-            batch.draw(assets.lifeOrb, bounds.x + 58f, oy, orb, orb);
-            batch.draw(assets.lifeOrb, bounds.x + bounds.width - 58f - orb, oy, orb, orb);
+            // Botão selecionado: um coração pequeno de cada lado, colado ao
+            // texto (em botão estreito com texto longo, nas bordas).
+            float w = assets.heartMini.getWidth() * Constants.PIXEL_SCALE;
+            float oy = bounds.y + bounds.height / 2f - assets.heartMini.getHeight() * Constants.PIXEL_SCALE / 2f;
+            float cx = bounds.x + bounds.width / 2f;
+            float off = Math.min(textWidth(text, TEXT) / 2f + 24f, bounds.width / 2f - 20f - w);
+            HeartMeter.drawMini(batch, assets, Math.round(cx - off - w), oy);
+            HeartMeter.drawMini(batch, assets, Math.round(cx + off), oy);
         }
         text(text, bounds.x + bounds.width / 2f, bounds.y + bounds.height / 2f + 12f - inset, TEXT,
             enabled ? Color.WHITE : DISABLED_TEXT, true);

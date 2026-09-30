@@ -13,6 +13,7 @@ import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.delmartec.projectorb.ProjectOrbGame;
 import com.delmartec.projectorb.utils.Constants;
+import com.delmartec.projectorb.utils.HeartMeter;
 import com.delmartec.projectorb.utils.UiRenderer;
 
 public final class VictoryScreen extends ScreenAdapter {
@@ -84,17 +85,20 @@ public final class VictoryScreen extends ScreenAdapter {
         game.ui.crystalCorners(390f, 300f, 1140f, 620f, 70f, 1f);
         game.ui.textCentered("VITÓRIA", 960f, 770f, 3.5f, new Color(0.90f, 0.95f, 1f, 1f));
         game.ui.textCentered("RIFT ESTABILIZADO", 960f, 665f, 1.25f, UiRenderer.SUCCESS);
-        game.ui.textCentered("Você leu as formas durante a ação - sem sair do jogo.",
+        game.ui.textCentered("Você leu as formas no meio da ação.",
             960f, 615f, 0.92f, Color.WHITE);
 
         int min = (int)(time / 60f), sec = (int)(time % 60f);
         float accuracy = correct + wrong == 0 ? 100f : correct * 100f / (correct + wrong);
         game.ui.textCentered(String.format("SCORE %06d   -   CRISTAIS %03d", score, crystals),
             960f, 565f, 1.05f, new Color(0.92f, 0.86f, 1f, 1f));
-        game.ui.textCentered(String.format("TEMPO %02d:%02d   -   VIDAS %d   -   PRECISÃO %.0f%%", min, sec, lives, accuracy),
+        game.ui.textCentered(String.format("TEMPO %02d:%02d   -   PRECISÃO %.0f%%", min, sec, accuracy),
             960f, 510f, 0.90f, new Color(0.76f, 0.84f, 1f, 1f));
-        game.ui.textCentered("Losango  -  Triângulo  -  Quadrado  -  Hexágono  -  Simetria",
-            960f, 415f, 0.80f, UiRenderer.CYAN);
+        // Vidas que sobraram, em corações.
+        float hw = HeartMeter.rowWidth(game.assets, Constants.START_LIVES);
+        HeartMeter.drawStatic(game.batch, game.assets, 960f - hw / 2f, 420f, lives, Constants.START_LIVES);
+        game.ui.textCentered("Vértices - Lados - Ângulos - Simetria",
+            960f, 395f, 0.80f, UiRenderer.CYAN);
 
         game.ui.button(next, "JOGAR NOVAMENTE", selected == 0, true, UiRenderer.SUCCESS);
         game.ui.button(menu, "MENU", selected == 1, true, UiRenderer.CYAN);

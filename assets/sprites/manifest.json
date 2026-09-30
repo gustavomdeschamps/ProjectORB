@@ -639,6 +639,49 @@
    "seam_mean_diff": 32.16
   }
  ],
+ "hearts": {
+  "canvas": [
+   13,
+   12
+  ],
+  "frames": {
+   "full": 4,
+   "break": 4,
+   "gain": 3
+  },
+  "palette": [
+   [
+    58,
+    18,
+    70
+   ],
+   [
+    112,
+    84,
+    150
+   ],
+   [
+    163,
+    32,
+    84
+   ],
+   [
+    230,
+    57,
+    98
+   ],
+   [
+    255,
+    138,
+    170
+   ],
+   [
+    255,
+    244,
+    248
+   ]
+  ]
+ },
  "npc_pi": {
   "canvas": 48,
   "frames": {
@@ -1113,6 +1156,19 @@
   "ui/arrow_right.png": "gerado",
   "ui/crosshair.png": "gerado",
   "ui/guide_arrow.png": "gerado",
+  "ui/heart/break_01.png": "gerado",
+  "ui/heart/break_02.png": "gerado",
+  "ui/heart/break_03.png": "gerado",
+  "ui/heart/break_04.png": "gerado",
+  "ui/heart/full_01.png": "gerado",
+  "ui/heart/full_02.png": "gerado",
+  "ui/heart/full_03.png": "gerado",
+  "ui/heart/full_04.png": "gerado",
+  "ui/heart/gain_01.png": "gerado",
+  "ui/heart/gain_02.png": "gerado",
+  "ui/heart/gain_03.png": "gerado",
+  "ui/heart_empty.png": "gerado",
+  "ui/heart_mini.png": "gerado",
   "ui/hud_boss_hex.png": "gerado",
   "ui/hud_crystal.png": "redesenho pequeno de art-source/projetofinal-29/cristal.png",
   "ui/hud_dash.png": "gerado",
@@ -1121,7 +1177,6 @@
   "ui/hud_orb.png": "recorte de art-source/projetofinal-29/personagem principal/Personagem principal.png",
   "ui/key.png": "gerado",
   "ui/key_lit.png": "gerado",
-  "ui/life_orb.png": "redesenho de art-source/ProjetoFinal_TCC/ui/life_orb.png",
   "ui/mouse.png": "gerado",
   "ui/mouse_lit.png": "gerado",
   "ui/panel.png": "art-source/ProjetoFinal_TCC/ui/hud_panel.png (reduzido 4x sem perda)",
@@ -1556,6 +1611,19 @@
   "ui/arrow_right.png",
   "ui/crosshair.png",
   "ui/guide_arrow.png",
+  "ui/heart/break_01.png",
+  "ui/heart/break_02.png",
+  "ui/heart/break_03.png",
+  "ui/heart/break_04.png",
+  "ui/heart/full_01.png",
+  "ui/heart/full_02.png",
+  "ui/heart/full_03.png",
+  "ui/heart/full_04.png",
+  "ui/heart/gain_01.png",
+  "ui/heart/gain_02.png",
+  "ui/heart/gain_03.png",
+  "ui/heart_empty.png",
+  "ui/heart_mini.png",
   "ui/hud_boss_hex.png",
   "ui/hud_crystal.png",
   "ui/hud_dash.png",
@@ -1564,7 +1632,6 @@
   "ui/hud_orb.png",
   "ui/key.png",
   "ui/key_lit.png",
-  "ui/life_orb.png",
   "ui/mouse.png",
   "ui/mouse_lit.png",
   "ui/panel.png",

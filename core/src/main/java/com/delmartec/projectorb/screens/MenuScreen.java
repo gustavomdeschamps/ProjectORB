@@ -92,7 +92,7 @@ public final class MenuScreen extends ScreenAdapter {
 
         game.ui.panel(560f, 105f, 800f, 845f, UiRenderer.MAGENTA, 1f);
         game.ui.textCentered("ORB", 960f, 845f, 4.5f, new Color(0.92f, 0.94f, 1f, 1f));
-        game.ui.textCentered("FLOATING RUINS", 960f, 685f, 1.5f, UiRenderer.CYAN);
+        game.ui.textCentered("RUÍNAS FLUTUANTES", 960f, 685f, 1.5f, UiRenderer.CYAN);
         game.ui.textCentered("GEOMETRIA EM AÇÃO", 960f, 630f, 1.08f,
             new Color(0.78f, 0.74f, 1f, 1f));
 

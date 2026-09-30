@@ -12,6 +12,7 @@ import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.delmartec.projectorb.ProjectOrbGame;
 import com.delmartec.projectorb.utils.Constants;
+import com.delmartec.projectorb.utils.HeartMeter;
 import com.delmartec.projectorb.utils.UiRenderer;
 
 public final class GameOverScreen extends ScreenAdapter {
@@ -85,7 +86,10 @@ public final class GameOverScreen extends ScreenAdapter {
             960f, 590f, 1.05f, new Color(0.90f, 0.86f, 1f, 1f));
         game.ui.textCentered("ÁREA " + (section + 1) + "/6   -   ACERTOS " + correct + "   -   ERROS " + wrong,
             960f, 535f, 0.90f, new Color(0.78f, 0.82f, 0.98f, 1f));
-        game.ui.textCentered("Leia o padrão, desvie da resposta e ataque os pontos marcados.",
+        // Todas as vidas perdidas: corações só em contorno.
+        float hw = HeartMeter.rowWidth(game.assets, Constants.START_LIVES);
+        HeartMeter.drawStatic(game.batch, game.assets, 960f - hw / 2f, 450f, 0, Constants.START_LIVES);
+        game.ui.textCentered("Leia a forma e acerte os pontos marcados.",
             960f, 430f, 0.84f, UiRenderer.CYAN);
 
         game.ui.button(retry, "REINICIAR", selected == 0, true, UiRenderer.DANGER);

@@ -31,6 +31,7 @@ import com.delmartec.projectorb.level.Platform;
 import com.delmartec.projectorb.level.Section;
 import com.delmartec.projectorb.utils.Assets;
 import com.delmartec.projectorb.utils.Constants;
+import com.delmartec.projectorb.utils.HeartMeter;
 import com.delmartec.projectorb.utils.UiRenderer;
 
 import java.util.ArrayList;
@@ -158,6 +159,7 @@ public class GameScreen extends ScreenAdapter {
         }
     };
     private float resumeGuard = 0f;
+    private final HeartMeter heartMeter;
     /** Diálogo em andamento (Pi, Octógono). Ver startDialogue(). */
     private final DialogueRunner dialogue = new DialogueRunner();
     private DialogueBox dialogueBox;
@@ -187,6 +189,7 @@ public class GameScreen extends ScreenAdapter {
         piScript = DialogueScript.load(Gdx.files.internal("dialogue/pi_tutorial.json"));
         piPortrait = game.assets.npcPortrait("pi");
         pi.play("appear");
+        heartMeter = new HeartMeter(game.assets, game.settings);
         spawnSection(0, false);
         updateGate();
     }
@@ -278,6 +281,7 @@ public class GameScreen extends ScreenAdapter {
 
         updateSectionProgress();
         updateGate();
+        heartMeter.update(delta, player.getLives());
 
         player.update(delta, level.getPlatforms(), gateActive ? gateRect : null, acceptActions);
 
@@ -1042,62 +1046,36 @@ public class GameScreen extends ScreenAdapter {
     private static final Color FEEDBACK = new Color(1f, 0.72f, 0.94f, 1f);
     private final Color fade = new Color();
 
-    /** Pixels de um anel (raio interno..externo, em pixels de arte), do topo no sentido horário. */
-    private static int[][] ring(float inner, float outer) {
-        List<int[]> cells = new ArrayList<>();
-        int r = (int)Math.ceil(outer);
-        for (int y = -r; y <= r; y++) {
-            for (int x = -r; x <= r; x++) {
-                double d = Math.hypot(x + 0.5, y + 0.5);
-                if (d >= inner && d < outer) cells.add(new int[] { x, y });
-            }
-        }
-        cells.sort((a, b) -> Double.compare(clockwise(a), clockwise(b)));
-        return cells.toArray(new int[0][]);
-    }
-
-    private static double clockwise(int[] c) {
-        double a = Math.atan2(c[0] + 0.5, c[1] + 0.5); // 0 no topo, cresce no sentido horário
-        return a < 0 ? a + Math.PI * 2 : a;
-    }
-
-    private static final int[][] HEALTH_RING = ring(12f, 14f);
-    private static final int[][] DASH_RING = ring(6f, 7f);
-
-    /** Desenha o anel com a fração 'filled' acesa (a partir do topo, horário). */
-    private void drawRing(int[][] cells, float cx, float cy, float filled, Color on, Color off) {
-        int lit = Math.round(cells.length * MathUtils.clamp(filled, 0f, 1f));
-        for (int k = 0; k < cells.length; k++) {
-            game.batch.setColor(k < lit ? on : off);
-            game.batch.draw(game.assets.pixel, cx + cells[k][0] * PX, cy + cells[k][1] * PX, PX, PX);
-        }
-        game.batch.setColor(Color.WHITE);
-    }
-
     private void drawIcon(Texture texture, float x, float y) {
         game.batch.draw(texture, x, y, texture.getWidth() * PX, texture.getHeight() * PX);
     }
 
     private void drawPlayerHud() {
-        // Rosto do ORB (recorte do idle) dentro do anel de vida.
-        float cx = 104f, cy = 976f;
-        drawRing(HEALTH_RING, cx, cy, player.getHealth() / (float)Constants.MAX_HEALTH, HUD_ON, HUD_OFF);
+        // Rosto do ORB (recorte do idle), corações das vidas ao lado e, embaixo
+        // deles, a saúde numa barra reta segmentada. Nada de anéis.
         Texture face = game.assets.hudOrb;
-        drawIcon(face, cx - face.getWidth() * PX / 2f, cy - face.getHeight() * PX / 2f);
+        drawIcon(face, 32f, 936f);
+        float hx = 32f + face.getWidth() * PX + 4 * PX;
+        heartMeter.draw(game.batch, hx, 972f, Constants.START_LIVES);
+        drawSegments(hx, 948f, 10, player.getHealth() / (float)Constants.MAX_HEALTH, HUD_ON, HUD_OFF);
 
-        // Vidas: uma life_orb por vida, em fileira.
-        float orb = game.assets.lifeOrb.getWidth() * PX;
-        for (int i = 0; i < player.getLives(); i++) {
-            drawIcon(game.assets.lifeOrb, cx + 76f + i * (orb + 8f), cy - orb / 2f);
-        }
-
-        // Dash: anel que recarrega em volta do ícone, sem texto.
-        float dx = cx + 76f + 3 * (orb + 8f) + 44f;
+        // Dash: setas ">>" e, embaixo, 3 segmentos que recarregam.
+        float dx = hx + HeartMeter.rowWidth(game.assets, Constants.START_LIVES) + 4 * PX;
         float ready = 1f - player.getDashCooldown() / Constants.DASH_COOLDOWN;
-        drawRing(DASH_RING, dx, cy, ready, HUD_DASH_ON, HUD_DASH_OFF);
         Texture dash = game.assets.hudDash;
         if (ready < 1f) game.batch.setColor(1f, 1f, 1f, 0.45f);
-        drawIcon(dash, dx - dash.getWidth() * PX / 2f + PX / 2f, cy - dash.getHeight() * PX / 2f + PX / 2f);
+        drawIcon(dash, dx, 980f);
+        game.batch.setColor(Color.WHITE);
+        drawSegments(dx, 948f, 3, ready, HUD_DASH_ON, HUD_DASH_OFF);
+    }
+
+    /** Barra reta de 'count' segmentos (3x2 pixels de arte, 1 de vão), 'filled' acesa. */
+    private void drawSegments(float x, float y, int count, float filled, Color on, Color off) {
+        int lit = MathUtils.ceil(count * MathUtils.clamp(filled, 0f, 1f) - 0.001f);
+        for (int k = 0; k < count; k++) {
+            game.batch.setColor(k < lit ? on : off);
+            game.batch.draw(game.assets.pixel, x + k * 4 * PX, y, 3 * PX, 2 * PX);
+        }
         game.batch.setColor(Color.WHITE);
     }
 
@@ -1283,6 +1261,8 @@ public class GameScreen extends ScreenAdapter {
         game.ui.textCentered("PAUSADO", 960f, 860f, 2.8f, Color.WHITE);
         game.ui.textCentered(level.getSection(currentSection).title + "  -  " + objectiveText(),
             960f, 735f, 0.82f, UiRenderer.CYAN);
+        float hw = HeartMeter.rowWidth(game.assets, Constants.START_LIVES);
+        HeartMeter.drawStatic(game.batch, game.assets, 960f - hw / 2f, 620f, player.getLives(), Constants.START_LIVES);
         game.ui.button(pauseButtons[0], "CONTINUAR", pauseSelected == 0, true, UiRenderer.MAGENTA);
         game.ui.button(pauseButtons[1], "REINICIAR", pauseSelected == 1, true, UiRenderer.CYAN);
         game.ui.button(pauseButtons[2], "OPÇÕES", pauseSelected == 2, true, UiRenderer.CYAN);

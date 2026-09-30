@@ -91,7 +91,13 @@ public class Assets {
     public final Texture menuBackground;
 
     // UI
-    public final Texture lifeOrb;
+    // Vidas (F1): coração cheio pulsando, quebrando, ganhando, vazio e o mini
+    // dos botões. Ver HeartMeter.
+    public final Animation<TextureRegion> heartFull;
+    public final Animation<TextureRegion> heartBreak;
+    public final Animation<TextureRegion> heartGain;
+    public final Texture heartEmpty;
+    public final Texture heartMini;
     public final Texture panel;
     public final Texture panelCyan;
     public final Texture panelRed;
@@ -189,7 +195,11 @@ public class Assets {
         };
         menuBackground = load("background/menu.png");
 
-        lifeOrb = load("ui/life_orb.png");
+        heartFull = animation(0.25f, "ui/heart/full_", Animation.PlayMode.LOOP);
+        heartBreak = animation(0.09f, "ui/heart/break_", Animation.PlayMode.NORMAL);
+        heartGain = animation(0.08f, "ui/heart/gain_", Animation.PlayMode.NORMAL);
+        heartEmpty = load("ui/heart_empty.png");
+        heartMini = load("ui/heart_mini.png");
         panel = load("ui/panel.png");
         panelCyan = load("ui/panel_cyan.png");
         panelRed = load("ui/panel_red.png");

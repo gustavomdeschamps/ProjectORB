@@ -737,11 +737,7 @@ def build_fx_ui():
         arrow[y, 3 - y:4 + y] = (*CYAN, 255)
     arrow[4:9, 2:5] = (*CYAN, 255)
     save(arrow, "ui/guide_arrow.png")
-    orb = canvas(14)
-    paint(orb, m_ring(14, 14, 7, 7, 6.0, 1.5), (255, 72, 196))
-    paint(orb, m_ring(14, 14, 7, 7, 3.8, 1.5), CYAN)
-    paint(orb, m_disc(14, 14, 7, 7, 1.8), WHITE)
-    save(orb, "ui/life_orb.png", "redesenho de art-source/ProjetoFinal_TCC/ui/life_orb.png")
+    # ui/life_orb.png (anéis concêntricos) saiu na F1: a vida é o coração (build_hearts).
     save(Image.new("RGBA", (1, 1), (255, 255, 255, 255)), "ui/pixel.png")
 
     # Painéis: o hud_panel do TCC é pixel art em blocos de 8 px; amostrado a
@@ -1257,6 +1253,147 @@ def build_hud():
         save(lamp, f"ui/{name}.png")
 
 
+# ================================================================ coração (F1)
+
+# Vida = coração vermelho-rosado com contorno roxo-escuro (casa com o roxo do
+# jogo e é lido na hora). Desenhado à mão como grade de texto; as animações
+# (pulsar, quebrar, ganhar) são derivadas destes desenhos.
+HEART_OUT = (58, 18, 70)
+HEART_RED = (230, 57, 98)        # #E63962
+HEART_DARK = (163, 32, 84)
+HEART_PINK = (255, 138, 170)
+HEART_WHITE = (255, 244, 248)
+HEART_EMPTY = (112, 84, 150)     # só o contorno do coração vazio
+HEART_PALETTE = {HEART_OUT, HEART_RED, HEART_DARK, HEART_PINK, HEART_WHITE, HEART_EMPTY}
+HEART_KEY = {"O": HEART_OUT, "R": HEART_RED, "D": HEART_DARK, "P": HEART_PINK, "W": HEART_WHITE,
+             "E": HEART_EMPTY}
+
+HEART = [            # 11x10: tamanho normal
+    ".OOO...OOO.",
+    "OWPRO.ORRRO",
+    "OPRRRORRRRO",
+    "ORRRRRRRRDO",
+    "ORRRRRRRRDO",
+    ".ORRRRRRDO.",
+    "..ORRRRDO..",
+    "...ORRDO...",
+    "....ODO....",
+    ".....O.....",
+]
+HEART_BIG = [        # 13x12: batida da pulsação / pico do "pop"
+    ".OOOO...OOOO.",
+    "OWWPRO.ORRRRO",
+    "OWPRRRORRRRRO",
+    "OPRRRRRRRRRDO",
+    "ORRRRRRRRRRDO",
+    "ORRRRRRRRRRDO",
+    ".ORRRRRRRRDO.",
+    "..ORRRRRRDO..",
+    "...ORRRRDO...",
+    "....ORRDO....",
+    ".....ODO.....",
+    "......O......",
+]
+HEART_MINI = [       # 7x6: começo do "pop" e marcador dos botões
+    ".OO.OO.",
+    "OWRORRO",
+    "ORRRRDO",
+    ".ORRDO.",
+    "..ODO..",
+    "...O...",
+]
+# Rachadura: coluna da trinca em cada linha do coração normal (zigue-zague).
+HEART_CRACK = {1: 5, 2: 5, 3: 6, 4: 5, 5: 4, 6: 5, 7: 5, 8: 5}
+HEART_C = (13, 12)   # canvas comum a todos os frames (largura, altura)
+
+
+def grid(rows, key):
+    """Grade de texto -> RGBA. '.' é transparente; cada letra é uma cor da paleta."""
+    a = canvas(len(rows[0]), len(rows))
+    for y, row in enumerate(rows):
+        assert len(row) == len(rows[0]), f"linha {y} com largura errada: {row!r}"
+        for x, ch in enumerate(row):
+            if ch != ".":
+                a[y, x] = (*key[ch], 255)
+    return a
+
+
+def on_canvas(a, w, h, dx=0, dy=0):
+    """Centraliza em x e alinha pela base (a ponta do coração não pula)."""
+    out = canvas(w, h)
+    ah, aw = a.shape[:2]
+    x0 = (w - aw) // 2 + dx
+    y0 = h - ah - 1 + dy
+    for y in range(ah):
+        for x in range(aw):
+            if a[y, x, 3] and 0 <= y0 + y < h and 0 <= x0 + x < w:
+                out[y0 + y, x0 + x] = a[y, x]
+    return out
+
+
+def check_palette(anims, palette, label):
+    for name, frames in anims.items():
+        for f in frames:
+            extra = palette_of(f) - palette
+            if extra:
+                raise SystemExit(f"{label}/{name}: cor fora da paleta: {sorted(extra)[:4]}")
+
+
+def build_hearts():
+    W, H = HEART_C
+    normal = grid(HEART, HEART_KEY)
+    big = grid(HEART_BIG, HEART_KEY)
+    mini = grid(HEART_MINI, HEART_KEY)
+    # O coração normal fica 1 px acima da base para que a batida (13x12)
+    # cresça para os lados e para cima a partir do mesmo centro.
+    full = on_canvas(normal, W, H)
+    beat = on_canvas(big, W, H, dy=1)
+
+    # vazio: só o contorno, numa cor apagada
+    body = normal[..., 3] > 0
+    empty_a = canvas(*normal.shape[1::-1])
+    paint(empty_a, outline(body), HEART_EMPTY)
+    empty = on_canvas(empty_a, W, H)
+
+    # quebrar: flash -> trinca -> metades se abrem -> metades caem
+    flash = recolor(normal, {HEART_RED: HEART_PINK, HEART_DARK: HEART_RED, HEART_PINK: HEART_WHITE})
+    cracked = normal.copy()
+    for y, x in HEART_CRACK.items():
+        cracked[y, x] = (*HEART_OUT, 255)
+    left = np.zeros(body.shape, dtype=bool)
+    right = np.zeros(body.shape, dtype=bool)
+    for y in range(body.shape[0]):
+        cx = HEART_CRACK.get(y, 5)
+        left[y, :cx] = body[y, :cx]
+        right[y, cx + 1:] = body[y, cx + 1:]
+
+    def half(mask):
+        h = np.where(mask[..., None], normal, 0).astype(np.uint8)
+        paint(h, outline(mask), HEART_OUT)          # borda nova no corte
+        return h
+
+    L, R = half(left), half(right)
+
+    def split(gap, drop):
+        out = canvas(W, H)
+        for piece, dx, rot in ((L, -gap, 0), (R, gap, 1)):
+            p = on_canvas(piece, W, H, dx=dx, dy=drop + rot)
+            out = np.where(p[..., 3:4] > 0, p, out)
+        return out.astype(np.uint8)
+
+    anims = {
+        "full": [full, full, beat, full],
+        "break": [on_canvas(flash, W, H), on_canvas(cracked, W, H), split(1, 0), split(2, 2)],
+        "gain": [on_canvas(mini, W, H, dy=-2), beat, full],
+    }
+    check_palette(anims, HEART_PALETTE, "coração")
+    check_palette({"mini": [mini], "empty": [empty]}, HEART_PALETTE, "coração")
+    counts = write_anims("ui/heart", anims)
+    save(empty, "ui/heart_empty.png")
+    save(mini, "ui/heart_mini.png")
+    return {"canvas": [W, H], "frames": counts, "palette": sorted(list(c) for c in HEART_PALETTE)}
+
+
 # ================================================================ preview
 
 def contact_sheet():
@@ -1300,6 +1437,7 @@ def main():
     manifest["fx"] = build_fx_ui()
     build_world()
     build_hud()
+    manifest["hearts"] = build_hearts()
     manifest["npc_pi"] = build_pi()
     manifest["npc_octo"] = build_octo()
     manifest["sources"] = dict(sorted(sources.items()))
