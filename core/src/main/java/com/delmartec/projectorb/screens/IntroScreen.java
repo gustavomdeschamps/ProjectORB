@@ -9,7 +9,7 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.RandomXS128;
-import com.badlogic.gdx.utils.viewport.FitViewport;
+import com.delmartec.projectorb.utils.PixelViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.delmartec.projectorb.ProjectOrbGame;
 import com.delmartec.projectorb.utils.Constants;
@@ -48,7 +48,7 @@ public final class IntroScreen extends ScreenAdapter {
 
     private final ProjectOrbGame game;
     private final OrthographicCamera camera = new OrthographicCamera();
-    private final Viewport viewport = new FitViewport(Constants.VIEW_WIDTH, Constants.VIEW_HEIGHT, camera);
+    private final Viewport viewport = new PixelViewport(camera);
     private final boolean reduced;
     private final boolean shakeAllowed;
     private final RandomXS128 rng = new RandomXS128(2026);

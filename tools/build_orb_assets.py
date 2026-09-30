@@ -32,6 +32,7 @@ from pathlib import Path
 import numpy as np
 from PIL import Image, ImageDraw
 
+import orb_background  # noqa: E402
 import orb_hostiles  # noqa: E402  (tools/ está no sys.path quando o script roda)
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -777,55 +778,21 @@ def build_fx_ui():
 
 
 def build_world():
-    # ---- fundo (já está na escala 4: 480x270 -> 1920x1080)
-    # O jogo repete cada camada em wrap simples (sem espelhar). Para isso cada
-    # camada precisa ser tileável e ter um período próprio: recortamos na
-    # largura em que a coluna seguinte do original mais se parece com a
-    # primeira (a emenda some), escolhendo larguras distintas entre 380 e 478
-    # — nenhuma é múltipla de outra, então duas camadas nunca "alinham".
-    # A camada de estruturas ganha um vão: com período maior que a tela mais
-    # uma estrutura, cada estrutura aparece no máximo uma vez por tela.
-    layers = ["ceu", "nuvem1", "nuvem2", "nuvem3", "nuvem4", "montanhas", "estruturas-fundo", "lago", "chao"]
-    comp = Image.new("RGBA", (480, 270))
-    used = set()
+    # ---- fundo (item 7 / Fase 5): paisagem nova em tools/orb_background.py.
+    # As camadas do TCC saíram: o lago em blocos de 9 px virava mosaico a 4x e
+    # a mistura pontilhada das emendas de lago/chão virava uma coluna.
+    layers = orb_background.build()
+    pal = set(orb_background.BG_PALETTE)
     info = []
-    for i, name in enumerate(layers):
-        im = Image.open(SRC_TCC / f"fundo/{name}.png").convert("RGBA")
-        comp.alpha_composite(im)
-        a = np.array(im).astype(np.int32)
-        if name == "estruturas-fundo":
-            period = 760
-            out = canvas(period, 270)
-            out[:, :480] = a
-            seam = 0.0
-        else:
-            # janela de 12 colunas: pega também texturas em blocos (lago) e
-            # montes que cruzariam a emenda (chão)
-            def cost(w):
-                return float(sum(np.abs(a[:, w + k] - a[:, k]).sum() for k in range(12)))
-            L = 24
-            cands = [w for w in range(380, 480 - L) if w not in used]
-            period = min(cands, key=lambda w: (cost(w), -w))
-            seam = cost(period) / (12 * 270)
-            out = a[:, :period].copy()
-            # Transição em dithering ordenado nas L primeiras colunas: começa
-            # na continuação natural da última coluna (a[period + x]) e chega
-            # ao conteúdo original (a[x]). Some a emenda sem espelhar e sem
-            # meio-tom (pixel art pura).
-            # só onde a emenda é grande (lago, chão): nas silhuetas de cor única
-            # o pontilhado aparecia mais que o degrau de 1-3 px do corte seco
-            for x in (range(L) if seam > 20 else ()):
-                t = (x + 0.5) / L
-                take_orig = BAYER4[np.arange(270) % 4, x % 4] < t
-                out[take_orig, x] = a[take_orig, x]
-                out[~take_orig, x] = a[~take_orig, period + x]
-            out = out.astype(np.uint8)
-        used.add(period)
-        clean = name.replace("estruturas-fundo", "estruturas")
-        save(out, f"background/{i:02d}_{clean}.png", f"art-source/ProjetoFinal_TCC/fundo/{name}.png")
-        info.append({"layer": clean, "period_px": period, "seam_mean_diff": round(seam, 2)})
+    for name, a in layers.items():
+        extra = palette_of(a) - pal
+        if extra:
+            raise SystemExit(f"fundo/{name}: cor fora da paleta: {sorted(extra)[:4]}")
+        save(a, f"background/{name}.png", "tools/orb_background.py")
+        if name != "menu":
+            seam, p99, _ = orb_background.seam_report(a)
+            info.append({"layer": name, "period_px": a.shape[1], "seam_diff": seam, "neighbor_p99": round(p99, 1)})
     manifest["background_layers"] = info
-    save(comp, "background/menu.png", "composição de art-source/ProjetoFinal_TCC/fundo/*")
 
     # ---- plataformas (16 px = 64 de mundo), redesenho de word/platform*.png
     for name, top1, top2 in [("platform", NEON_MAG, NEON_MAG2), ("platform_alt", NEON_CYAN, NEON_CYAN2)]:

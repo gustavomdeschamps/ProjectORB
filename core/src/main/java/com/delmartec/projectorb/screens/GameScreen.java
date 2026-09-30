@@ -12,7 +12,7 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.utils.viewport.FitViewport;
+import com.delmartec.projectorb.utils.PixelViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.delmartec.projectorb.ProjectOrbGame;
 import com.delmartec.projectorb.dialogue.DialogueBox;
@@ -68,8 +68,8 @@ public class GameScreen extends ScreenAdapter {
 
     private final OrthographicCamera worldCamera = new OrthographicCamera();
     private final OrthographicCamera hudCamera = new OrthographicCamera();
-    private final Viewport worldViewport = new FitViewport(Constants.VIEW_WIDTH, Constants.VIEW_HEIGHT, worldCamera);
-    private final Viewport hudViewport = new FitViewport(Constants.VIEW_WIDTH, Constants.VIEW_HEIGHT, hudCamera);
+    private final Viewport worldViewport = new PixelViewport(worldCamera);
+    private final Viewport hudViewport = new PixelViewport(hudCamera);
     private final Vector2 mouseWorld = new Vector2();
     private final Vector2 mouseHud = new Vector2();
     private final Rectangle[] pauseButtons = {
@@ -98,9 +98,11 @@ public class GameScreen extends ScreenAdapter {
     // gerador para não ser múltipla de nenhuma outra), então duas camadas
     // nunca alinham a mesma estrutura.
     /** Fator de parallax por camada: céu quase parado ... chão do fundo. */
-    private static final float[] PARALLAX = { 0.02f, 0.05f, 0.07f, 0.09f, 0.11f, 0.16f, 0.26f, 0.34f, 0.42f };
-    /** Deriva própria das nuvens (px de mundo/s); desligada em movimento reduzido. */
-    private static final float[] DRIFT = { 0f, 3f, 5f, 7f, 9f, 0f, 0f, 0f, 0f };
+    // céu, estrelas, montanhas, bruma alta, cristais, ruínas, bruma baixa, fragmentos, frente
+    private static final float[] PARALLAX = { 0f, 0.02f, 0.06f, 0.09f, 0.14f, 0.22f, 0.28f, 0.18f, 0.40f };
+    /** Deriva própria da bruma e dos fragmentos (px de mundo/s); desligada em movimento reduzido. */
+    private static final float[] DRIFT = { 0f, 0f, 0f, 4f, 0f, 0f, 6f, 5f, 0f };
+    private static final float TWINKLE_PERIOD = 1.3f;
     /** Ponta direita das plataformas = ponta esquerda espelhada. */
     private final TextureRegion platformCapRight;
     private final TextureRegion platformAltCapRight;
@@ -699,9 +701,13 @@ public class GameScreen extends ScreenAdapter {
         // cenário nunca competir com personagem, pontos fracos e projéteis.
         int step = Constants.PIXEL_SCALE;
         boolean drift = !game.settings.isReducedMotion();
-        game.batch.setColor(0.74f, 0.76f, 0.88f, 1f);
+        // A paisagem já nasce com baixo contraste (tools/orb_background.py):
+        // sem tinta por cima e sem faixa escura em degradê.
+        game.batch.setColor(Color.WHITE);
         for (int layer = 0; layer < game.assets.backgroundLayers.length; layer++) {
             Texture texture = game.assets.backgroundLayers[layer];
+            // estrelas piscam alternando dois quadros (paradas em movimento reduzido)
+            if (layer == 1 && drift && (int)(gameTime / TWINKLE_PERIOD) % 2 == 1) texture = game.assets.starsTwinkle;
             float period = texture.getWidth() * step;
             float height = texture.getHeight() * step;
             float offset = worldCamera.position.x * PARALLAX[layer] + (drift ? gameTime * DRIFT[layer] : 0f);
@@ -712,16 +718,6 @@ public class GameScreen extends ScreenAdapter {
             }
         }
 
-        // Escurece a faixa de gameplay, onde tudo que importa acontece.
-        // Em degradê: a faixa única de alfa fixo deixava uma linha horizontal
-        // dura atravessando a tela inteira.
-        int steps = 8;
-        float bandHeight = 430f;
-        for (int i = 0; i < steps; i++) {
-            float t = i / (float)steps;
-            game.batch.setColor(0.018f, 0.012f, 0.045f, 0.052f);
-            game.batch.draw(game.assets.pixel, 0f, 0f, Constants.VIEW_WIDTH, bandHeight * (1f - t));
-        }
         game.batch.setColor(Color.WHITE);
         game.batch.end();
     }

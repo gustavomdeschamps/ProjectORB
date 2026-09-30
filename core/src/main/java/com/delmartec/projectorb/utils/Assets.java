@@ -89,6 +89,8 @@ public class Assets {
     // FUNDO: camadas de parallax (de trás para frente) e a composição dos menus
     public final Texture[] backgroundLayers;
     public final Texture menuBackground;
+    /** 2º quadro das estrelas (algumas apagam): o jogo alterna para piscar. */
+    public final Texture starsTwinkle;
 
     // UI
     // Vidas (F1): coração cheio pulsando, quebrando, ganhando e vazio.
@@ -185,17 +187,19 @@ public class Assets {
         gate = load("world/gate.png");
         portal = load("world/portal.png");
 
+        // Paisagem de tools/orb_background.py, de trás para a frente.
         backgroundLayers = new Texture[] {
             load("background/00_ceu.png"),
-            load("background/01_nuvem1.png"),
-            load("background/02_nuvem2.png"),
-            load("background/03_nuvem3.png"),
-            load("background/04_nuvem4.png"),
-            load("background/05_montanhas.png"),
-            load("background/06_estruturas.png"),
-            load("background/07_lago.png"),
-            load("background/08_chao.png"),
+            load("background/01_estrelas.png"),
+            load("background/02_montanhas.png"),
+            load("background/03_bruma_alta.png"),
+            load("background/04_cristais.png"),
+            load("background/05_ruinas.png"),
+            load("background/06_bruma_baixa.png"),
+            load("background/07_fragmentos.png"),
+            load("background/08_frente.png"),
         };
+        starsTwinkle = load("background/01_estrelas_b.png");
         menuBackground = load("background/menu.png");
 
         heartFull = animation(0.25f, "ui/heart/full_", Animation.PlayMode.LOOP);

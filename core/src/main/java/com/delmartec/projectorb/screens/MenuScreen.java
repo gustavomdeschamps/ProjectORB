@@ -10,7 +10,7 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.utils.viewport.FitViewport;
+import com.delmartec.projectorb.utils.PixelViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.delmartec.projectorb.ProjectOrbGame;
 import com.delmartec.projectorb.utils.Constants;
@@ -20,7 +20,7 @@ import com.delmartec.projectorb.utils.UiRenderer;
 public final class MenuScreen extends ScreenAdapter {
     private final ProjectOrbGame game;
     private final OrthographicCamera camera = new OrthographicCamera();
-    private final Viewport viewport = new FitViewport(Constants.VIEW_WIDTH, Constants.VIEW_HEIGHT, camera);
+    private final Viewport viewport = new PixelViewport(camera);
     private final Vector2 mouse = new Vector2();
     private final Rectangle[] buttons = {
         new Rectangle(710f, 448f, 500f, 82f),
@@ -76,11 +76,8 @@ public final class MenuScreen extends ScreenAdapter {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         game.batch.setProjectionMatrix(camera.combined);
         game.batch.begin();
-        game.batch.setColor(0.88f, 0.90f, 1f, 1f);
-        game.batch.draw(game.assets.menuBackground, 0f, 0f, Constants.VIEW_WIDTH, Constants.VIEW_HEIGHT); // 480x270 a 4x
-        game.batch.setColor(0.008f, 0.006f, 0.03f, 0.12f);
-        game.batch.draw(game.assets.pixel, 0f, 0f, Constants.VIEW_WIDTH, 430f);
         game.batch.setColor(Color.WHITE);
+        game.batch.draw(game.assets.menuBackground, 0f, 0f, Constants.VIEW_WIDTH, Constants.VIEW_HEIGHT); // 480x270 a 4x
 
         float floor = 150f;
         game.batch.setColor(1f, 1f, 1f, 0.72f);

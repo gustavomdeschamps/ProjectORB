@@ -23,7 +23,8 @@ public final class BackgroundTour {
     private BackgroundTour() { }
 
     public static void main(String[] args) throws Exception {
-        String out = new File(args.length > 0 ? args[0] : "../tmp/background-tour").getCanonicalPath();
+        String out = new File(args.length > 0 ? args[0]
+            : System.getProperty("smoke.out", "../tmp/background-tour")).getCanonicalPath();
         new File(out).mkdirs();
         float[] xs = { 1000f, 4000f, 7000f, 11000f };
         if (args.length > 1) {
@@ -59,9 +60,16 @@ public final class BackgroundTour {
             frames++;
             if (index < 0 && frames > 20) next();
             else if (index >= 0 && frames > 90) {
-                capture(String.format("x%05d.png", (int) xs[index]));
-                if (index == xs.length - 1) Gdx.app.exit();
-                else next();
+                ScreenCapture.capture(getScreen(), out + File.separator + String.format("x%05d.png", (int) xs[index]), 0f);
+                if (index == xs.length - 1) {
+                    // a mesma cena em várias resoluções: escala inteira + barras
+                    int[][] sizes = { { 1280, 720 }, { 1920, 1080 }, { 2560, 1440 }, { 3440, 1440 } };
+                    for (int[] sz : sizes) {
+                        ScreenCapture.capture(getScreen(), out + File.separator
+                            + "resolucao-" + sz[0] + "x" + sz[1] + ".png", 0f, sz[0], sz[1]);
+                    }
+                    Gdx.app.exit();
+                } else next();
             }
         }
 

@@ -9,7 +9,7 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.utils.viewport.FitViewport;
+import com.delmartec.projectorb.utils.PixelViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.delmartec.projectorb.ProjectOrbGame;
 import com.delmartec.projectorb.utils.ButtonPress;
@@ -31,7 +31,7 @@ public final class HowToPlayScreen extends ScreenAdapter {
     private final ProjectOrbGame game;
     private final MenuScreen menu;
     private final OrthographicCamera camera = new OrthographicCamera();
-    private final Viewport viewport = new FitViewport(Constants.VIEW_WIDTH, Constants.VIEW_HEIGHT, camera);
+    private final Viewport viewport = new PixelViewport(camera);
     private final Vector2 pointer = new Vector2();
     private final Rectangle back = new Rectangle(760f, 64f, 400f, 82f);
     private final ButtonPress press = new ButtonPress();

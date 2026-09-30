@@ -17,7 +17,11 @@ final class ScreenCapture {
     private ScreenCapture() { }
 
     static void capture(Screen screen, String path, float delta) {
-        int w = 1920, h = 1080;
+        capture(screen, path, delta, 1920, 1080);
+    }
+
+    /** Captura num framebuffer w x h: o viewport faz a conta daquela resolução. */
+    static void capture(Screen screen, String path, float delta, int w, int h) {
         FrameBuffer fbo = new FrameBuffer(Pixmap.Format.RGBA8888, w, h, false);
         fbo.begin();
         screen.resize(w, h);
