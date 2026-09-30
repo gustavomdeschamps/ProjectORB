@@ -26,6 +26,8 @@ public class AudioManager {
     private final Sound uiConfirm;
     private final Sound callout;
     private final Music ambient;
+    /** Música da abertura (40 s, tools/musica_abertura.py); a cena segue o tempo dela. */
+    public final Music intro;
 
     public AudioManager(GameSettings settings) {
         this.settings = settings;
@@ -50,10 +52,15 @@ public class AudioManager {
         callout = Gdx.audio.newSound(Gdx.files.internal("audio/callout.wav"));
         ambient = Gdx.audio.newMusic(Gdx.files.internal("audio/ambient.wav"));
         ambient.setLooping(true);
+        intro = Gdx.audio.newMusic(Gdx.files.internal("audio/intro_music.wav"));
+        intro.setLooping(false);
         refreshVolume();
     }
 
-    public void refreshVolume() { ambient.setVolume(0.25f * settings.getMasterVolume()); }
+    public void refreshVolume() {
+        ambient.setVolume(0.25f * settings.getMasterVolume());
+        intro.setVolume(0.6f * settings.getMasterVolume());
+    }
     public void startAmbient() { refreshVolume(); if (!ambient.isPlaying()) ambient.play(); }
     public void stopAmbient() { ambient.stop(); }
     private float volume(float base) { return base * settings.getMasterVolume(); }
@@ -90,5 +97,6 @@ public class AudioManager {
         shatter.dispose(); miss.dispose(); stairRumble.dispose(); stairOpen.dispose();
         uiMove.dispose(); uiConfirm.dispose(); callout.dispose();
         ambient.dispose();
+        intro.dispose();
     }
 }

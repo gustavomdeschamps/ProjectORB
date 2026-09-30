@@ -127,6 +127,44 @@ public class Assets {
     public final Texture orbShadow;
     /** Logo "PROJECT ORB" em lettering de pixel art (o "O" é o ORB). */
     public final Texture logo;
+    /** Imagem-chave 480x270 (sem logo): fundo do menu e fim da abertura. */
+    public final Texture keyArt;
+    /** Arte da abertura (tools/abertura_rodada3.py). */
+    public final IntroArt intro;
+
+    /** Quadros e peças da abertura. */
+    public static final class IntroArt {
+        public Texture[] rift, crack, bossSil, egg;
+        public final java.util.Map<String, Texture[]> calm = new HashMap<>();
+        /** Peças do logo e onde cada uma fica no logo inteiro (px de arte). */
+        public final java.util.Map<String, Texture> logoPart = new HashMap<>();
+        public final java.util.Map<String, int[]> logoOffset = new HashMap<>();
+    }
+
+    private IntroArt loadIntro() {
+        IntroArt a = new IntroArt();
+        a.rift = frames("intro/rift_");
+        a.crack = frames("intro/crack_");
+        a.bossSil = frames("intro/boss_sil_");
+        a.egg = frames("intro/egg_");
+        for (String k : new String[] { "triangle", "square", "diamond", "hexagon" }) a.calm.put(k, frames("intro/calm_" + k + "_"));
+        for (String line : Gdx.files.internal(ROOT + "intro/logo_parts.txt").readString("UTF-8").split("\n")) {
+            String[] p = line.trim().split(" ");
+            if (p.length < 3) continue;
+            a.logoPart.put(p[0], load("intro/logo_part_" + p[0] + ".png"));
+            a.logoOffset.put(p[0], new int[] { Integer.parseInt(p[1]), Integer.parseInt(p[2]) });
+        }
+        return a;
+    }
+
+    /** prefixo_01.png, prefixo_02.png ... como texturas soltas. */
+    private Texture[] frames(String prefix) {
+        List<Texture> out = new ArrayList<>();
+        for (int i = 1; Gdx.files.internal(ROOT + prefix + String.format("%02d", i) + ".png").exists(); i++) {
+            out.add(load(prefix + String.format("%02d", i) + ".png"));
+        }
+        return out.toArray(new Texture[0]);
+    }
     /** Borda pontilhada (12x4) da faixa escura atrás dos menus: sem degradê. */
     public final Texture shadeEdge;
 
@@ -260,6 +298,8 @@ public class Assets {
         panelRed = load("ui/panel_red.png");
         pixel = load("ui/pixel.png");
         logo = load("ui/logo.png");
+        keyArt = load("ui/key_art.png");
+        intro = loadIntro();
         shadeEdge = load("ui/shade_edge.png");
         key = load("ui/key.png");
         keyLit = load("ui/key_lit.png");

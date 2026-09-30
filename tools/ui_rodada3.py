@@ -132,8 +132,9 @@ def paint_letter(a, mask, ox, oy, extrude=3):
     return full
 
 
-def orb_letter(a, cx, cy, r):
-    """O "O" do logo: o ORB (esfera roxa, viseira escura com dois olhos)."""
+def orb_letter(a, cx, cy, r, look=0):
+    """O "O" do logo: o ORB (esfera roxa, viseira escura com dois olhos).
+    look: desloca os olhos (px) para olhar para um lado."""
     H, W = a.shape[:2]
     yy, xx = np.mgrid[0:H, 0:W]
     d = ((xx + 0.5 - cx) / r) ** 2 + ((yy + 0.5 - cy) / r) ** 2
@@ -165,7 +166,7 @@ def orb_letter(a, cx, cy, r):
     px.fill(a, vis & ~px.shift(vis, 0, 1), ORB_FACE[2])        # borda de cima da viseira
     px.fill(a, vis & ~px.shift(vis, 0, -1), ORB_FACE[1])
     # olhos: barras verticais brancas com 1 px de brilho lilás
-    for ex in (cx - 6, cx + 3):
+    for ex in (cx - 6 + look, cx + 3 + look):
         eye = px.rect_mask(W, H, int(ex), int(vy0 + vh * 0.40), int(ex) + 3, int(vy0 + vh * 1.60))
         px.fill(a, eye, ORB_EYE[1])
         px.fill(a, eye & ~px.shift(eye, 0, -1), ORB_EYE[0])

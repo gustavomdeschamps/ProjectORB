@@ -84,7 +84,7 @@ public final class MenuScreen extends ScreenAdapter {
         game.batch.setProjectionMatrix(camera.combined);
         game.batch.begin();
         game.batch.setColor(Color.WHITE);
-        game.batch.draw(game.assets.menuBackground, 0f, 0f, Constants.VIEW_WIDTH, Constants.VIEW_HEIGHT); // 480x270 a 4x
+        game.batch.draw(game.assets.keyArt, 0f, 0f, Constants.VIEW_WIDTH, Constants.VIEW_HEIGHT); // imagem-chave 480x270 a 4x
         game.ui.shade(704f, 0.62f);
 
         // logo desenhado à mão, na escala única
