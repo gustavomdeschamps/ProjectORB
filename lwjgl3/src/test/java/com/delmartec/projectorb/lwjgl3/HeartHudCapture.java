@@ -36,6 +36,20 @@ public final class HeartHudCapture {
 
             @Override public void render() {
                 frame++;
+                // mouse fixo no canto (0,0), longe de qualquer botão: a captura não
+                // depende de onde o ponteiro real está parado
+                final com.badlogic.gdx.Input real = com.badlogic.gdx.Gdx.input;
+                com.badlogic.gdx.Gdx.input = (com.badlogic.gdx.Input) java.lang.reflect.Proxy.newProxyInstance(
+                    com.badlogic.gdx.Input.class.getClassLoader(), new Class<?>[] { com.badlogic.gdx.Input.class },
+                    (px, m, a) -> switch (m.getName()) {
+                        case "getX", "getY" -> a == null ? 0 : m.invoke(real, a);
+                        case "isButtonPressed", "isButtonJustPressed", "isTouched", "justTouched" -> false;
+                        default -> m.invoke(real, a);
+                    });
+                try { renderFrame(); } finally { com.badlogic.gdx.Gdx.input = real; }
+            }
+
+            private void renderFrame() {
                 try {
                     if (frame == 20) {
                         ScreenCapture.capture(getScreen(), out + "/01-hud-cheio.png", 0f);

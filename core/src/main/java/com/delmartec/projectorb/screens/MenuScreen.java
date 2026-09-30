@@ -76,8 +76,11 @@ public final class MenuScreen extends ScreenAdapter {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         game.batch.setProjectionMatrix(camera.combined);
         game.batch.begin();
-        game.batch.setColor(Color.WHITE);
+        game.batch.setColor(0.88f, 0.90f, 1f, 1f);
         game.batch.draw(game.assets.menuBackground, 0f, 0f, Constants.VIEW_WIDTH, Constants.VIEW_HEIGHT); // 480x270 a 4x
+        game.batch.setColor(0.008f, 0.006f, 0.03f, 0.12f);
+        game.batch.draw(game.assets.pixel, 0f, 0f, Constants.VIEW_WIDTH, 430f);
+        game.batch.setColor(Color.WHITE);
 
         float floor = 150f;
         game.batch.setColor(1f, 1f, 1f, 0.72f);

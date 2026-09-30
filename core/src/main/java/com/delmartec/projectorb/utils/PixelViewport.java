@@ -22,13 +22,19 @@ public final class PixelViewport extends Viewport {
 
     @Override
     public void update(int screenWidth, int screenHeight, boolean centerCamera) {
-        float fit = Math.min(screenWidth / getWorldWidth(), screenHeight / getWorldHeight());
+        int[] b = bounds(screenWidth, screenHeight);
+        setScreenBounds(b[0], b[1], b[2], b[3]);
+        apply(centerCamera);
+    }
+
+    /** Área desenhada {x, y, largura, altura} numa janela; o resto são barras. */
+    public static int[] bounds(int screenWidth, int screenHeight) {
+        float fit = Math.min(screenWidth / Constants.VIEW_WIDTH, screenHeight / Constants.VIEW_HEIGHT);
         // escala em passos de 1/PIXEL_SCALE = pixel de arte inteiro na tela
         float scale = (float)Math.floor(fit * Constants.PIXEL_SCALE) / Constants.PIXEL_SCALE;
         if (scale <= 0f) scale = fit;
-        int w = Math.round(getWorldWidth() * scale);
-        int h = Math.round(getWorldHeight() * scale);
-        setScreenBounds((screenWidth - w) / 2, (screenHeight - h) / 2, w, h);
-        apply(centerCamera);
+        int w = Math.round(Constants.VIEW_WIDTH * scale);
+        int h = Math.round(Constants.VIEW_HEIGHT * scale);
+        return new int[] { (screenWidth - w) / 2, (screenHeight - h) / 2, w, h };
     }
 }

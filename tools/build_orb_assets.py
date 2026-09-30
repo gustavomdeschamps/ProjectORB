@@ -32,7 +32,6 @@ from pathlib import Path
 import numpy as np
 from PIL import Image, ImageDraw
 
-import orb_background  # noqa: E402
 import orb_hostiles  # noqa: E402  (tools/ está no sys.path quando o script roda)
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -856,21 +855,51 @@ def build_world():
             # meio-tom (pixel art pura).
             # só onde a emenda é grande (lago, chão): nas silhuetas de cor única
             # o pontilhado aparecia mais que o degrau de 1-3 px do corte seco
-            for x in (range(L) if seam > 20 else ()):
-                t = (x + 0.5) / L
-                take_orig = BAYER4[np.arange(270) % 4, x % 4] < t
-                out[take_orig, x] = a[take_orig, x]
-                out[~take_orig, x] = a[~take_orig, period + x]
+            # Rodada de correções: no chão (única camada que ainda usava isto)
+            # o pontilhado virava uma área pontilhada perto da pedra. Troca por
+            # um corte NÍTIDO por linha nas mesmas L colunas: antes do corte, a
+            # continuação da última coluna (a[period + x]); depois, o original
+            # (a[x]); o corte fica onde as duas mais se parecem. Fora das L
+            # colunas, nada muda.
+            if seam > 20:
+                # linhas do chão contínuo (100% opacas): UM corte vertical
+                # comum; acima delas (pedras, céu) nenhum corte — a pedra
+                # fica inteira com a borda original.
+                ground = [y for y in range(270) if a[y, :, 3].min() > 0]
+
+                def cut_cost(c):
+                    return sum(float(np.abs(a[y, period + c - 1] - a[y, c]).sum()) if c > 0
+                               else float(np.abs(a[y, period - 1] - a[y, 0]).sum()) for y in ground)
+                best = min(range(L + 1), key=lambda c: (cut_cost(c), c))
+                for y in ground:
+                    out[y, :best] = a[y, period:period + best]
+                # A pedra que o TCC deixou cortada na coluna 0 ganha uma borda
+                # esquerda: o degrau da borda direita espelhado (mesma inclinação),
+                # contorno no tom mais escuro da própria pedra. Só colunas < L.
+                rock = [y for y in range(ground[0]) if a[y, 0, 3] > 0]
+                if rock:
+                    def run_end(y):
+                        x = 0
+                        while x + 1 < a.shape[1] and a[y, x + 1, 3] > 0:
+                            x += 1
+                        return x
+                    top = run_end(rock[0])
+                    left0 = min(L - 1, top - 24)
+                    px = a[rock[0]:ground[0], :L]
+                    dark = tuple(int(v) for v in min((tuple(p[:3]) for p in px.reshape(-1, 4) if p[3] > 0), key=sum))
+                    for y in rock:
+                        xl = max(0, left0 - (run_end(y) - top))
+                        out[y, :xl] = a[y, period:period + xl]
+                        out[y, xl] = (*dark, 255)
+                        if y == rock[0]:
+                            out[y, xl:left0 + 1] = (*dark, 255)
             out = out.astype(np.uint8)
         used.add(period)
         clean = name.replace("estruturas-fundo", "estruturas")
         save(out, f"background/{i:02d}_{clean}.png", f"art-source/ProjetoFinal_TCC/fundo/{name}.png")
         info.append({"layer": clean, "period_px": period, "seam_mean_diff": round(seam, 2)})
     manifest["background_layers"] = info
-    # menu.png: mantido como na tela de menu aprovada (composição de
-    # tools/orb_background.py); só as camadas do jogo voltaram ao TCC.
-    menu = orb_background.build()["menu"]
-    save(menu, "background/menu.png", "tools/orb_background.py (composição do menu)")
+    save(comp, "background/menu.png", "composição de art-source/ProjetoFinal_TCC/fundo/*")
 
     # ---- plataformas (16 px = 64 de mundo), redesenho de word/platform*.png
     for name, top1, top2 in [("platform", NEON_MAG, NEON_MAG2), ("platform_alt", NEON_CYAN, NEON_CYAN2)]:

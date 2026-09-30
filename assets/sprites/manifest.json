@@ -763,7 +763,7 @@
   "background/06_estruturas.png": "art-source/ProjetoFinal_TCC/fundo/estruturas-fundo.png",
   "background/07_lago.png": "art-source/ProjetoFinal_TCC/fundo/lago.png",
   "background/08_chao.png": "art-source/ProjetoFinal_TCC/fundo/chao.png",
-  "background/menu.png": "tools/orb_background.py (composição do menu)",
+  "background/menu.png": "composição de art-source/ProjetoFinal_TCC/fundo/*",
   "boss/beam_01.png": "gerado",
   "boss/beam_02.png": "gerado",
   "boss/beam_03.png": "gerado",

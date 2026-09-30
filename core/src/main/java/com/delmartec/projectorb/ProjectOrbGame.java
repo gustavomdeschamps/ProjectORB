@@ -2,6 +2,7 @@ package com.delmartec.projectorb;
 
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -10,6 +11,7 @@ import com.delmartec.projectorb.screens.MenuScreen;
 import com.delmartec.projectorb.utils.Assets;
 import com.delmartec.projectorb.utils.AudioManager;
 import com.delmartec.projectorb.utils.GameSettings;
+import com.delmartec.projectorb.utils.PixelViewport;
 import com.delmartec.projectorb.utils.UiRenderer;
 
 public class ProjectOrbGame extends Game {
@@ -56,6 +58,36 @@ public class ProjectOrbGame extends Game {
 
     public void showMenu() {
         setScreen(new MenuScreen(this));
+    }
+
+    /**
+     * Barras da escala inteira (PixelViewport) na cor do topo do céu do fundo
+     * (00_ceu com a tinta do jogo), em vez de preto. Pintadas DEPOIS da tela,
+     * com recorte (scissor) só nas barras: nada dentro da imagem muda.
+     */
+    private static final float[] BAR = { 0f, 11f / 255f, 88f / 255f };
+
+    @Override
+    public void render() {
+        super.render();
+        int sw = Gdx.graphics.getBackBufferWidth(), sh = Gdx.graphics.getBackBufferHeight();
+        int[] b = PixelViewport.bounds(sw, sh);
+        if (b[0] == 0 && b[1] == 0) return;   // janela em múltiplo inteiro: sem barras
+        Gdx.gl.glEnable(GL20.GL_SCISSOR_TEST);
+        Gdx.gl.glClearColor(BAR[0], BAR[1], BAR[2], 1f);
+        if (b[0] > 0) {
+            Gdx.gl.glScissor(0, 0, b[0], sh);
+            Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+            Gdx.gl.glScissor(b[0] + b[2], 0, sw - b[0] - b[2], sh);
+            Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+        }
+        if (b[1] > 0) {
+            Gdx.gl.glScissor(0, 0, sw, b[1]);
+            Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+            Gdx.gl.glScissor(0, b[1] + b[3], sw, sh - b[1] - b[3]);
+            Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+        }
+        Gdx.gl.glDisable(GL20.GL_SCISSOR_TEST);
     }
 
     @Override
