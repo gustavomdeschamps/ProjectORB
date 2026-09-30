@@ -1,0 +1,2 @@
+  texturas desenhadas: 56 (por pasta: {sprites/enemies/triangle=1, sprites/world/stair=6, sprites/world=7, sprites/npc/pi=1, sprites/ui=19, sprites/enemies/square=1, sprites/player=1, sprites/boss=1, sprites/ui/heart=2, sprites/enemies/diamond=1, sprites/enemies/hexagon=1, sprites/background=13})
+OLD GATE CHECK: PASS

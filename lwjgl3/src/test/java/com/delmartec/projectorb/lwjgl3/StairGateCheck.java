@@ -25,6 +25,9 @@ import java.util.Set;
  *  3. SEM SOFT-LOCK: renascendo no ponto de renascimento da seção seguinte (em
  *     cima da escada aberta, como o jogo faz), o ORB não fica preso dentro de
  *     nada e chega até a massa do próximo portão.
+ *  0. DISTÂNCIAS (rodada 3): escada fechada e aberta a >= 3 larguras do ORB de
+ *     qualquer plataforma, nenhuma plataforma por cima/por baixo, topo da
+ *     escada a >= 1 altura do ORB de qualquer plataforma.
  * O caso "morrer com a escada aberta e renascer" com o jogo inteiro está em
  * StairRespawnCheck.
  */
@@ -64,6 +67,7 @@ public final class StairGateCheck {
                     if (c.bounds.overlaps(p.bounds)) failures.add("portão " + g + ": degrau encosta numa plataforma");
                 }
             }
+            clearance(level, s, g);
             closedBlocks(level, s, g);
             openPasses(level, s, g, true);
             openPasses(level, s, g, false);
@@ -73,6 +77,46 @@ public final class StairGateCheck {
         System.out.println(failures.isEmpty() ? "STAIR GATE CHECK: PASS" : "STAIR GATE CHECK: FAIL");
         for (String f : failures) System.out.println("  - " + f);
         System.exit(failures.isEmpty() ? 0 : 1);
+    }
+
+    /**
+     * Rodada 3: distâncias entre a escada (fechada = massa; aberta = degraus)
+     * e TODAS as plataformas: horizontal >= 3 larguras do ORB; nenhuma por
+     * cima/por baixo; topo da escada a >= 1 altura do ORB de qualquer plataforma.
+     */
+    private static void clearance(LevelDemo level, StairGate s, int g) {
+        Rectangle m = s.getMass();
+        float[][] shapes = {
+            { m.x, m.x + m.width, m.y + m.height },                                    // fechada
+            { s.getStairLeft(), s.getStairRight(), s.getPlateauTop() },               // aberta
+        };
+        String[] names = { "fechada", "aberta" };
+        float minDx = Float.MAX_VALUE, minTop = Float.MAX_VALUE;
+        for (int k = 0; k < 2; k++) {
+            float l = shapes[k][0], r = shapes[k][1], top = shapes[k][2];
+            for (Platform p : level.getPlatforms()) {
+                Rectangle b = p.bounds;
+                if (b.width >= Constants.WORLD_WIDTH) continue;
+                float dx = Math.max(0f, Math.max(b.x - r, l - (b.x + b.width)));
+                float dy = Math.max(0f, Math.max(b.y - top, top - (b.y + b.height)));
+                float topDist = (float)Math.hypot(dx, dy);
+                minDx = Math.min(minDx, dx);
+                minTop = Math.min(minTop, topDist);
+                if (dx <= 0f) {
+                    failures.add(String.format("portão %d (%s): plataforma x=%.0f %s da escada", g, names[k], b.x,
+                        b.y >= top ? "por cima" : "por baixo/encostada"));
+                } else if (dx < StairGate.CLEARANCE) {
+                    failures.add(String.format("portão %d (%s): plataforma x=%.0f a %.0f px (mínimo %.0f = 3 larguras do ORB)",
+                        g, names[k], b.x, dx, StairGate.CLEARANCE));
+                }
+                if (topDist < Constants.PLAYER_HIT_H) {
+                    failures.add(String.format("portão %d (%s): topo da escada a %.0f px da plataforma x=%.0f (mínimo %.0f)",
+                        g, names[k], topDist, b.x, Constants.PLAYER_HIT_H));
+                }
+            }
+        }
+        System.out.printf("    distâncias: menor horizontal %.0f px (mín %.0f), menor do topo %.0f px (mín %.0f)%n",
+            minDx, StairGate.CLEARANCE, minTop, Constants.PLAYER_HIT_H);
     }
 
     private static List<Platform> world(LevelDemo level, StairGate s) {

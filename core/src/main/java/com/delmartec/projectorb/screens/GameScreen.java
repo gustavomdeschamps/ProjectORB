@@ -89,9 +89,7 @@ public class GameScreen extends ScreenAdapter {
     private final boolean[] sectionSpawned = new boolean[6];
     private final boolean[] sectionCleared = new boolean[6];
 
-    // O portão era recriado a cada consulta — e ele é consultado no update do
-    // jogador, no teste de cada projétil e no render.
-    private final Rectangle gateRect = new Rectangle();
+    /** A seção atual ainda está fechada (a massa da escada bloqueia a saída). */
     private boolean gateActive;
     /** Escadinhas entre as seções 0-1, 1-2, 2-3, 3-4 e 4-5 (etapa B). */
     private final StairGate[] stairs = new StairGate[5];
@@ -417,7 +415,6 @@ public class GameScreen extends ScreenAdapter {
 
     private void updateGate() {
         gateActive = currentSection < 5 && !sectionCleared[currentSection];
-        if (gateActive) gateRect.set(stairs[currentSection].getMass());
         for (int i = 0; i < stairs.length; i++) {
             if (sectionCleared[i]) stairs[i].open();
         }

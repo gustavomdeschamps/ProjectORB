@@ -32,30 +32,35 @@ public class LevelDemo {
         // Um único piso físico evita pequenas frestas entre segmentos.
         platforms.add(new Platform(0, 0, Constants.WORLD_WIDTH, Constants.FLOOR_Y));
 
+        // Rodada 3 (etapa 2): as plataformas vizinhas de cada escadinha ficam a
+        // pelo menos 3 larguras do ORB da escada (fechada ou aberta), nunca por
+        // cima nem por baixo dela. Só as plataformas das pontas das seções
+        // andaram; alturas e larguras são as mesmas. Ver StairGate.CLEARANCE.
+
         // 01 — corredor: três saltos confortáveis e um descanso antes da câmara.
         platforms.add(new Platform(580, 230, 288, 64));
-        platforms.add(new Platform(1080, 340, 288, 64));
-        platforms.add(new Platform(1510, 235, 192, 64));
+        platforms.add(new Platform(930, 340, 288, 64));
+        platforms.add(new Platform(1248, 235, 192, 64));
 
         // 02 — câmara do losango: arena limpa e simétrica.
-        platforms.add(new Platform(2020, 250, 288, 64));
-        platforms.add(new Platform(3190, 250, 288, 64));
+        platforms.add(new Platform(2162, 250, 288, 64));
+        platforms.add(new Platform(2950, 250, 288, 64));
 
         // 03 — ponte dos triângulos: níveis alternados sem bloquear a linha de tiro.
-        platforms.add(new Platform(3820, 235, 288, 64));
+        platforms.add(new Platform(3880, 235, 288, 64));
         platforms.add(new Platform(4680, 315, 288, 64));
-        platforms.add(new Platform(5350, 235, 192, 64));
+        platforms.add(new Platform(5148, 235, 192, 64));
 
         // 04 — quadrado: dois pontos de reposicionamento laterais.
-        platforms.add(new Platform(5900, 250, 288, 64));
-        platforms.add(new Platform(7040, 250, 288, 64));
+        platforms.add(new Platform(6060, 250, 288, 64));
+        platforms.add(new Platform(6852, 250, 288, 64));
 
         // 05 — hexágono: espaço central livre para mudar o ângulo dos disparos.
-        platforms.add(new Platform(7700, 240, 288, 64));
-        platforms.add(new Platform(8850, 305, 288, 64));
+        platforms.add(new Platform(7780, 240, 288, 64));
+        platforms.add(new Platform(8652, 305, 288, 64));
 
         // 06 — arena do chefe: ampla, limpa e com plataformas apenas nas bordas.
-        platforms.add(new Platform(9520, 250, 288, 64));
+        platforms.add(new Platform(9580, 250, 288, 64));
         platforms.add(new Platform(11510, 250, 288, 64));
     }
 

@@ -931,17 +931,9 @@ def build_world():
     g[5, 5:11] = (*DASH, 255)
     save(g, "world/ground.png", "gerado no estilo de art-source/ProjetoFinal_TCC/word/platform.png")
 
-    # ---- portão: 22x75 (88x300 de mundo = a colisão), redesenho de word/gate.png
-    gate = canvas(22, 75)
-    body = np.zeros((75, 22), dtype=bool)
-    body[1:74, 2:20] = True
-    body[1, 2] = body[1, 19] = body[73, 2] = body[73, 19] = False
-    paint(gate, body, VOID)
-    paint(gate, outline(body), NEON_MAG)
-    gate[4:71, 10:12] = (*LILAC, 255)
-    for y in range(6, 71, 8):
-        gate[y, 6:16] = (*CYAN, 255)
-    save(gate, "world/gate.png", "redesenho de art-source/ProjetoFinal_TCC/word/gate.png")
+    # ---- portão (barra vertical magenta com marcas): REMOVIDO na rodada 3.
+    # A passagem entre seções é a escadinha (world/stair/*, StairGate). A arte
+    # antiga está em art-source/descartado_rodada3/portao_antigo/.
 
     # ---- portal: 64x79 (256x316 de mundo), redesenho de word/portal.png
     W, H = 64, 79

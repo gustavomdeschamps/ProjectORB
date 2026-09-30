@@ -146,6 +146,20 @@ public final class VisualSmokeLauncher {
                 playerField.setAccessible(true);
                 ((Player) playerField.get(screen)).respawn(playerX, 230f);
                 screen.skipTutorial();
+                // como no jogo de verdade: as seções anteriores estão vencidas e
+                // as escadas delas, abertas (antes a massa da seção anterior
+                // aparecia fechada e parecia a barra antiga)
+                Field clearedField = GameScreen.class.getDeclaredField("sectionCleared");
+                clearedField.setAccessible(true);
+                boolean[] cleared = (boolean[]) clearedField.get(screen);
+                Field stairsField = GameScreen.class.getDeclaredField("stairs");
+                stairsField.setAccessible(true);
+                com.delmartec.projectorb.level.StairGate[] stairs =
+                    (com.delmartec.projectorb.level.StairGate[]) stairsField.get(screen);
+                for (int k = 0; k < section; k++) {
+                    cleared[k] = true;
+                    stairs[k].openImmediately();
+                }
                 Method spawn = GameScreen.class.getDeclaredMethod("spawnSection", int.class, boolean.class);
                 spawn.setAccessible(true);
                 spawn.invoke(screen, section, false);

@@ -1,0 +1,17 @@
+  texturas desenhadas: 56 (por pasta: {sprites/enemies/triangle=1, sprites/world/stair=6, sprites/world=7, sprites/npc/pi=1, sprites/ui=19, sprites/enemies/square=1, sprites/player=1, sprites/boss=1, sprites/ui/heart=2, sprites/enemies/diamond=1, sprites/enemies/hexagon=1, sprites/background=13})
+OLD GATE CHECK: FAIL
+  - arquivo com a arte do port�o antigo em assets/: C:\Users\gustavo_m_deschamps\Desktop\ProjectORB\assets\sprites\ui\tmp_prova_barra.png
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':lwjgl3:runCheck' (registered in build file 'lwjgl3\build.gradle').
+> Process 'command 'C:\Program Files\Java\jdk-21.0.10\bin\java.exe'' finished with non-zero exit value 1
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 12s

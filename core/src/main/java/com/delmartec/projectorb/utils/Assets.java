@@ -83,7 +83,6 @@ public class Assets {
     public final Texture ground;
     public final PlatformSkin platform;
     public final PlatformSkin platformAlt;
-    public final Texture gate;
     // Escadinha entre as seções (etapa B): blocos de cristal
     public final Texture stairClosed;
     public final Texture stairBlock;
@@ -197,7 +196,6 @@ public class Assets {
             load("world/platform_module.png"), load("world/platform_fill.png"));
         platformAlt = new PlatformSkin(load("world/platform_alt_cap.png"),
             load("world/platform_alt_module.png"), load("world/platform_alt_fill.png"));
-        gate = load("world/gate.png");
         stairClosed = load("world/stair/block_closed.png");
         stairBlock = load("world/stair/block.png");
         stairTop = load("world/stair/block_top.png");

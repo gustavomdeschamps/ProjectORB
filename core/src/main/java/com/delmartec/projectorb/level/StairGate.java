@@ -19,12 +19,15 @@ import java.util.List;
  * - bloco 24x40 (6x10 de arte);
  * - degrau 40 de altura: <= 40% do pulo simples (JUMP_SPEED^2 / 2|GRAVITY| = 180);
  * - topo 5 x 24 = 120: >= 2 larguras do ORB (hitbox 58);
- * - escada inteira 11 x 24 = 264, perto do portão antigo, começando depois da
- *   plataforma anterior (o ORB precisa de espaço para a cabeça ao pular no
- *   1º degrau) e só passando por baixo de plataformas com espaço para o ORB;
+ * - escada inteira 11 x 24 = 264, centrada na massa (rodada 3);
  * - massa fechada centrada no portão antigo (endX - 88 .. endX), 4 blocos de
  *   largura, e alta o bastante para passar do alcance máximo do ORB (pulo
- *   duplo a partir da plataforma mais alta por perto) com 20% de margem.
+ *   duplo a partir da plataforma mais alta por perto) com 20% de margem;
+ * - distância (rodada 3): entre a escada (fechada ou aberta) e qualquer
+ *   plataforma, pelo menos CLEARANCE = 3 larguras do ORB na horizontal;
+ *   nenhuma plataforma por cima nem por baixo; o topo da escada a pelo menos
+ *   1 altura do ORB de qualquer plataforma. O nível (LevelDemo) respeita isso;
+ *   StairGateCheck confere.
  */
 public final class StairGate {
     public enum State { CLOSED, OPENING, OPEN }
@@ -35,6 +38,8 @@ public final class StairGate {
     public static final int TOP_COLS = 5;
     public static final int MASS_COLS = 4;
     public static final float OPEN_TIME = 1.25f;
+    /** Folga horizontal mínima entre a escada e qualquer plataforma: 3 larguras do ORB. */
+    public static final float CLEARANCE = 3f * Constants.PLAYER_HIT_W;
     /** Pulo simples, das constantes reais do Player. */
     public static final float JUMP_HEIGHT = Constants.JUMP_SPEED * Constants.JUMP_SPEED / (2f * -Constants.GRAVITY);
     /** Alcance máximo acima do apoio: pulo duplo (o dash é só horizontal). */
@@ -90,28 +95,22 @@ public final class StairGate {
     }
 
     /**
-     * Escada da seção: massa centrada no portão antigo; escada no vão livre
-     * entre as plataformas vizinhas, cobrindo o portão.
+     * Escada da seção: massa centrada no portão antigo e escada aberta
+     * centrada na massa. As plataformas ficam longe (ver CLEARANCE); se alguma
+     * ainda encostasse numa coluna, a escada anda para a direita até caber.
      */
     public static StairGate forSection(Section section, List<Platform> platforms) {
         float gateLeft = section.endX - 88f, gateRight = section.endX;
         float width = COLS.length * BLOCK_W;
-        float prevEnd = 0f;
         float highest = Constants.FLOOR_Y;
         for (Platform p : platforms) {
             Rectangle b = p.bounds;
             if (b.width >= Constants.WORLD_WIDTH) continue;             // o piso
-            if (b.x + b.width <= gateLeft) prevEnd = Math.max(prevEnd, b.x + b.width);
             if (b.x + b.width > gateLeft - 700f && b.x < gateRight + 700f) highest = Math.max(highest, b.y + b.height);
         }
-        // Começa uma largura de ORB depois da plataforma anterior (senão ele
-        // bate a cabeça nela ao pular no 1º degrau) e fica o mais perto
-        // possível do portão, desde que cada coluna que passe por baixo de uma
-        // plataforma deixe espaço para o ORB andar em cima dela.
-        float left = Math.max(prevEnd + Constants.PLAYER_HIT_W + 4f, gateLeft - width / 2f);
-        left = (float)Math.ceil(left / PX) * PX;
-        while (!fits(left, platforms)) left += PX;
         float massLeft = Math.round((section.endX - 44f - MASS_COLS * BLOCK_W / 2f) / PX) * PX;
+        float left = Math.round((massLeft + MASS_COLS * BLOCK_W / 2f - width / 2f) / PX) * PX;
+        while (!fits(left, platforms)) left += PX;
         // alcance máximo a partir do apoio mais alto por perto, +20%, medido do piso
         float needed = ((highest - Constants.FLOOR_Y) + MAX_REACH) * 1.2f;
         return new StairGate(left, massLeft, needed);
