@@ -91,13 +91,16 @@ public class Assets {
     public final Texture menuBackground;
 
     // UI
-    // Vidas (F1): coração cheio pulsando, quebrando, ganhando, vazio e o mini
-    // dos botões. Ver HeartMeter.
+    // Vidas (F1): coração cheio pulsando, quebrando, ganhando e vazio.
+    // Corações existem SÓ como vida. Ver HeartMeter.
     public final Animation<TextureRegion> heartFull;
     public final Animation<TextureRegion> heartBreak;
     public final Animation<TextureRegion> heartGain;
     public final Texture heartEmpty;
-    public final Texture heartMini;
+    // Botões (normal, selecionado, pressionado), em NinePatch no UiRenderer
+    public final Texture buttonNormal;
+    public final Texture buttonSelected;
+    public final Texture buttonPressed;
     public final Texture panel;
     public final Texture panelCyan;
     public final Texture panelRed;
@@ -199,7 +202,9 @@ public class Assets {
         heartBreak = animation(0.09f, "ui/heart/break_", Animation.PlayMode.NORMAL);
         heartGain = animation(0.08f, "ui/heart/gain_", Animation.PlayMode.NORMAL);
         heartEmpty = load("ui/heart_empty.png");
-        heartMini = load("ui/heart_mini.png");
+        buttonNormal = load("ui/button_normal.png");
+        buttonSelected = load("ui/button_selected.png");
+        buttonPressed = load("ui/button_pressed.png");
         panel = load("ui/panel.png");
         panelCyan = load("ui/panel_cyan.png");
         panelRed = load("ui/panel_red.png");

@@ -1294,7 +1294,7 @@ HEART_BIG = [        # 13x12: batida da pulsação / pico do "pop"
     ".....ODO.....",
     "......O......",
 ]
-HEART_MINI = [       # 7x6: começo do "pop" e marcador dos botões
+HEART_MINI = [       # 7x6: começo do "pop"
     ".OO.OO.",
     "OWRORRO",
     "ORRRRDO",
@@ -1390,8 +1390,39 @@ def build_hearts():
     check_palette({"mini": [mini], "empty": [empty]}, HEART_PALETTE, "coração")
     counts = write_anims("ui/heart", anims)
     save(empty, "ui/heart_empty.png")
-    save(mini, "ui/heart_mini.png")
     return {"canvas": [W, H], "frames": counts, "palette": sorted(list(c) for c in HEART_PALETTE)}
+
+
+# ================================================================ botões (F2, item 6)
+
+# Botão retangular em NinePatch (cortes de 3 px). Três estados; o selecionado
+# se destaca só pelo próprio botão (miolo mais claro, contorno claro e forte),
+# sem ícone nenhum. O pressionado inverte luz e sombra (parece afundado).
+BUTTON = [
+    ".OOOOOOOOOO.",
+    "OEEEEEEEEEEO",
+    "OETTTTTTTTEO",
+    "OEFFFFFFFFEO",
+    "OEFFFFFFFFEO",
+    "OEFFFFFFFFEO",
+    "OEFFFFFFFFEO",
+    "OEFFFFFFFFEO",
+    "OEFFFFFFFFEO",
+    "OESSSSSSSSEO",
+    "OEEEEEEEEEEO",
+    ".OOOOOOOOOO.",
+]
+BUTTON_STATES = {
+    #            contorno        borda            miolo           luz de cima     sombra de baixo
+    "normal": {"O": (10, 8, 22), "E": (96, 78, 150), "F": (30, 25, 56), "T": (48, 40, 86), "S": (18, 14, 36)},
+    "selected": {"O": (10, 8, 22), "E": (236, 214, 255), "F": (84, 60, 150), "T": (130, 100, 206), "S": (54, 38, 102)},
+    "pressed": {"O": (10, 8, 22), "E": (190, 160, 240), "F": (54, 40, 100), "T": (30, 22, 60), "S": (84, 62, 150)},
+}
+
+
+def build_buttons():
+    for state, key in BUTTON_STATES.items():
+        save(grid(BUTTON, key), f"ui/button_{state}.png")
 
 
 # ================================================================ preview
@@ -1438,6 +1469,7 @@ def main():
     build_world()
     build_hud()
     manifest["hearts"] = build_hearts()
+    build_buttons()
     manifest["npc_pi"] = build_pi()
     manifest["npc_octo"] = build_octo()
     manifest["sources"] = dict(sorted(sources.items()))

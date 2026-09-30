@@ -11,6 +11,7 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.delmartec.projectorb.ProjectOrbGame;
+import com.delmartec.projectorb.utils.ButtonPress;
 import com.delmartec.projectorb.utils.Constants;
 import com.delmartec.projectorb.utils.HeartMeter;
 import com.delmartec.projectorb.utils.UiRenderer;
@@ -28,6 +29,7 @@ public final class GameOverScreen extends ScreenAdapter {
     private final Rectangle retry = new Rectangle(450f, 190f, 500f, 92f);
     private final Rectangle menu = new Rectangle(970f, 190f, 500f, 92f);
     private int selected;
+    private final ButtonPress press = new ButtonPress();
     private float stateTime;
 
     public GameOverScreen(ProjectOrbGame game, float time, int section, int correct, int wrong, int score) {
@@ -47,15 +49,17 @@ public final class GameOverScreen extends ScreenAdapter {
         viewport.apply();
         mouse.set(Gdx.input.getX(), Gdx.input.getY());
         viewport.unproject(mouse);
-        if (retry.contains(mouse)) selected = 0;
-        if (menu.contains(mouse)) selected = 1;
-        if (Gdx.input.isKeyJustPressed(Input.Keys.LEFT) || Gdx.input.isKeyJustPressed(Input.Keys.RIGHT)) selected = 1 - selected;
-        boolean activate = Gdx.input.isKeyJustPressed(Input.Keys.ENTER)
-            || (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)
-                && (retry.contains(mouse) || menu.contains(mouse)));
-        if (activate) {
-            if (selected == 0) game.startGame(); else game.showMenu();
-            return;
+        int done = press.update(delta);
+        if (done == 0) { game.startGame(); return; }
+        if (done == 1) { game.showMenu(); return; }
+        if (!press.isBusy()) {
+            if (retry.contains(mouse)) selected = 0;
+            if (menu.contains(mouse)) selected = 1;
+            if (Gdx.input.isKeyJustPressed(Input.Keys.LEFT) || Gdx.input.isKeyJustPressed(Input.Keys.RIGHT)) selected = 1 - selected;
+            boolean activate = Gdx.input.isKeyJustPressed(Input.Keys.ENTER)
+                || (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)
+                    && (retry.contains(mouse) || menu.contains(mouse)));
+            if (activate) press.press(selected, game.settings);
         }
         if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) { game.showMenu(); return; }
 
@@ -77,7 +81,6 @@ public final class GameOverScreen extends ScreenAdapter {
         game.batch.setColor(Color.WHITE);
 
         game.ui.panel(390f, 315f, 1140f, 590f, UiRenderer.DANGER, 1f);
-        game.ui.crystalCorners(390f, 315f, 1140f, 590f, 70f, 1f);
         game.ui.textCentered("DERROTA", 960f, 740f, 3.5f, UiRenderer.DANGER);
         game.ui.textCentered("O Void desestabilizou ORB", 960f, 660f, 1.15f, Color.WHITE);
 
@@ -92,8 +95,8 @@ public final class GameOverScreen extends ScreenAdapter {
         game.ui.textCentered("Leia a forma e acerte os pontos marcados.",
             960f, 430f, 0.84f, UiRenderer.CYAN);
 
-        game.ui.button(retry, "REINICIAR", selected == 0, true, UiRenderer.DANGER);
-        game.ui.button(menu, "MENU", selected == 1, true, UiRenderer.CYAN);
+        game.ui.button(retry, "REINICIAR", selected == 0, true, UiRenderer.DANGER, press.isPressed(0));
+        game.ui.button(menu, "MENU", selected == 1, true, UiRenderer.CYAN, press.isPressed(1));
         game.batch.end();
     }
 

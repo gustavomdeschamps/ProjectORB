@@ -12,6 +12,7 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.delmartec.projectorb.ProjectOrbGame;
+import com.delmartec.projectorb.utils.ButtonPress;
 import com.delmartec.projectorb.utils.Constants;
 import com.delmartec.projectorb.utils.HeartMeter;
 import com.delmartec.projectorb.utils.UiRenderer;
@@ -30,6 +31,7 @@ public final class VictoryScreen extends ScreenAdapter {
     private final Rectangle next = new Rectangle(450f, 175f, 500f, 92f);
     private final Rectangle menu = new Rectangle(970f, 175f, 500f, 92f);
     private int selected;
+    private final ButtonPress press = new ButtonPress();
     private float stateTime;
 
     public VictoryScreen(ProjectOrbGame game, float time, int lives, int correct, int wrong,
@@ -51,16 +53,17 @@ public final class VictoryScreen extends ScreenAdapter {
         viewport.apply();
         mouse.set(Gdx.input.getX(), Gdx.input.getY());
         viewport.unproject(mouse);
-        if (next.contains(mouse)) selected = 0;
-        if (menu.contains(mouse)) selected = 1;
-        if (Gdx.input.isKeyJustPressed(Input.Keys.LEFT) || Gdx.input.isKeyJustPressed(Input.Keys.RIGHT)) selected = 1 - selected;
-        boolean activate = Gdx.input.isKeyJustPressed(Input.Keys.ENTER)
-            || (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)
-                && (next.contains(mouse) || menu.contains(mouse)));
-        if (activate) {
-            // A demonstracao possui uma fase; "proxima" reinicia a rota para novo tempo/score.
-            if (selected == 0) game.startGame(); else game.showMenu();
-            return;
+        int done = press.update(delta);
+        if (done == 0) { game.startGame(); return; }
+        if (done == 1) { game.showMenu(); return; }
+        if (!press.isBusy()) {
+            if (next.contains(mouse)) selected = 0;
+            if (menu.contains(mouse)) selected = 1;
+            if (Gdx.input.isKeyJustPressed(Input.Keys.LEFT) || Gdx.input.isKeyJustPressed(Input.Keys.RIGHT)) selected = 1 - selected;
+            boolean activate = Gdx.input.isKeyJustPressed(Input.Keys.ENTER)
+                || (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)
+                    && (next.contains(mouse) || menu.contains(mouse)));
+            if (activate) press.press(selected, game.settings);
         }
         if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) { game.showMenu(); return; }
 
@@ -82,7 +85,6 @@ public final class VictoryScreen extends ScreenAdapter {
             game.assets.portal.getHeight() * Constants.PIXEL_SCALE); // escala única
 
         game.ui.panel(390f, 300f, 1140f, 620f, UiRenderer.SUCCESS, 1f);
-        game.ui.crystalCorners(390f, 300f, 1140f, 620f, 70f, 1f);
         game.ui.textCentered("VITÓRIA", 960f, 770f, 3.5f, new Color(0.90f, 0.95f, 1f, 1f));
         game.ui.textCentered("RIFT ESTABILIZADO", 960f, 665f, 1.25f, UiRenderer.SUCCESS);
         game.ui.textCentered("Você leu as formas no meio da ação.",
@@ -100,8 +102,8 @@ public final class VictoryScreen extends ScreenAdapter {
         game.ui.textCentered("Vértices - Lados - Ângulos - Simetria",
             960f, 395f, 0.80f, UiRenderer.CYAN);
 
-        game.ui.button(next, "JOGAR NOVAMENTE", selected == 0, true, UiRenderer.SUCCESS);
-        game.ui.button(menu, "MENU", selected == 1, true, UiRenderer.CYAN);
+        game.ui.button(next, "JOGAR NOVAMENTE", selected == 0, true, UiRenderer.SUCCESS, press.isPressed(0));
+        game.ui.button(menu, "MENU", selected == 1, true, UiRenderer.CYAN, press.isPressed(1));
         game.batch.end();
     }
 

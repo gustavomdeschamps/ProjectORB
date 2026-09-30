@@ -27,6 +27,11 @@ public final class UiRenderer {
     private final NinePatch dialogPatch;
     private final NinePatch hudPatch;
     private final NinePatch dangerPatch;
+    private final NinePatch buttonNormal;
+    private final NinePatch buttonSelected;
+    private final NinePatch buttonPressed;
+    private final NinePatch keyPatch;
+    private final NinePatch keyLitPatch;
     private final GlyphLayout layout = new GlyphLayout();
 
     public UiRenderer(SpriteBatch batch, BitmapFont font, BitmapFont titleFont, Assets assets) {
@@ -37,10 +42,24 @@ public final class UiRenderer {
         dialogPatch = patch(assets.panelCyan);
         hudPatch = patch(assets.panel);
         dangerPatch = patch(assets.panelRed);
+        buttonNormal = buttonPatch(assets.buttonNormal);
+        buttonSelected = buttonPatch(assets.buttonSelected);
+        buttonPressed = buttonPatch(assets.buttonPressed);
+        keyPatch = new NinePatch(assets.key, 3, 3, 3, 4);
+        keyPatch.scale(Constants.PIXEL_SCALE, Constants.PIXEL_SCALE);
+        keyLitPatch = new NinePatch(assets.keyLit, 3, 3, 3, 4);
+        keyLitPatch.scale(Constants.PIXEL_SCALE, Constants.PIXEL_SCALE);
     }
 
     private static NinePatch patch(com.badlogic.gdx.graphics.Texture texture) {
         NinePatch p = new NinePatch(texture, 12, 14, 4, 4);
+        p.scale(Constants.PIXEL_SCALE, Constants.PIXEL_SCALE);
+        return p;
+    }
+
+    /** Botão: grade 12x12 com cantos de 3 px (sprites/ui/button_*.png). */
+    private static NinePatch buttonPatch(com.badlogic.gdx.graphics.Texture texture) {
+        NinePatch p = new NinePatch(texture, 3, 3, 3, 3);
         p.scale(Constants.PIXEL_SCALE, Constants.PIXEL_SCALE);
         return p;
     }
@@ -61,39 +80,54 @@ public final class UiRenderer {
         dangerPatch.draw(batch, x, y, width, height);
     }
 
-    public void crystalCorners(float x, float y, float width, float height, float requested, float alpha) {
-        float size = assets.weakPoint.getWidth() * Constants.PIXEL_SCALE;
-        batch.setColor(1f, 1f, 1f, alpha);
-        batch.draw(assets.weakPoint, x - size * 0.5f, y + height - size * 0.5f, size, size);
-        batch.draw(assets.weakPoint, x + width - size * 0.5f, y + height - size * 0.5f, size, size);
-        batch.draw(assets.weakPoint, x - size * 0.5f, y - size * 0.5f, size, size);
-        batch.draw(assets.weakPoint, x + width - size * 0.5f, y - size * 0.5f, size, size);
-        batch.setColor(Color.WHITE);
-    }
-
     public void button(Rectangle bounds, String text, boolean selected, boolean enabled, Color accent) {
         button(bounds, text, selected, enabled, accent, false);
     }
 
+    /**
+     * Botão retangular em pixel art, texto centralizado. Três estados:
+     * normal, selecionado (o próprio botão clareia e ganha contorno forte) e
+     * pressionado (afunda 1 pixel de arte). Nenhum ícone ao lado.
+     */
     public void button(Rectangle bounds, String text, boolean selected, boolean enabled, Color accent, boolean pressed) {
-        float alpha = enabled ? 1f : 0.45f;
-        float inset = pressed ? 6f : 0f;
-        batch.setColor(1f, 1f, 1f, alpha);
-        (selected && enabled ? dialogPatch : hudPatch).draw(batch, bounds.x + inset, bounds.y - inset,
-            bounds.width - inset * 2f, bounds.height - inset * 2f);
+        float drop = pressed ? Constants.PIXEL_SCALE : 0f;
+        NinePatch patch = pressed ? buttonPressed : (selected && enabled) ? buttonSelected : buttonNormal;
+        batch.setColor(1f, 1f, 1f, enabled ? 1f : 0.45f);
+        patch.draw(batch, bounds.x, bounds.y - drop, bounds.width, bounds.height);
         batch.setColor(Color.WHITE);
-        if (selected && enabled && !pressed) {
-            // Botão selecionado: um coração pequeno de cada lado, colado ao
-            // texto (em botão estreito com texto longo, nas bordas).
-            float w = assets.heartMini.getWidth() * Constants.PIXEL_SCALE;
-            float oy = bounds.y + bounds.height / 2f - assets.heartMini.getHeight() * Constants.PIXEL_SCALE / 2f;
-            float cx = bounds.x + bounds.width / 2f;
-            float off = Math.min(textWidth(text, TEXT) / 2f + 24f, bounds.width / 2f - 20f - w);
-            HeartMeter.drawMini(batch, assets, Math.round(cx - off - w), oy);
-            HeartMeter.drawMini(batch, assets, Math.round(cx + off), oy);
-        }
-        text(text, bounds.x + bounds.width / 2f, bounds.y + bounds.height / 2f + 12f - inset, TEXT,
+        text(text, bounds.x + bounds.width / 2f, bounds.y + bounds.height / 2f + 12f - drop, TEXT,
             enabled ? Color.WHITE : DISABLED_TEXT, true);
+    }
+
+    /** Altura de uma tecla desenhada (12 pixels de arte). */
+    public static final float KEY_H = 12 * Constants.PIXEL_SCALE;
+    private static final Color KEY_TEXT = new Color(0.86f, 0.80f, 1f, 1f);
+
+    /**
+     * Tecla em pixel art com o rótulo dentro; 'right' é a borda direita.
+     * Acesa, ela afunda 1 pixel de arte. Devolve a borda esquerda.
+     */
+    public float keyCap(String label, int minArtWidth, float right, float y, boolean lit) {
+        int px = Constants.PIXEL_SCALE;
+        int textArt = (int)Math.ceil(textWidth(label, TEXT) / px);
+        float w = Math.max(minArtWidth, textArt + 6) * px;
+        float left = right - w;
+        float drop = lit ? px : 0f;
+        (lit ? keyLitPatch : keyPatch).draw(batch, left, y - drop, w, KEY_H);
+        text(label, left + w / 2f, y + 40f - drop, TEXT, lit ? Color.WHITE : KEY_TEXT, true);
+        return left;
+    }
+
+    /** Tecla com um desenho (setas) no lugar do rótulo. Devolve a borda esquerda. */
+    public float keyCap(com.badlogic.gdx.graphics.Texture glyph, float right, float y, boolean lit) {
+        int px = Constants.PIXEL_SCALE;
+        float w = 11 * px;
+        float left = right - w;
+        float drop = lit ? px : 0f;
+        (lit ? keyLitPatch : keyPatch).draw(batch, left, y - drop, w, KEY_H);
+        float gw = glyph.getWidth() * px, gh = glyph.getHeight() * px;
+        batch.draw(glyph, left + (w - gw) / 2f, y + 3 * px + (9 * px - gh) / 2f - drop, gw, gh);
+        return left;
     }
 
     /** Texto corrido e HUD: 1 pixel da fonte = 1 pixel de arte (4 de mundo). */

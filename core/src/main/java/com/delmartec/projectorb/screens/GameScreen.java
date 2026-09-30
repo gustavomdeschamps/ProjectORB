@@ -30,6 +30,7 @@ import com.delmartec.projectorb.level.LevelDemo;
 import com.delmartec.projectorb.level.Platform;
 import com.delmartec.projectorb.level.Section;
 import com.delmartec.projectorb.utils.Assets;
+import com.delmartec.projectorb.utils.ButtonPress;
 import com.delmartec.projectorb.utils.Constants;
 import com.delmartec.projectorb.utils.HeartMeter;
 import com.delmartec.projectorb.utils.UiRenderer;
@@ -119,6 +120,7 @@ public class GameScreen extends ScreenAdapter {
     private int score = 0;
     private int crystals = 0;
     private int pauseSelected = 0;
+    private final ButtonPress pausePress = new ButtonPress();
     private boolean paused = false;
     private boolean codexOpen = false;
     private boolean portalActive = false;
@@ -1148,9 +1150,13 @@ public class GameScreen extends ScreenAdapter {
     }
 
     private void drawBannerAndHints() {
-        String hint = null;
-        if (portalActive) hint = playerAtPortal() ? "E  ATRAVESSAR O RIFT" : "SIGA PARA O PORTAL";
-        if (hint != null) game.ui.text(hint, 32f, 52f, UiRenderer.TEXT, HINT, false); // sobre o piso escuro
+        // Dica de controle: só a tecla e uma palavra, sobre o piso escuro.
+        if (portalActive && playerAtPortal()) {
+            float left = game.ui.keyCap("E", 11, 32f + 11 * PX, 24f, Gdx.input.isKeyPressed(Input.Keys.E));
+            game.ui.text("PORTAL", left + 11 * PX + 16f, 64f, UiRenderer.TEXT, HINT, false);
+        } else if (portalActive) {
+            game.ui.text("SIGA PARA O PORTAL", 32f, 52f, UiRenderer.TEXT, HINT, false);
+        }
 
         if (bannerTimer > 0f && !dialogue.isActive()) {
             float alpha = Math.min(1f, bannerTimer);
@@ -1179,6 +1185,19 @@ public class GameScreen extends ScreenAdapter {
     private boolean handlePauseInput() {
         mouseHud.set(Gdx.input.getX(), Gdx.input.getY());
         hudViewport.unproject(mouseHud);
+        // O botão afunda e a ação acontece quando ele volta (ButtonPress).
+        switch (pausePress.update(Gdx.graphics.getDeltaTime())) {
+            case 0 -> {
+                paused = false;
+                guardResumeInput();
+                return false;
+            }
+            case 1 -> { game.startGame(); return true; }
+            case 2 -> { game.setScreen(new OptionsScreen(game, this)); return true; }
+            case 3 -> { game.showMenu(); return true; }
+            default -> { }
+        }
+        if (pausePress.isBusy()) return false;
         for (int i = 0; i < pauseButtons.length; i++) {
             if (pauseButtons[i].contains(mouseHud)) pauseSelected = i;
         }
@@ -1192,18 +1211,7 @@ public class GameScreen extends ScreenAdapter {
             || Gdx.input.isKeyJustPressed(Input.Keys.SPACE)
             || (pauseButtons[pauseSelected].contains(mouseHud)
                 && Gdx.input.isButtonJustPressed(Input.Buttons.LEFT));
-        if (!activate) return false;
-
-        switch (pauseSelected) {
-            case 0 -> {
-                paused = false;
-                guardResumeInput();
-            }
-            case 1 -> { game.startGame(); return true; }
-            case 2 -> { game.setScreen(new OptionsScreen(game, this)); return true; }
-            case 3 -> { game.showMenu(); return true; }
-            default -> { }
-        }
+        if (activate) pausePress.press(pauseSelected, game.settings);
         return false;
     }
 
@@ -1216,7 +1224,6 @@ public class GameScreen extends ScreenAdapter {
         game.batch.setColor(Color.WHITE);
 
         game.ui.panel(310f, 120f, 1300f, 840f, UiRenderer.CYAN, 1f);
-        game.ui.crystalCorners(310f, 120f, 1300f, 840f, 62f, 1f);
         game.ui.textCentered("CÓDEX DAS FORMAS", 960f, 885f, 2.4f, Color.WHITE);
         game.ui.textCentered("Descobertas registradas durante esta expedição", 960f, 833f,
             0.88f, UiRenderer.CYAN);
@@ -1242,8 +1249,11 @@ public class GameScreen extends ScreenAdapter {
                 UiRenderer.TEXT, unlocked ? Color.WHITE : CODEX_LOCKED_TEXT, false);
             y -= 105f;
         }
-        game.ui.textCentered("C / TAB / ESC  -  VOLTAR À PARTIDA", 960f, 165f, 0.84f,
-            UiRenderer.SOFT_TEXT);
+        // Só as teclas e uma palavra.
+        float kx = game.ui.keyCap("ESC", 17, 1040f, 140f, Gdx.input.isKeyPressed(Input.Keys.ESCAPE)) - 12f;
+        kx = game.ui.keyCap("TAB", 17, kx, 140f, Gdx.input.isKeyPressed(Input.Keys.TAB)) - 12f;
+        game.ui.keyCap("C", 11, kx, 140f, Gdx.input.isKeyPressed(Input.Keys.C));
+        game.ui.text("VOLTAR", 1064f, 180f, UiRenderer.TEXT, UiRenderer.SOFT_TEXT, false);
         game.batch.end();
     }
 
@@ -1257,16 +1267,15 @@ public class GameScreen extends ScreenAdapter {
         game.batch.setColor(Color.WHITE);
 
         game.ui.panel(610f, 170f, 700f, 740f, UiRenderer.MAGENTA, 1f);
-        game.ui.crystalCorners(610f, 170f, 700f, 740f, 62f, 1f);
         game.ui.textCentered("PAUSADO", 960f, 860f, 2.8f, Color.WHITE);
         game.ui.textCentered(level.getSection(currentSection).title + "  -  " + objectiveText(),
             960f, 735f, 0.82f, UiRenderer.CYAN);
         float hw = HeartMeter.rowWidth(game.assets, Constants.START_LIVES);
         HeartMeter.drawStatic(game.batch, game.assets, 960f - hw / 2f, 620f, player.getLives(), Constants.START_LIVES);
-        game.ui.button(pauseButtons[0], "CONTINUAR", pauseSelected == 0, true, UiRenderer.MAGENTA);
-        game.ui.button(pauseButtons[1], "REINICIAR", pauseSelected == 1, true, UiRenderer.CYAN);
-        game.ui.button(pauseButtons[2], "OPÇÕES", pauseSelected == 2, true, UiRenderer.CYAN);
-        game.ui.button(pauseButtons[3], "SAIR PARA O MENU", pauseSelected == 3, true, UiRenderer.CYAN);
+        game.ui.button(pauseButtons[0], "CONTINUAR", pauseSelected == 0, true, UiRenderer.MAGENTA, pausePress.isPressed(0));
+        game.ui.button(pauseButtons[1], "REINICIAR", pauseSelected == 1, true, UiRenderer.CYAN, pausePress.isPressed(1));
+        game.ui.button(pauseButtons[2], "OPÇÕES", pauseSelected == 2, true, UiRenderer.CYAN, pausePress.isPressed(2));
+        game.ui.button(pauseButtons[3], "SAIR PARA O MENU", pauseSelected == 3, true, UiRenderer.CYAN, pausePress.isPressed(3));
 
         game.batch.end();
     }

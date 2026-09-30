@@ -103,7 +103,8 @@ public final class ResumeInputCheck {
                 case 1 -> { justKeys.add(Input.Keys.ESCAPE); next(); }
                 case 2 -> { expect(get(screen, "paused"), "ESC deveria pausar"); justKeys.add(Input.Keys.SPACE); next(); }
                 case 3 -> {
-                    expect(!(Boolean) get(screen, "paused"), "ESPAÇO deveria retomar");
+                    // o botão afunda por ~0,12 s (ButtonPress) antes de retomar
+                    if (stepFrame >= 15) expect(!(Boolean) get(screen, "paused"), "ESPAÇO deveria retomar");
                     expect(player.isGrounded() && player.getVy() <= 0f,
                         "pulou ao retomar com ESPAÇO (frame " + stepFrame + ")");
                     if (stepFrame > 20) next();
@@ -116,7 +117,7 @@ public final class ResumeInputCheck {
                 case 7 -> { mouseX = buttonX; mouseY = buttonY; justKeys.add(Input.Keys.ESCAPE); next(); }
                 case 8 -> { mouseHeld = true; mouseJust = true; shots.clear(); next(); }
                 case 9 -> {
-                    expect(!(Boolean) get(screen, "paused"), "clique deveria retomar");
+                    if (stepFrame >= 15) expect(!(Boolean) get(screen, "paused"), "clique deveria retomar");
                     expect(shots.isEmpty(), "atirou com o clique que retomou (frame " + stepFrame + ")");
                     if (stepFrame > 30) { mouseHeld = false; next(); }
                 }

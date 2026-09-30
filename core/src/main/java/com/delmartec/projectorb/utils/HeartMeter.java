@@ -1,6 +1,5 @@
 package com.delmartec.projectorb.utils;
 
-import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
@@ -92,11 +91,5 @@ public final class HeartMeter {
             if (i < full) batch.draw(heart, hx, y, w, h);
             else batch.draw(assets.heartEmpty, hx, y, w, h);
         }
-    }
-
-    /** Marcador pequeno (botão selecionado). */
-    public static void drawMini(SpriteBatch batch, Assets assets, float x, float y) {
-        Texture t = assets.heartMini;
-        batch.draw(t, x, y, t.getWidth() * PX, t.getHeight() * PX);
     }
 }

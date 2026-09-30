@@ -12,6 +12,7 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.delmartec.projectorb.ProjectOrbGame;
+import com.delmartec.projectorb.utils.ButtonPress;
 import com.delmartec.projectorb.utils.Constants;
 import com.delmartec.projectorb.utils.UiRenderer;
 
@@ -31,6 +32,7 @@ public final class OptionsScreen extends ScreenAdapter {
         new Rectangle(750f, 170f, 420f, 76f)
     };
     private int selected;
+    private final ButtonPress press = new ButtonPress();
     private float stateTime;
 
     public OptionsScreen(ProjectOrbGame game, Screen returnScreen) {
@@ -47,30 +49,43 @@ public final class OptionsScreen extends ScreenAdapter {
         mouse.set(Gdx.input.getX(), Gdx.input.getY());
         viewport.unproject(mouse);
 
-        for (int i = 0; i < rows.length; i++) if (rows[i].contains(mouse)) selected = i;
-        if (Gdx.input.isKeyJustPressed(Input.Keys.UP)) selected = (selected + rows.length - 1) % rows.length;
-        if (Gdx.input.isKeyJustPressed(Input.Keys.DOWN)) selected = (selected + 1) % rows.length;
-
-        boolean activate = Gdx.input.isKeyJustPressed(Input.Keys.ENTER)
-            || Gdx.input.isKeyJustPressed(Input.Keys.SPACE)
-            || (rows[selected].contains(mouse) && Gdx.input.isButtonJustPressed(Input.Buttons.LEFT));
-        boolean left = Gdx.input.isKeyJustPressed(Input.Keys.LEFT);
-        boolean right = Gdx.input.isKeyJustPressed(Input.Keys.RIGHT);
-
-        if (selected == 0 && (activate || left || right)) {
-            game.settings.adjustMasterVolume(left ? -0.1f : 0.1f);
+        // Volume: setas ajustam na hora; ENTER/ESPAÇO/clique afundam o botão e
+        // a ação acontece quando ele volta (ButtonPress).
+        int done = press.update(delta);
+        if (done == 0) {
+            game.settings.adjustMasterVolume(0.1f);
             game.audio.refreshVolume();
-        } else if (selected == 1 && activate) {
+        } else if (done == 1) {
             game.settings.toggleScreenShake();
-        } else if (selected == 2 && activate) {
+        } else if (done == 2) {
             game.settings.toggleReducedMotion();
-        } else if (selected == 3 && activate) {
+        } else if (done == 3) {
             game.settings.toggleDialogueSound();
-        } else if (selected == 4 && activate) {
+        } else if (done == 4) {
             game.settings.toggleIntro();
-        } else if ((selected == 5 && activate) || Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
+        } else if (done == 5) {
             game.setScreen(returnScreen);
             return;
+        }
+        if (!press.isBusy()) {
+            for (int i = 0; i < rows.length; i++) if (rows[i].contains(mouse)) selected = i;
+            if (Gdx.input.isKeyJustPressed(Input.Keys.UP)) selected = (selected + rows.length - 1) % rows.length;
+            if (Gdx.input.isKeyJustPressed(Input.Keys.DOWN)) selected = (selected + 1) % rows.length;
+            boolean activate = Gdx.input.isKeyJustPressed(Input.Keys.ENTER)
+                || Gdx.input.isKeyJustPressed(Input.Keys.SPACE)
+                || (rows[selected].contains(mouse) && Gdx.input.isButtonJustPressed(Input.Buttons.LEFT));
+            boolean left = Gdx.input.isKeyJustPressed(Input.Keys.LEFT);
+            boolean right = Gdx.input.isKeyJustPressed(Input.Keys.RIGHT);
+            if (selected == 0 && (left || right)) {
+                game.settings.adjustMasterVolume(left ? -0.1f : 0.1f);
+                game.audio.refreshVolume();
+            } else if (activate) {
+                press.press(selected, game.settings);
+            }
+            if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
+                game.setScreen(returnScreen);
+                return;
+            }
         }
 
         Gdx.gl.glClearColor(0.008f, 0.005f, 0.025f, 1f);
@@ -84,26 +99,24 @@ public final class OptionsScreen extends ScreenAdapter {
         game.batch.setColor(Color.WHITE);
 
         game.ui.panel(545f, 145f, 830f, 780f, UiRenderer.CYAN, 1f);
-        game.ui.crystalCorners(545f, 145f, 830f, 780f, 58f, 1f);
         game.ui.textCentered("OPÇÕES", 960f, 850f, 2.7f, Color.WHITE);
-        game.ui.textCentered("Conforto e resposta", 960f, 720f, 0.95f, UiRenderer.CYAN);
 
-        String volume = "VOLUME GERAL   <  " + Math.round(game.settings.getMasterVolume() * 100f) + "%  >";
-        game.ui.button(rows[0], volume, selected == 0, true, UiRenderer.MAGENTA);
-        game.ui.button(rows[1], "SHAKE DE CÂMERA   " + onOff(game.settings.isScreenShakeEnabled()),
-            selected == 1, true, UiRenderer.MAGENTA);
+        String volume = "VOLUME GERAL   " + Math.round(game.settings.getMasterVolume() * 100f) + "%";
+        game.ui.button(rows[0], volume, selected == 0, true, UiRenderer.MAGENTA, press.isPressed(0));
+        game.ui.button(rows[1], "TREMOR DE TELA   " + onOff(game.settings.isScreenShakeEnabled()),
+            selected == 1, true, UiRenderer.MAGENTA, press.isPressed(1));
         game.ui.button(rows[2], "MOVIMENTO REDUZIDO   " + onOff(game.settings.isReducedMotion()),
-            selected == 2, true, UiRenderer.MAGENTA);
+            selected == 2, true, UiRenderer.MAGENTA, press.isPressed(2));
         game.ui.button(rows[3], "SOM DAS FALAS   " + onOff(game.settings.isDialogueSoundEnabled()),
-            selected == 3, true, UiRenderer.MAGENTA);
+            selected == 3, true, UiRenderer.MAGENTA, press.isPressed(3));
         game.ui.button(rows[4], "ABERTURA   " + onOff(game.settings.isIntroEnabled()),
-            selected == 4, true, UiRenderer.MAGENTA);
-        game.ui.button(rows[5], "VOLTAR", selected == 5, true, UiRenderer.CYAN);
+            selected == 4, true, UiRenderer.MAGENTA, press.isPressed(4));
+        game.ui.button(rows[5], "VOLTAR", selected == 5, true, UiRenderer.CYAN, press.isPressed(5));
 
         game.batch.end();
     }
 
-    private String onOff(boolean enabled) { return enabled ? "LIGADO" : "DESLIGADO"; }
+    private String onOff(boolean enabled) { return enabled ? "SIM" : "NÃO"; }
 
     @Override public void resize(int width, int height) { viewport.update(width, height, true); }
 }

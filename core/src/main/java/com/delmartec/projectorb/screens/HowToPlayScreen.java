@@ -7,12 +7,12 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.NinePatch;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.delmartec.projectorb.ProjectOrbGame;
+import com.delmartec.projectorb.utils.ButtonPress;
 import com.delmartec.projectorb.utils.Constants;
 import com.delmartec.projectorb.utils.UiRenderer;
 
@@ -23,12 +23,10 @@ import com.delmartec.projectorb.utils.UiRenderer;
  */
 public final class HowToPlayScreen extends ScreenAdapter {
     private static final int PX = Constants.PIXEL_SCALE;
-    private static final float KEY_H = 12 * PX;
     private static final float ROW = 104f;
     private static final float KEYS_RIGHT = 900f;
     private static final float LABEL_X = 948f;
     private static final Color LABEL = new Color(0.95f, 0.94f, 1f, 1f);
-    private static final Color KEY_TEXT = new Color(0.86f, 0.80f, 1f, 1f);
 
     private final ProjectOrbGame game;
     private final MenuScreen menu;
@@ -36,33 +34,29 @@ public final class HowToPlayScreen extends ScreenAdapter {
     private final Viewport viewport = new FitViewport(Constants.VIEW_WIDTH, Constants.VIEW_HEIGHT, camera);
     private final Vector2 pointer = new Vector2();
     private final Rectangle back = new Rectangle(760f, 64f, 400f, 82f);
-    private final NinePatch keyPatch;
-    private final NinePatch keyLitPatch;
+    private final ButtonPress press = new ButtonPress();
 
     public HowToPlayScreen(ProjectOrbGame game, MenuScreen menu) {
         this.game = game;
         this.menu = menu;
         camera.position.set(Constants.VIEW_WIDTH / 2f, Constants.VIEW_HEIGHT / 2f, 0f);
         camera.update();
-        keyPatch = patch(game.assets.key);
-        keyLitPatch = patch(game.assets.keyLit);
-    }
-
-    private static NinePatch patch(Texture texture) {
-        NinePatch p = new NinePatch(texture, 3, 3, 3, 4);
-        p.scale(PX, PX);
-        return p;
     }
 
     @Override public void render(float delta) {
         viewport.apply();
         pointer.set(Gdx.input.getX(), Gdx.input.getY());
         viewport.unproject(pointer);
-        if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)
-            || Gdx.input.isKeyJustPressed(Input.Keys.ENTER)
-            || (back.contains(pointer) && Gdx.input.isButtonJustPressed(Input.Buttons.LEFT))) {
+        // VOLTAR é o único botão, então tem o foco do teclado (selecionado);
+        // ENTER/ESC/clique afundam e a tela volta quando ele sobe.
+        if (press.update(delta) == 0) {
             game.setScreen(menu);
             return;
+        }
+        if (!press.isBusy() && (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)
+            || Gdx.input.isKeyJustPressed(Input.Keys.ENTER)
+            || (back.contains(pointer) && Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)))) {
+            press.press(0, game.settings);
         }
 
         Gdx.gl.glClearColor(0.01f, 0.01f, 0.04f, 1f);
@@ -79,8 +73,7 @@ public final class HowToPlayScreen extends ScreenAdapter {
         float x = KEYS_RIGHT;
         x = keyArrow(game.assets.arrowRight, x, y, pressed(Input.Keys.RIGHT));
         x = keyArrow(game.assets.arrowLeft, x, y, pressed(Input.Keys.LEFT));
-        x = slash(x, y);
-        x = key("D", 11, x, y, pressed(Input.Keys.D));
+        x = key("D", 11, x - 24f, y, pressed(Input.Keys.D));
         key("A", 11, x, y, pressed(Input.Keys.A));
         label("MOVER", y);
 
@@ -96,9 +89,7 @@ public final class HowToPlayScreen extends ScreenAdapter {
         boolean click = Gdx.input.isButtonPressed(Input.Buttons.LEFT);
         Texture m = click ? game.assets.mouseLit : game.assets.mouse;
         float mw = m.getWidth() * PX, mh = m.getHeight() * PX;
-        game.batch.draw(m, KEYS_RIGHT - mw, y - (mh - KEY_H) / 2f, mw, mh);
-        game.ui.text("ESQ.", KEYS_RIGHT - mw - 16f - game.ui.textWidth("ESQ.", UiRenderer.TEXT), y + 36f,
-            UiRenderer.TEXT, KEY_TEXT, false);
+        game.batch.draw(m, KEYS_RIGHT - mw, y - (mh - UiRenderer.KEY_H) / 2f, mw, mh);
         label("ATIRAR", y);
 
         y -= ROW;
@@ -107,15 +98,14 @@ public final class HowToPlayScreen extends ScreenAdapter {
 
         y -= ROW;
         x = key("TAB", 17, KEYS_RIGHT, y, pressed(Input.Keys.TAB));
-        x = slash(x, y);
-        key("C", 11, x, y, pressed(Input.Keys.C));
+        key("C", 11, x - 24f, y, pressed(Input.Keys.C));
         label("CÓDEX", y);
 
         y -= ROW;
         key("ESC", 17, KEYS_RIGHT, y, pressed(Input.Keys.ESCAPE));
         label("PAUSA", y);
 
-        game.ui.button(back, "VOLTAR", back.contains(pointer), true, UiRenderer.MAGENTA);
+        game.ui.button(back, "VOLTAR", true, true, UiRenderer.MAGENTA, press.isPressed(0));
         game.batch.end();
     }
 
@@ -125,30 +115,11 @@ public final class HowToPlayScreen extends ScreenAdapter {
 
     /** Tecla com rótulo; 'right' é a borda direita. Devolve a borda esquerda livre. */
     private float key(String text, int minArtWidth, float right, float y, boolean lit) {
-        // largura em pixels de arte inteiros: o rótulo + 3 px de margem por lado
-        int textArt = (int)Math.ceil(game.ui.textWidth(text, UiRenderer.TEXT) / PX);
-        float w = Math.max(minArtWidth, textArt + 6) * PX;
-        float left = right - w;
-        float drop = lit ? PX : 0f;
-        (lit ? keyLitPatch : keyPatch).draw(game.batch, left, y - drop, w, KEY_H);
-        game.ui.text(text, left + w / 2f, y + 40f - drop, UiRenderer.TEXT, lit ? Color.WHITE : KEY_TEXT, true);
-        return left - 12f;
+        return game.ui.keyCap(text, minArtWidth, right, y, lit) - 12f;
     }
 
     private float keyArrow(Texture glyph, float right, float y, boolean lit) {
-        float w = 11 * PX;
-        float left = right - w;
-        float drop = lit ? PX : 0f;
-        (lit ? keyLitPatch : keyPatch).draw(game.batch, left, y - drop, w, KEY_H);
-        float gw = glyph.getWidth() * PX, gh = glyph.getHeight() * PX;
-        game.batch.draw(glyph, left + (w - gw) / 2f, y + 3 * PX + (9 * PX - gh) / 2f - drop, gw, gh);
-        return left - 12f;
-    }
-
-    private float slash(float right, float y) {
-        float w = game.ui.textWidth("/", UiRenderer.TEXT);
-        game.ui.text("/", right - w, y + 40f, UiRenderer.TEXT, KEY_TEXT, false);
-        return right - w - 12f;
+        return game.ui.keyCap(glyph, right, y, lit) - 12f;
     }
 
     private void label(String text, float y) {
