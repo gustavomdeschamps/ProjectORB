@@ -597,64 +597,49 @@
  },
  "background_layers": [
   {
-   "layer": "00_ceu",
-   "period_px": 480,
-   "seam_diff": 848,
-   "neighbor_p99": 848.0
+   "layer": "ceu",
+   "period_px": 451,
+   "seam_mean_diff": 4.71
   },
   {
-   "layer": "01_estrelas",
-   "period_px": 503,
-   "seam_diff": 0,
-   "neighbor_p99": 797.0
+   "layer": "nuvem1",
+   "period_px": 402,
+   "seam_mean_diff": 8.05
   },
   {
-   "layer": "02_montanhas",
-   "period_px": 613,
-   "seam_diff": 566,
-   "neighbor_p99": 2782.5
+   "layer": "nuvem2",
+   "period_px": 401,
+   "seam_mean_diff": 9.05
   },
   {
-   "layer": "03_bruma_alta",
-   "period_px": 420,
-   "seam_diff": 6580,
-   "neighbor_p99": 6580.0
+   "layer": "nuvem3",
+   "period_px": 393,
+   "seam_mean_diff": 17.76
   },
   {
-   "layer": "04_cristais",
-   "period_px": 701,
-   "seam_diff": 0,
-   "neighbor_p99": 23102.2
+   "layer": "nuvem4",
+   "period_px": 397,
+   "seam_mean_diff": 16.54
   },
   {
-   "layer": "05_ruinas",
-   "period_px": 829,
-   "seam_diff": 0,
-   "neighbor_p99": 27438.6
+   "layer": "montanhas",
+   "period_px": 405,
+   "seam_mean_diff": 0.0
   },
   {
-   "layer": "06_bruma_baixa",
-   "period_px": 444,
-   "seam_diff": 3647,
-   "neighbor_p99": 3647.0
+   "layer": "estruturas",
+   "period_px": 760,
+   "seam_mean_diff": 0.0
   },
   {
-   "layer": "07_fragmentos",
-   "period_px": 389,
-   "seam_diff": 940,
-   "neighbor_p99": 2503.0
+   "layer": "lago",
+   "period_px": 380,
+   "seam_mean_diff": 28.7
   },
   {
-   "layer": "08_frente",
-   "period_px": 757,
-   "seam_diff": 0,
-   "neighbor_p99": 1696.0
-  },
-  {
-   "layer": "01_estrelas_b",
-   "period_px": 503,
-   "seam_diff": 0,
-   "neighbor_p99": 797.0
+   "layer": "chao",
+   "period_px": 421,
+   "seam_mean_diff": 32.16
   }
  ],
  "hearts": {
@@ -769,17 +754,16 @@
   "baseline_px": 9
  },
  "sources": {
-  "background/00_ceu.png": "tools/orb_background.py",
-  "background/01_estrelas.png": "tools/orb_background.py",
-  "background/01_estrelas_b.png": "tools/orb_background.py",
-  "background/02_montanhas.png": "tools/orb_background.py",
-  "background/03_bruma_alta.png": "tools/orb_background.py",
-  "background/04_cristais.png": "tools/orb_background.py",
-  "background/05_ruinas.png": "tools/orb_background.py",
-  "background/06_bruma_baixa.png": "tools/orb_background.py",
-  "background/07_fragmentos.png": "tools/orb_background.py",
-  "background/08_frente.png": "tools/orb_background.py",
-  "background/menu.png": "tools/orb_background.py",
+  "background/00_ceu.png": "art-source/ProjetoFinal_TCC/fundo/ceu.png",
+  "background/01_nuvem1.png": "art-source/ProjetoFinal_TCC/fundo/nuvem1.png",
+  "background/02_nuvem2.png": "art-source/ProjetoFinal_TCC/fundo/nuvem2.png",
+  "background/03_nuvem3.png": "art-source/ProjetoFinal_TCC/fundo/nuvem3.png",
+  "background/04_nuvem4.png": "art-source/ProjetoFinal_TCC/fundo/nuvem4.png",
+  "background/05_montanhas.png": "art-source/ProjetoFinal_TCC/fundo/montanhas.png",
+  "background/06_estruturas.png": "art-source/ProjetoFinal_TCC/fundo/estruturas-fundo.png",
+  "background/07_lago.png": "art-source/ProjetoFinal_TCC/fundo/lago.png",
+  "background/08_chao.png": "art-source/ProjetoFinal_TCC/fundo/chao.png",
+  "background/menu.png": "tools/orb_background.py (composição do menu)",
   "boss/beam_01.png": "gerado",
   "boss/beam_02.png": "gerado",
   "boss/beam_03.png": "gerado",
@@ -1240,15 +1224,14 @@
  },
  "files": [
   "background/00_ceu.png",
-  "background/01_estrelas.png",
-  "background/01_estrelas_b.png",
-  "background/02_montanhas.png",
-  "background/03_bruma_alta.png",
-  "background/04_cristais.png",
-  "background/05_ruinas.png",
-  "background/06_bruma_baixa.png",
-  "background/07_fragmentos.png",
-  "background/08_frente.png",
+  "background/01_nuvem1.png",
+  "background/02_nuvem2.png",
+  "background/03_nuvem3.png",
+  "background/04_nuvem4.png",
+  "background/05_montanhas.png",
+  "background/06_estruturas.png",
+  "background/07_lago.png",
+  "background/08_chao.png",
   "background/menu.png",
   "boss/beam_01.png",
   "boss/beam_02.png",

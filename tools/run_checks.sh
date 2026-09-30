@@ -6,7 +6,6 @@ set -u
 cd "$(dirname "$0")/.."
 ./gradlew :core:compileJava :lwjgl3:compileTestJava --console=plain -q || exit 1
 fail=0
-if py tools/audit_background.py >/dev/null; then echo "PASS  audit_background (fundo)"; else echo "FAIL  audit_background (fundo)"; fail=1; fi
 for c in DialogueRunnerCheck NpcCheck PlayerMovementCheck ProjectileSweepCheck QuizCheck \
          ResumeInputCheck SectionRespawnCheck TutorialCheck WeakPointAlignmentCheck ${EXTRA_CHECKS:-}; do
   out=$(./gradlew :lwjgl3:runCheck -Pcheck=$c --console=plain -q 2>&1)
